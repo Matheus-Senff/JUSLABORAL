@@ -1,0 +1,229 @@
+import { useCalculo, Dependente } from '@/contexts/CalculoContext';
+import { MaskedInput } from '@/components/MaskedInput';
+import { maskCPF, maskDate } from '@/lib/masks';
+import { Button } from '@/components/ui/button';
+import { Plus, Trash2, Calculator, FileText, Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { executarCalculo, ResultadoCalculo } from '@/lib/calculoEngine';
+import { generateCalculoPDF } from '@/lib/pdfGenerator';
+import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
+
+export function StepDependentes() {
+  const { formData, updateFormData, calculoMode } = useCalculo();
+  const isInicial = calculoMode === 'inicial';
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [resultado, setResultado] = useState<ResultadoCalculo | null>(null);
+
+  const handleCalcular = () => {
+    setIsCalculating(true);
+    try {
+      const result = executarCalculo(formData);
+      setResultado(result);
+      toast({
+        title: 'Cálculo realizado com sucesso!',
+        description: `Valor da causa: ${result.valorCausa.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Erro no cálculo',
+        description: err.message || 'Verifique os dados preenchidos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const handleGerarPDF = () => {
+    if (resultado) {
+      generateCalculoPDF(resultado);
+    }
+  };
+
+  if (isInicial) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Calculator className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Calcular Valores</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+            Todos os dados foram preenchidos. Clique no botão abaixo para executar o cálculo
+            previdenciário com correção monetária, juros moratórios e gerar o relatório em PDF.
+          </p>
+          <Button
+            size="lg"
+            onClick={handleCalcular}
+            disabled={isCalculating}
+            className="gap-2 px-8"
+          >
+            {isCalculating ? (
+              <><Loader2 className="h-5 w-5 animate-spin" /> Calculando...</>
+            ) : (
+              <><Calculator className="h-5 w-5" /> Calcular Valores</>
+            )}
+          </Button>
+        </div>
+
+        {resultado && (
+          <Card className="p-5 bg-card border-border">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-foreground">Resultado do Cálculo</h4>
+                <Button variant="outline" size="sm" onClick={handleGerarPDF} className="gap-1.5">
+                  <FileText className="h-4 w-4" /> Gerar PDF
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Total Devido (nominal)</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {resultado.totalDevido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Total Corrigido</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {resultado.totalCorrigido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+                {resultado.totalJurosIgpDi > 0 && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground">Correção IGP-DI</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {resultado.totalJurosIgpDi.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  </div>
+                )}
+                {resultado.totalJurosInpc > 0 && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground">Correção INPC</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {resultado.totalJurosInpc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  </div>
+                )}
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">SELIC (Correção + Juros)</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {resultado.totalJurosSelic.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Juros Moratórios</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {resultado.totalJurosMoratorios.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+                {resultado.incluiu12Vincendas && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground">Vincendas (12 parcelas{resultado.incluiu13Vincendas ? ' + 13°' : ''})</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {resultado.totalVincendas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  </div>
+                )}
+                {resultado.limitou60SM && (
+                  <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
+                    <p className="text-xs text-destructive">Teto 60 SM (JEF)</p>
+                    <p className="text-sm font-bold text-destructive">
+                      {resultado.teto60SM.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  </div>
+                )}
+                <div className="bg-primary/10 rounded-lg p-3 border border-primary/20 col-span-2 md:col-span-1">
+                  <p className="text-xs text-primary">Valor da Causa</p>
+                  <p className="text-lg font-bold text-primary">
+                    {resultado.valorCausa.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-0.5">
+                <p>{resultado.parcelas.length} parcelas • {resultado.correcaoAplicada}</p>
+                <p>Reajuste: {resultado.sistematicaReajuste}</p>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // Modo Execução: dependentes original
+  const deps = formData.dependentes;
+
+  const addDependente = () => {
+    const novo: Dependente = {
+      id: crypto.randomUUID(),
+      nome: '', cpf: '', nascimento: '', inicioCotas: '', fimCotas: '', parentesco: '',
+    };
+    updateFormData({ dependentes: [...deps, novo] });
+  };
+
+  const updateDep = (id: string, field: keyof Dependente, value: string) => {
+    updateFormData({
+      dependentes: deps.map(d => d.id === id ? { ...d, [field]: value } : d),
+    });
+  };
+
+  const removeDep = (id: string) => {
+    updateFormData({ dependentes: deps.filter(d => d.id !== id) });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Adicione os dependentes habilitados para rateio de cotas do benefício.
+        </p>
+        <Button variant="outline" size="sm" onClick={addDependente} className="gap-1.5">
+          <Plus className="h-4 w-4" /> Adicionar
+        </Button>
+      </div>
+
+      {deps.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-border rounded-lg">
+          Nenhum dependente cadastrado. Clique em "Adicionar" para incluir.
+        </div>
+      )}
+
+      {deps.map((dep, idx) => (
+        <Card key={dep.id} className="p-4 bg-card border-border">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-foreground">Dependente {idx + 1}</span>
+            <Button variant="ghost" size="sm" onClick={() => removeDep(dep.id)} className="text-destructive hover:text-destructive h-8 w-8 p-0">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MaskedInput label="Nome" value={dep.nome} onChange={(v) => updateDep(dep.id, 'nome', v)} placeholder="Nome completo" required />
+            <MaskedInput label="CPF" value={dep.cpf} onChange={(v) => updateDep(dep.id, 'cpf', v)} mask={maskCPF} placeholder="000.000.000-00" />
+            <MaskedInput label="Nascimento" value={dep.nascimento} onChange={(v) => updateDep(dep.id, 'nascimento', v)} mask={maskDate} placeholder="DD/MM/AAAA" />
+            <div>
+              <Label className="text-sm font-medium mb-1.5 block">Parentesco</Label>
+              <Select value={dep.parentesco} onValueChange={(v) => updateDep(dep.id, 'parentesco', v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="conjuge">Cônjuge/Companheiro(a)</SelectItem>
+                  <SelectItem value="filho">Filho(a)</SelectItem>
+                  <SelectItem value="pai">Pai/Mãe</SelectItem>
+                  <SelectItem value="irmao">Irmão(ã)</SelectItem>
+                  <SelectItem value="enteado">Enteado(a)</SelectItem>
+                  <SelectItem value="menor_tutelado">Menor Tutelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <MaskedInput label="Início da Cota" value={dep.inicioCotas} onChange={(v) => updateDep(dep.id, 'inicioCotas', v)} mask={maskDate} placeholder="DD/MM/AAAA" tooltip="Data de início do direito à cota-parte do dependente" />
+            <MaskedInput label="Fim da Cota" value={dep.fimCotas} onChange={(v) => updateDep(dep.id, 'fimCotas', v)} mask={maskDate} placeholder="DD/MM/AAAA" tooltip="Data de cessação da cota-parte (ex: maioridade)" />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}

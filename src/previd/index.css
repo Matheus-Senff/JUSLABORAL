@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Light mode (default) ── */
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 211 100% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 93%;
+    --secondary-foreground: 0 0% 12%;
+
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 211 100% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 82%;
+    --input: 0 0% 90%;
+    --ring: 211 100% 45%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 95%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 211 100% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 88%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 80%;
+    --sidebar-ring: 211 100% 45%;
+
+    --success: 155 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 90% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --step-active: 211 100% 45%;
+    --step-complete: 155 60% 40%;
+    --step-pending: 0 0% 70%;
+
+    --calculo-bg: 0 0% 96%;
+    --calculo-card: 0 0% 100%;
+    --calculo-border: 0 0% 80%;
+    --calculo-border-focus: 211 100% 45%;
+    --calculo-border-hover: 155 60% 40%;
+    --calculo-required: 0 70% 50%;
+  }
+
+  /* ── Dark mode ── */
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 75%;
+
+    --accent: 211 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 211 100% 50%;
+
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 211 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 211 100% 50%;
+
+    --success: 155 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 90% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --step-active: 211 100% 50%;
+    --step-complete: 155 60% 45%;
+    --step-pending: 0 0% 25%;
+
+    --calculo-bg: 0 0% 0%;
+    --calculo-card: 0 0% 8%;
+    --calculo-border: 0 0% 20%;
+    --calculo-border-focus: 211 100% 50%;
+    --calculo-border-hover: 155 60% 45%;
+    --calculo-required: 0 70% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Classes personalizadas para o tema Dark */
+@layer components {
+  /* Área de Cálculo - Fundo Preto Puro */
+  .calculo-section {
+    @apply bg-black; /* Fundo preto puro */
+  }
+
+  /* Campos de entrada com bordas dinâmicas */
+  .calculo-input {
+    @apply bg-secondary border border-calculo-border rounded-lg px-3 py-2 text-foreground;
+    @apply transition-all duration-300 ease-in-out;
+    @apply focus:border-calculo-border-focus focus:ring-2 focus:ring-calculo-border-focus/20;
+    @apply hover:border-calculo-border-hover;
+    box-shadow: 0 0 0 1px hsl(var(--calculo-border));
+  }
+
+  .calculo-input:focus {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); /* Glow azul suave */
+  }
+
+  /* Campos obrigatórios não preenchidos */
+  .calculo-input.required:invalid {
+    @apply border-calculo-required;
+    box-shadow: 0 0 0 1px hsl(var(--calculo-required));
+  }
+
+  /* Cards de cálculo */
+  .calculo-card {
+    @apply bg-calculo-card border border-calculo-border rounded-lg p-4;
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .calculo-card:hover {
+    @apply border-calculo-border-hover;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Tabelas de memória de cálculo com zebra stripes */
+  .calculo-table {
+    @apply w-full border-collapse;
+  }
+
+  .calculo-table th {
+    @apply bg-calculo-card border-b border-calculo-border px-4 py-3 text-left;
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wider;
+  }
+
+  .calculo-table td {
+    @apply px-4 py-3 border-b border-calculo-border text-sm text-foreground;
+  }
+
+  /* Linhas alternadas (zebra stripes) */
+  .calculo-table tbody tr:nth-child(even) {
+    @apply bg-calculo-card;
+  }
+
+  .calculo-table tbody tr:nth-child(odd) {
+    @apply bg-secondary;
+  }
+
+  .calculo-table tbody tr:hover {
+    @apply bg-muted;
+    @apply transition-colors duration-200;
+  }
+
+  /* Botões com transições suaves */
+  .calculo-button {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .calculo-button:hover {
+    @apply transform scale-105;
+  }
+
+  /* Texto principal - Branco com leve opacidade */
+  .calculo-text-primary {
+    @apply text-foreground; /* hsl(0 0% 95%) */
+  }
+
+  /* Texto secundário - Cinza claro */
+  .calculo-text-secondary {
+    @apply text-muted-foreground; /* hsl(0 0% 75%) */
+  }
+
+  /* Feedback visual para elementos interativos */
+  .calculo-interactive {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .calculo-interactive:hover {
+    @apply transform scale-105;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+  }
+
+  .calculo-interactive:focus {
+    @apply outline-none ring-2 ring-primary/50;
+  }
+}
