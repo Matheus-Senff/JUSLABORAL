@@ -17,6 +17,7 @@ const App = () => (
       <ChatProvider>
       <Toaster />
       <Sonner />
+      <div className="h-full">
       <MemoryRouter initialEntries={["/"]}>
         <Routes>
           <Route path="/" element={<Draft />} />
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </MemoryRouter>
+      </div>
       </ChatProvider>
     </TooltipProvider>
   </QueryClientProvider>

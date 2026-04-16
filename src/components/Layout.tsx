@@ -53,7 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({
               : 'Cálculo'
           }
         />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto h-full">
           {children}
         </main>
       </div>

@@ -131,15 +131,12 @@ export function useLibrary() {
       const o = org as any;
       setOrgInfo({ id: o.id, name: o.name, plan: o.plan });
 
-      // Only fetch shared items if business plan
-      if (["business", "enterprise", "team"].includes(o.plan)) {
-        const [templatesRes, promptsRes] = await Promise.all([
-          supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-          supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-        ]);
-        if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
-        if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
-      }
+      const [templatesRes, promptsRes] = await Promise.all([
+        supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+        supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+      ]);
+      if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
+      if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
     }
   }, [user]);
 
@@ -155,7 +152,7 @@ export function useLibrary() {
 
   // Realtime subscription for shared items
   useEffect(() => {
-    if (!orgInfo?.id || !["business", "enterprise", "team"].includes(orgInfo.plan)) return;
+    if (!orgInfo?.id) return;
 
     const channel = supabase
       .channel("shared-assets")
@@ -299,11 +296,9 @@ export function useLibrary() {
     }
   }, [toast]);
 
-  const isBusinessPlan = orgInfo ? ["business", "enterprise", "team"].includes(orgInfo.plan) : false;
-
   return {
     templates, prompts, history, loading,
-    sharedTemplates, sharedPrompts, orgInfo, isBusinessPlan,
+    sharedTemplates, sharedPrompts, orgInfo,
     addTemplate, deleteTemplate, updateTemplate,
     savePrompt, toggleFavorite, deletePrompt,
     saveToHistory, refresh,

@@ -30,6 +30,51 @@ code {
     monospace;
 }
 
+/* ===== MODO LIVRE — Tipografia ===== */
+.chat-livre-typography {
+  font-family: 'Google Sans', 'Inter', 'Roboto', 'Segoe UI', 'San Francisco', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.chat-livre-typography h2 {
+  font-family: 'Google Sans', 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.chat-livre-typography h3 {
+  font-family: 'Google Sans', 'Inter', sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.4rem;
+}
+
+.chat-livre-typography p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.chat-livre-typography code,
+.chat-livre-typography pre {
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chat-livre-typography ul,
+.chat-livre-typography ol {
+  line-height: 1.6;
+}
+
+.chat-livre-typography li {
+  margin-bottom: 0.25rem;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

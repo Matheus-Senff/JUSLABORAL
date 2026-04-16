@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Trash2, Star, FileText, MessageSquare,
-  X, Upload, Edit3, Users, Lock, ImageIcon,
+  X, Upload, Edit3, Users, ImageIcon,
 } from "lucide-react";
 import { Button } from "@canon/components/ui/button";
 import { ScrollArea } from "@canon/components/ui/scroll-area";
@@ -22,7 +22,6 @@ interface LibraryPanelProps {
   visualTemplates: DocumentVisualTemplate[];
   visualTemplatesLoading: boolean;
   visualTemplatesUploading: boolean;
-  isBusinessPlan: boolean;
   orgName: string | null;
   onBack: () => void;
   onSelectTemplate?: (templateId: string) => void;
@@ -44,7 +43,7 @@ interface LibraryPanelProps {
 
 export default function LibraryPanel({
   initialTab = "modelos",
-  templates, prompts, sharedTemplates, sharedPrompts, isBusinessPlan, orgName,
+  templates, prompts, sharedTemplates, sharedPrompts, orgName,
   visualTemplates, visualTemplatesLoading, visualTemplatesUploading,
   onBack, onSelectTemplate, onAddTemplate, onDeleteTemplate, onUpdateTemplate,
   onSavePrompt, onDeletePrompt, onToggleFavorite, onUsePrompt,
@@ -282,21 +281,7 @@ export default function LibraryPanel({
             {/* ===== EQUIPE TAB ===== */}
             {tab === "equipe" && (
               <motion.div key="equipe" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                {!isBusinessPlan ? (
-                  <div className="text-center py-16">
-                    <div className="h-14 w-14 rounded-full border-2 border-border flex items-center justify-center mx-auto mb-4">
-                      <Lock className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2">Plano Business Necessário</h3>
-                    <p className="text-[11px] text-muted-foreground max-w-xs mx-auto mb-4">
-                      Compartilhe modelos, prompts e templates com sua equipe. Disponível nos planos Business e Enterprise.
-                    </p>
-                    <Button size="sm" variant="outline" className="h-8 text-xs" style={{ borderColor: "#D4AF37", color: "#D4AF37" }}>
-                      Upgrade para Business
-                    </Button>
-                  </div>
-                ) : (
-                  <>
+                <>
                     <div className="flex items-center gap-2 mb-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">
@@ -358,7 +343,6 @@ export default function LibraryPanel({
                       )}
                     </div>
                   </>
-                )}
               </motion.div>
             )}
           </AnimatePresence>

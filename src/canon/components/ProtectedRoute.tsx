@@ -1,8 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@canon/hooks/useAuth";
 import { Loader2 } from "lucide-react";
-import { usePromptQuota } from "@canon/hooks/usePromptQuota";
-import AccessBlockedScreen from "@canon/components/AccessBlockedScreen";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,9 +8,8 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
-  const { accessBlocked, loading: quotaLoading } = usePromptQuota();
 
-  if (loading || quotaLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -24,13 +21,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/" replace />;
   }
 
-  // Check email verification
   if (!user.email_confirmed_at) {
     return <Navigate to="/verify-email" replace />;
-  }
-
-  if (accessBlocked) {
-    return <AccessBlockedScreen />;
   }
 
   return <>{children}</>;

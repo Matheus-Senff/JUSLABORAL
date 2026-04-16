@@ -7,5 +7,5 @@ interface CanonIndexProps {
 }
 
 export const CanonIndex: React.FC<CanonIndexProps> = ({ darkMode }) => {
-  return <CanonApp />
+  return <div className="h-full"><CanonApp /></div>
 }
