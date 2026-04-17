@@ -96,6 +96,8 @@ export interface KanbanCard {
   position: number
   columnId: string
   createdAt: string
+  linkedProcessId?: string
+  linkedProcessType?: 'federal' | 'estadual'
 }
 
 export interface KanbanColumn {

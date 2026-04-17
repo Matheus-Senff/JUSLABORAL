@@ -9,49 +9,8 @@ interface AgendaProps {
 export const Agenda: React.FC<AgendaProps> = ({ darkMode }) => {
   const [currentDate, setCurrentDate] = React.useState(new Date(2026, 3, 1))
 
-  // Mock events data
-  const events: AgendaEvent[] = [
-    {
-      id: '1',
-      tipo: 'Audiência',
-      responsavel: 'João Silva',
-      cliente: 'Empresa A',
-      data: new Date(2026, 3, 5),
-      color: 'green'
-    },
-    {
-      id: '2',
-      tipo: 'Reunião',
-      responsavel: 'Maria Santos',
-      cliente: 'Empresa B',
-      data: new Date(2026, 3, 5),
-      color: 'orange'
-    },
-    {
-      id: '3',
-      tipo: 'Pericia',
-      responsavel: 'Pedro Costa',
-      cliente: 'Empresa C',
-      data: new Date(2026, 3, 10),
-      color: 'purple'
-    },
-    {
-      id: '4',
-      tipo: 'Ajuizamento',
-      responsavel: 'Ana Paula',
-      cliente: 'Empresa D',
-      data: new Date(2026, 3, 15),
-      color: 'green'
-    },
-    {
-      id: '5',
-      tipo: 'Intimação',
-      responsavel: 'Carlos Mendes',
-      cliente: 'Empresa E',
-      data: new Date(2026, 3, 20),
-      color: 'orange'
-    },
-  ]
+  // Events will be loaded from database in future
+  const events: AgendaEvent[] = []
 
   const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
@@ -60,6 +19,8 @@ export const Agenda: React.FC<AgendaProps> = ({ darkMode }) => {
   for (let i = 1; i <= daysInMonth(currentDate); i++) {
     days.push(i)
   }
+
+
 
   const getEventsForDay = (day: number | null) => {
     if (!day) return []
@@ -113,11 +74,10 @@ export const Agenda: React.FC<AgendaProps> = ({ darkMode }) => {
         {days.map((day, index) => (
           <div
             key={index}
-            className={`min-h-32 p-2 rounded-lg border ${
-              day === null
+            className={`min-h-32 p-2 rounded-lg border ${day === null
                 ? darkMode ? 'bg-dark-800 border-dark-700' : 'bg-gray-100 border-gray-200'
-                : darkMode ? 'bg-dark-800 border-dark-700 hover:border-dark-500' : 'bg-white border-gray-200 hover:border-gray-300'
-            }`}
+                : darkMode ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-200'
+              }`}
           >
             {day && (
               <>
@@ -140,6 +100,7 @@ export const Agenda: React.FC<AgendaProps> = ({ darkMode }) => {
           </div>
         ))}
       </div>
+      {/* Modal */}
     </div>
   )
 }

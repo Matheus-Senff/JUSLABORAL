@@ -118,7 +118,7 @@ async function connectMicrosoft(): Promise<ConnectedService> {
       authority: "https://login.microsoftonline.com/common",
       redirectUri: window.location.origin,
     },
-    cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false },
+    cache: { cacheLocation: "sessionStorage" },
   });
 
   await msalInstance.initialize();

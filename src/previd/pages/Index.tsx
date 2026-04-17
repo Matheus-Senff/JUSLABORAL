@@ -8,7 +8,7 @@ import { StepAvancado } from '@previd/components/steps/StepAvancado';
 import { ResultadosCalculo } from '@previd/components/ResultadosCalculo';
 import { Button } from '@previd/components/ui/button';
 import { Card } from '@previd/components/ui/card';
-import { Scale, FilePlus, Gavel } from 'lucide-react';
+import { FilePlus, Gavel } from 'lucide-react';
 import { toast } from '@previd/hooks/use-toast';
 import { useState } from 'react';
 import jsPDF from 'jspdf';
@@ -24,17 +24,7 @@ function CalculoForm() {
   if (step === 1) {
     return (
       <div className="min-h-screen bg-calculo-bg flex flex-col">
-        <header className="border-b border-calculo-border bg-calculo-card sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <Scale className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold calculo-text-primary leading-tight">Cálculo Previdenciário</h1>
-              <p className="text-xs calculo-text-secondary">Sistema de Cálculos Previdenciários</p>
-            </div>
-          </div>
-        </header>
+
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           <div className="w-full max-w-3xl flex flex-col gap-8 items-center">
             <div className="grid grid-cols-2 gap-8 w-full">
@@ -252,30 +242,6 @@ function CalculoForm() {
 
   return (
     <div className="min-h-screen bg-calculo-bg">
-      <header className="border-b border-calculo-border bg-calculo-card sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <Scale className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold calculo-text-primary leading-tight">Cálculo Previdenciário</h1>
-            <p className="text-xs calculo-text-secondary">Sistema de Cálculos Previdenciários</p>
-          </div>
-          <div className="ml-auto">
-            <div className="bg-zinc-100 border-2 border-zinc-300 rounded-2xl px-6 py-2 flex items-center shadow-md">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { setStep(1); resetFormData(); setCalculoMode(null); }}
-                className="font-bold text-zinc-800 hover:bg-zinc-200 hover:text-zinc-900 focus:bg-zinc-200 focus:text-zinc-900"
-                style={{ transition: 'background 0.2s, color 0.2s' }}
-              >
-                Novo Cálculo
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 

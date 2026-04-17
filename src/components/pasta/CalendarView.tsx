@@ -1,74 +1,158 @@
 import React, { useState } from 'react'
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePastaStore } from './pastaStore'
-import { KanbanCard } from './types'
+import { CompromissoModal, Compromisso } from './CompromissoModal'
+import { CompromissosDiaModal } from './CompromissosDiaModal'
 
-const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-const DAY_NAMES   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export const CalendarView: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
-  const board      = usePastaStore((s) => s.board)
-  const setOpenCard = usePastaStore((s) => s.setOpenCard)
+const PRIORIDADE_CORES: Record<Compromisso['prioridade'], string> = {
+  baixa: 'bg-green-600',
+  media: 'bg-yellow-600',
+  alta: 'bg-orange-600',
+  critica: 'bg-red-600',
+}
+
+export const CalendarView: React.FC<{
+  darkMode?: boolean
+  compromissos?: Compromisso[]
+  onSaveCompromisso?: (compromisso: Compromisso) => Promise<void>
+  onDeleteCompromisso?: (id: string) => Promise<void>
+}> = ({ darkMode, compromissos: externalCompromissos, onSaveCompromisso, onDeleteCompromisso }) => {
   const [cur, setCur] = useState(new Date(2026, 3, 1)) // Abril 2026
+  const [compromissos, setCompromissos] = useState<Compromisso[]>(externalCompromissos || [
+    {
+      id: '1',
+      data: '2026-04-15',
+      horario: '09:30',
+      descricao: 'Reunião com cliente - Análise de processo',
+      local: 'Sala 301',
+      prioridade: 'alta',
+      status: 'pendente',
+    },
+    {
+      id: '2',
+      data: '2026-04-15',
+      horario: '14:00',
+      descricao: 'Revisão de documentos',
+      local: 'Escritório',
+      prioridade: 'media',
+      status: 'pendente',
+    },
+    {
+      id: '3',
+      data: '2026-04-20',
+      horario: '10:00',
+      descricao: 'Despacho com juiz',
+      local: 'Fórum',
+      prioridade: 'critica',
+      status: 'pendente',
+    },
+  ])
 
-  const year  = cur.getFullYear()
+  // Atualizar compromissos quando props externas mudam
+  React.useEffect(() => {
+    if (externalCompromissos) {
+      setCompromissos(externalCompromissos)
+    }
+  }, [externalCompromissos])
+
+  const [showModal, setShowModal] = useState(false)
+  const [selectedCompromisso, setSelectedCompromisso] = useState<Compromisso | undefined>()
+  const [selectedDate, setSelectedDate] = useState<string>()
+  const [showDiaModal, setShowDiaModal] = useState(false)
+  const [selectedDayForList, setSelectedDayForList] = useState<string>()
+
+  const year = cur.getFullYear()
   const month = cur.getMonth()
   const today = new Date()
 
-  // All non-archived cards with due dates in this month
-  const allCards: KanbanCard[] = board.columns.flatMap((col) =>
-    col.cards.filter((c) => !c.archived)
-  )
-
-  const cardsByDay: Record<number, KanbanCard[]> = {}
-  allCards.forEach((card) => {
-    if (!card.dueDate) return
-    const d = new Date(card.dueDate)
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const day = d.getDate()
-      cardsByDay[day] = cardsByDay[day] ? [...cardsByDay[day], card] : [card]
+  const compromissosByDay: Record<string, Compromisso[]> = {}
+  compromissos.forEach((c) => {
+    if (!compromissosByDay[c.data]) {
+      compromissosByDay[c.data] = []
     }
+    compromissosByDay[c.data].push(c)
+  })
+
+  // Sort compromissos by horário
+  Object.values(compromissosByDay).forEach((arr) => {
+    arr.sort((a, b) => a.horario.localeCompare(b.horario))
   })
 
   // Build grid
-  const firstDow   = new Date(year, month, 1).getDay()   // 0=Sun
+  const firstDow = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const cells: (number | null)[] = [
     ...Array(firstDow).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
 
-  const totalCards = Object.values(cardsByDay).reduce((s, arr) => s + arr.length, 0)
-  const overdueCards = allCards.filter((c) => c.dueDate && !c.dueDateDone && new Date(c.dueDate) < today).length
-
-  const bg   = darkMode ? 'bg-dark-900'  : 'bg-gray-50'
+  const bg = darkMode ? 'bg-dark-900' : 'bg-gray-50'
   const cell = darkMode ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-200'
+  const textColor = darkMode ? 'text-white' : 'text-gray-900'
+
+  const handleDayClick = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    // Sempre abre a lista do dia, mesmo que vazia
+    setSelectedDayForList(dateStr)
+    setShowDiaModal(true)
+  }
+
+
+
+  const handleSaveCompromisso = async (compromisso: Compromisso) => {
+    try {
+      // Optimistic update - atualizar estado local imediatamente
+      const existeNaLista = compromissos.some(c => c.id === compromisso.id)
+      if (existeNaLista) {
+        setCompromissos(compromissos.map(c => c.id === compromisso.id ? compromisso : c))
+      } else {
+        setCompromissos([...compromissos, compromisso])
+      }
+
+      // Enviar para backend
+      if (onSaveCompromisso) {
+        await onSaveCompromisso(compromisso)
+      }
+    } catch (err) {
+      console.error('Erro ao salvar compromisso:', err)
+      alert('Erro ao salvar compromisso')
+      // Revert optimistic update se falhar
+      if (onSaveCompromisso) {
+        // Re-fetch data to restore previous state
+      }
+    }
+  }
+
+  const handleDeleteCompromisso = async (id: string) => {
+    try {
+      // Optimistic update - remover do estado local imediatamente
+      setCompromissos(compromissos.filter(c => c.id !== id))
+
+      // Enviar para backend
+      if (onDeleteCompromisso) {
+        await onDeleteCompromisso(id)
+      }
+    } catch (err) {
+      console.error('Erro ao deletar compromisso:', err)
+      alert('Erro ao deletar compromisso')
+      // Revert optimistic update se falhar - dados virão do realtime
+    }
+  }
 
   return (
     <div className={`flex-1 flex flex-col overflow-auto p-4 ${bg}`}>
-      {/* Stats */}
-      <div className="flex gap-3 mb-4">
-        {[
-          { label: 'No mês', value: totalCards, color: 'text-blue-400' },
-          { label: 'Vencidos', value: overdueCards, color: 'text-red-400' },
-          { label: 'Concluídos', value: allCards.filter((c) => c.dueDateDone).length, color: 'text-green-400' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className={`rounded-lg px-4 py-2 text-sm flex items-center gap-2 border ${cell}`}>
-            <span className={`text-xl font-bold ${color}`}>{value}</span>
-            <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>{label}</span>
-          </div>
-        ))}
-      </div>
-
       {/* Month nav */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => setCur(new Date(year, month - 1, 1))}
           className={`p-2 rounded-lg transition ${darkMode ? 'hover:bg-dark-700 text-gray-300' : 'hover:bg-gray-200 text-gray-600'}`}
         >
           <ChevronLeft size={20} />
         </button>
-        <h2 className={`text-lg font-bold tracking-wide ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+        <h2 className={`text-2xl font-bold tracking-wide ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
           {MONTH_NAMES[month]} {year}
         </h2>
         <button
@@ -80,9 +164,9 @@ export const CalendarView: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => 
       </div>
 
       {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-7 gap-1 mb-2">
         {DAY_NAMES.map((d) => (
-          <div key={d} className={`text-center text-xs font-semibold py-1.5 rounded ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>{d}</div>
+          <div key={d} className={`text-center text-sm font-semibold py-2 rounded ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{d}</div>
         ))}
       </div>
 
@@ -90,73 +174,85 @@ export const CalendarView: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => 
       <div className="grid grid-cols-7 gap-1 flex-1">
         {cells.map((day, idx) => {
           const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
-          const dayCards = day ? (cardsByDay[day] || []) : []
+          const dateStr = day ? `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : ''
+          const dayCompromissos = dateStr ? (compromissosByDay[dateStr] || []) : []
 
           return (
-            <div
+            <button
               key={idx}
-              className={`rounded-lg p-1.5 min-h-[90px] border transition-all ${
-                !day
-                  ? 'invisible'
-                  : isToday
-                    ? (darkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-300')
-                    : (darkMode ? `${cell} hover:border-dark-500` : `${cell} hover:border-gray-300`)
-              }`}
+              onClick={() => day && handleDayClick(day)}
+              disabled={!day}
+              className={`rounded-lg p-2 min-h-[120px] border transition-all cursor-pointer ${!day
+                ? 'invisible'
+                : isToday
+                  ? (darkMode ? 'bg-blue-900/40 border-blue-600 hover:bg-blue-900/50' : 'bg-blue-100 border-blue-400 hover:bg-blue-150')
+                  : (darkMode ? `${cell} hover:bg-dark-700 hover:border-dark-500` : `${cell} hover:bg-gray-100 hover:border-gray-400`)
+                }`}
             >
               {day && (
-                <>
-                  <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mb-1 ${
-                    isToday ? 'bg-blue-600 text-white' : darkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>{day}</div>
+                <div className="flex flex-col h-full">
+                  <div className={`text-sm font-bold mb-1 ${isToday ? (darkMode ? 'text-blue-400' : 'text-blue-600') : textColor
+                    }`}>{day}</div>
 
-                  {dayCards.slice(0, 3).map((card) => {
-                    const overdue = !card.dueDateDone && new Date(card.dueDate) < today
-                    return (
-                      <button
-                        key={card.id}
-                        onClick={() => setOpenCard(card.id)}
-                        className={`w-full text-left rounded px-1.5 py-[3px] mb-0.5 text-[10px] font-medium truncate transition hover:opacity-80 ${
-                          card.dueDateDone
-                            ? 'bg-green-500/80 text-white'
-                            : overdue
-                              ? 'bg-red-500/80 text-white'
-                              : darkMode ? 'bg-blue-600/80 text-white' : 'bg-blue-100 text-blue-800'
-                        }`}
-                        title={card.title}
+                  <div className="flex-1 overflow-y-auto space-y-1">
+                    {dayCompromissos.slice(0, 2).map((comp) => (
+                      <div
+                        key={comp.id}
+                        className={`w-full text-left text-xs rounded px-2 py-1 ${PRIORIDADE_CORES[comp.prioridade]} text-white line-clamp-2`}
+                        title={`${comp.horario} - ${comp.descricao}`}
                       >
-                        {card.title}
-                      </button>
-                    )
-                  })}
-
-                  {dayCards.length > 3 && (
-                    <button
-                      onClick={() => setOpenCard(dayCards[3].id)}
-                      className={`text-[10px] w-full text-left flex items-center gap-0.5 ${darkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      <Eye size={10} /> +{dayCards.length - 3} mais
-                    </button>
-                  )}
-                </>
+                        <span className="font-semibold">{comp.horario}</span>
+                        <span className="block truncate">{comp.descricao}</span>
+                      </div>
+                    ))}
+                    {dayCompromissos.length > 2 && (
+                      <div className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-dark-600 text-gray-300' : 'bg-gray-300 text-gray-700'}`}>
+                        +{dayCompromissos.length - 2} mais
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </div>
+            </button>
           )
         })}
       </div>
 
-      {/* Legend */}
-      <div className="flex gap-4 mt-3 text-[11px]">
-        {[
-          { bg: 'bg-green-500', label: 'Concluído' },
-          { bg: 'bg-red-500',   label: 'Vencido' },
-          { bg: 'bg-blue-500',  label: 'Pendente' },
-        ].map(({ bg: c, label }) => (
-          <div key={label} className="flex items-center gap-1.5">
-            <div className={`w-3 h-3 rounded ${c}`} />
-            <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{label}</span>
-          </div>
-        ))}
-      </div>
+      <CompromissoModal
+        isOpen={showModal}
+        compromisso={selectedCompromisso}
+        dataDefault={selectedDate}
+        onClose={() => {
+          setShowModal(false)
+          setSelectedCompromisso(undefined)
+          setSelectedDate(undefined)
+        }}
+        onSave={handleSaveCompromisso}
+        onDelete={handleDeleteCompromisso}
+        darkMode={darkMode}
+      />
+
+      <CompromissosDiaModal
+        isOpen={showDiaModal}
+        data={selectedDayForList || ''}
+        compromissos={compromissosByDay[selectedDayForList || ''] || []}
+        onClose={() => {
+          setShowDiaModal(false)
+          setSelectedDayForList(undefined)
+        }}
+        onSelectCompromisso={(comp) => {
+          setSelectedCompromisso(comp)
+          setShowModal(true)
+        }}
+        onAddCompromisso={() => {
+          setSelectedDate(selectedDayForList)
+          setSelectedCompromisso(undefined)
+          setShowModal(true)
+          setShowDiaModal(false)
+        }}
+        onDeleteCompromisso={handleDeleteCompromisso}
+        darkMode={darkMode}
+      />
     </div>
   )
 }

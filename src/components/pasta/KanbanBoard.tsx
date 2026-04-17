@@ -27,6 +27,7 @@ const COL_COLOR_HEX: Record<string, string> = {
 const KanbanCardComponent: React.FC<{ card: KanbanCardType; darkMode?: boolean }> = ({ card, darkMode }) => {
   const setOpenCard = usePastaStore((s) => s.setOpenCard)
   const [isHovered, setIsHovered] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [quickEdit, setQuickEdit] = useState(false)
   const [quickTitle, setQuickTitle] = useState(card.title)
   const updateCard = usePastaStore((s) => s.updateCard)
@@ -75,16 +76,25 @@ const KanbanCardComponent: React.FC<{ card: KanbanCardType; darkMode?: boolean }
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setOpenCard(card.id)}
-      className={`group rounded-lg mb-2 cursor-pointer border transition-all duration-150 ${
+      className={`group rounded-lg mb-2 cursor-grab active:cursor-grabbing border transition-all duration-150 ${
         darkMode
           ? 'bg-dark-700 border-dark-600 hover:border-dark-400 shadow-sm hover:shadow-md'
           : 'bg-white border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md'
-      }`}
+      } ${isDragging ? (darkMode ? 'opacity-50 border-blue-500 shadow-lg' : 'opacity-50 border-blue-500 shadow-lg') : ''}`}
       style={{ position: 'relative' }}
     >
       {/* Cover color strip */}
       {card.cover && COVER_COLORS[card.cover] && (
         <div className={`${COVER_COLORS[card.cover]} h-8 rounded-t-lg`} />
+      )}
+
+      {/* Drag handle indicator */}
+      {isHovered && (
+        <div className={`absolute left-1 top-${card.cover ? '10' : '2'} z-10 flex flex-col gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity`}>
+          <div className={`w-0.5 h-0.5 rounded-full ${darkMode ? 'bg-gray-400' : 'bg-gray-500'}`} />
+          <div className={`w-0.5 h-0.5 rounded-full ${darkMode ? 'bg-gray-400' : 'bg-gray-500'}`} />
+          <div className={`w-0.5 h-0.5 rounded-full ${darkMode ? 'bg-gray-400' : 'bg-gray-500'}`} />
+        </div>
       )}
 
       {/* Pencil quick-edit button */}
@@ -218,6 +228,7 @@ const KanbanColumnComponent: React.FC<{
   const [showSortMenu, setShowSortMenu] = useState(false)
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
+  const [isDragOverColumn, setIsDragOverColumn] = useState(false)
 
   const addCard = usePastaStore((s) => s.addCard)
   const updateColumnTitle = usePastaStore((s) => s.updateColumnTitle)
@@ -246,12 +257,19 @@ const KanbanColumnComponent: React.FC<{
 
   return (
     <div
-      className={`flex-shrink-0 w-72 rounded-xl flex flex-col max-h-full ${
+      className={`flex-shrink-0 w-72 rounded-xl flex flex-col max-h-full transition-all ${
         darkMode ? 'bg-dark-800' : 'bg-gray-100'
-      }`}
+      } ${isDragOverColumn ? (darkMode ? 'ring-2 ring-green-500 bg-dark-700' : 'ring-2 ring-green-500 bg-green-50') : ''}`}
       style={{ borderTop: column.color ? `4px solid ${COL_COLOR_HEX[column.color] || '#888'}` : undefined }}
-      onDragOver={onDragOver}
-      onDrop={(e) => onDrop(e, column.id)}
+      onDragOver={(e) => {
+        onDragOver(e)
+        setIsDragOverColumn(true)
+      }}
+      onDragLeave={() => setIsDragOverColumn(false)}
+      onDrop={(e) => {
+        onDrop(e, column.id)
+        setIsDragOverColumn(false)
+      }}
     >
       {/* Column header */}
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
@@ -401,14 +419,26 @@ const KanbanColumnComponent: React.FC<{
       </div>
 
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0">
+      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0 relative kanban-cards-scroll max-h-[calc(100vh-300px)]">
+        {visibleCards.length === 0 && (
+          <div className={`absolute inset-0 flex items-center justify-center text-center pointer-events-none ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            <p className="text-xs">Arraste cards aqui</p>
+          </div>
+        )}
         {visibleCards.map((card) => (
           <div
             key={card.id}
             draggable
             onDragStart={(e) => {
+              e.stopPropagation()
+              e.dataTransfer.setData('dragType', 'card')
               e.dataTransfer.setData('cardId', card.id)
               e.dataTransfer.setData('fromColumnId', column.id)
+              e.dataTransfer.effectAllowed = 'move'
+            }}
+            onDragEnd={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
             }}
           >
             <KanbanCardComponent card={card} darkMode={darkMode} />
@@ -487,18 +517,25 @@ export const KanbanBoard: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
 
   const handleDrop = (e: React.DragEvent, toColumnId: string) => {
     e.preventDefault()
-    const cardId = e.dataTransfer.getData('cardId')
-    const fromColumnId = e.dataTransfer.getData('fromColumnId')
-    const draggedColId = e.dataTransfer.getData('columnId')
-
-    if (draggedColId && draggedColId !== toColumnId) {
-      const fromIdx = board.columns.findIndex((c) => c.id === draggedColId)
-      const toIdx = board.columns.findIndex((c) => c.id === toColumnId)
-      if (fromIdx !== -1 && toIdx !== -1) moveColumn(fromIdx, toIdx)
-      setDraggingColId(null)
-      setDragOverColId(null)
-    } else if (cardId && fromColumnId && fromColumnId !== toColumnId) {
-      moveCard(cardId, fromColumnId, toColumnId, 0)
+    e.stopPropagation()
+    
+    const dragType = e.dataTransfer.getData('dragType')
+    
+    if (dragType === 'column') {
+      const draggedColId = e.dataTransfer.getData('columnId')
+      if (draggedColId && draggedColId !== toColumnId) {
+        const fromIdx = board.columns.findIndex((c) => c.id === draggedColId)
+        const toIdx = board.columns.findIndex((c) => c.id === toColumnId)
+        if (fromIdx !== -1 && toIdx !== -1) moveColumn(fromIdx, toIdx)
+        setDraggingColId(null)
+        setDragOverColId(null)
+      }
+    } else if (dragType === 'card') {
+      const cardId = e.dataTransfer.getData('cardId')
+      const fromColumnId = e.dataTransfer.getData('fromColumnId')
+      if (cardId && fromColumnId) {
+        moveCard(cardId, fromColumnId, toColumnId, 0)
+      }
     }
   }
 
@@ -518,6 +555,8 @@ export const KanbanBoard: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
     return { ...col, cards }
   })
 
+
+
   return (
     <div className="flex gap-3 overflow-x-auto pb-4 items-start flex-1 min-h-0">
       {filteredColumns.map((column, idx) => (
@@ -525,9 +564,12 @@ export const KanbanBoard: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
           key={column.id}
           draggable
           onDragStart={(e) => {
-            e.dataTransfer.setData('columnId', column.id)
-            e.dataTransfer.effectAllowed = 'move'
-            setDraggingColId(column.id)
+            if ((e.target as HTMLElement).closest('[draggable]') === e.currentTarget) {
+              e.dataTransfer.setData('dragType', 'column')
+              e.dataTransfer.setData('columnId', column.id)
+              e.dataTransfer.effectAllowed = 'move'
+              setDraggingColId(column.id)
+            }
           }}
           onDragEnd={() => { setDraggingColId(null); setDragOverColId(null) }}
           onDragEnter={() => setDragOverColId(column.id)}

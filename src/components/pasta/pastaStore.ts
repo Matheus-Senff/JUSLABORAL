@@ -102,6 +102,9 @@ interface PastaState {
   toggleAutomation: (ruleId: string) => void
   deleteAutomation: (ruleId: string) => void
 
+  // Process Link
+  linkCardToProcess: (cardId: string, processId: string, processType: 'federal' | 'estadual') => void
+
   // Activity
   addBoardActivity: (description: string, actor: string) => void
 
@@ -536,6 +539,19 @@ export const usePastaStore = create<PastaState>((set) => ({
 
   deleteAutomation: (ruleId) =>
     set((s) => ({ board: { ...s.board, automations: s.board.automations.filter((a) => a.id !== ruleId) } })),
+
+  // ───── Process Link ─────
+  linkCardToProcess: (cardId, processId, processType) =>
+    set((s) => ({
+      board: {
+        ...s.board,
+        columns: mapCards(s.board.columns, cardId, (card) => ({
+          ...card,
+          linkedProcessId: processId,
+          linkedProcessType: processType
+        }))
+      }
+    })),
 
   // ───── Activity ─────
   addBoardActivity: (description, actor) =>

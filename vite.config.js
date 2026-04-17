@@ -6,6 +6,7 @@ export default defineConfig({
     plugins: [react()],
     resolve: {
         alias: {
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
             '@previd': fileURLToPath(new URL('./src/previd', import.meta.url)),
             '@canon': fileURLToPath(new URL('./src/canon', import.meta.url))
         }

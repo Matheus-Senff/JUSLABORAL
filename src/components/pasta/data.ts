@@ -263,6 +263,137 @@ export const mockBoard: KanbanBoard = {
           ],
           cover: '', startDate: '2026-04-04', dueDateDone: false, watched: false, customFieldValues: [],
           archived: false, position: 4, columnId: 'col-1', createdAt: '04/04/2026'
+        },
+        {
+          id: 'card-6b',
+          title: 'Recurso em revista - Processo 9999',
+          description: 'Preparar recurso para apresentação em revista (TST). Prazo final: 25 dias.',
+          labels: [
+            { id: 'lbl-r1', text: 'Recurso', color: 'red' },
+            { id: 'lbl-r2', text: 'Trabalhista', color: 'blue' }
+          ],
+          members: ['Roberto Dias'],
+          dueDate: '2026-05-10',
+          checklists: [
+            {
+              id: 'cl-r1',
+              title: 'Recurso em revista',
+              items: [
+                { id: 'cli-r1', text: 'Análise da decisão regional', done: true },
+                { id: 'cli-r2', text: 'Levantamento de jurisprudência TST', done: false },
+                { id: 'cli-r3', text: 'Redação do recurso', done: false },
+                { id: 'cli-r4', text: 'Revisão final', done: false },
+                { id: 'cli-r5', text: 'Protocolo no TST', done: false }
+              ]
+            }
+          ],
+          comments: [],
+          attachments: [],
+          cover: '', startDate: '2026-04-09', dueDateDone: false, watched: true, customFieldValues: [],
+          archived: false, position: 5, columnId: 'col-1', createdAt: '09/04/2026'
+        },
+        {
+          id: 'card-7b',
+          title: 'Parecer confidencial - Cliente XYZ',
+          description: 'Parecer sobre estratégia processual sigilosa. Confidencial - apenas para sócio.',
+          labels: [
+            { id: 'lbl-r3', text: 'Confidencial', color: 'purple' },
+            { id: 'lbl-r4', text: 'Parecer', color: 'blue' }
+          ],
+          members: ['Mariana Costa'],
+          dueDate: '2026-04-19',
+          checklists: [],
+          comments: [
+            { id: 'cmt-new1', author: 'Mariana Costa', text: 'Análise jurisprudencial iniciada.', createdAt: '11/04/2026 09:00' }
+          ],
+          attachments: [],
+          cover: 'purple', startDate: '', dueDateDone: false, watched: false, customFieldValues: [],
+          archived: false, position: 6, columnId: 'col-1', createdAt: '10/04/2026'
+        },
+        {
+          id: 'card-8b',
+          title: 'Contato telefônico - Cliente Ferreira',
+          description: 'Ligar para cliente confirmar recebimento de documentação e esclarecer dúvidas sobre processo.',
+          labels: [
+            { id: 'lbl-r5', text: 'Acompanhamento', color: 'yellow' }
+          ],
+          members: ['Fernanda Oliveira', 'Ana Silva'],
+          dueDate: '2026-04-17',
+          checklists: [
+            {
+              id: 'cl-r2',
+              title: 'Contato',
+              items: [
+                { id: 'cli-r6', text: 'Ligar para cliente', done: false },
+                { id: 'cli-r7', text: 'Confirmar documentação recebida', done: false },
+                { id: 'cli-r8', text: 'Esclarecer próximas etapas', done: false },
+                { id: 'cli-r9', text: 'Agendar reunião se necessário', done: false }
+              ]
+            }
+          ],
+          comments: [],
+          attachments: [],
+          cover: 'yellow', startDate: '', dueDateDone: false, watched: false, customFieldValues: [],
+          archived: false, position: 7, columnId: 'col-1', createdAt: '11/04/2026'
+        },
+        {
+          id: 'card-9b',
+          title: 'Pesquisa jurisprudência - Insalubridade',
+          description: 'Levantamento de decisões recentes sobre adicional de insalubridade para fundamentar ação.',
+          labels: [
+            { id: 'lbl-r6', text: 'Pesquisa', color: 'blue' },
+            { id: 'lbl-r7', text: 'Insalubridade', color: 'orange' }
+          ],
+          members: ['Lucas Mendes'],
+          dueDate: '2026-04-21',
+          checklists: [
+            {
+              id: 'cl-r3',
+              title: 'Pesquisa',
+              items: [
+                { id: 'cli-r10', text: 'Consultar bases jurisprudenciais', done: true },
+                { id: 'cli-r11', text: 'Separar decisões mais relevantes', done: true },
+                { id: 'cli-r12', text: 'Elaborar documento síntese', done: false }
+              ]
+            }
+          ],
+          comments: [
+            { id: 'cmt-new2', author: 'Lucas Mendes', text: 'Encontradas 47 decisões relevantes no STF e TST.', createdAt: '10/04/2026 15:30' }
+          ],
+          attachments: [],
+          cover: '', startDate: '2026-04-08', dueDateDone: false, watched: false, customFieldValues: [],
+          archived: false, position: 8, columnId: 'col-1', createdAt: '08/04/2026'
+        },
+        {
+          id: 'card-10b',
+          title: 'Revisar minuta - Acordo extrajudicial',
+          description: 'Revisar proposta de minuta para acordo extrajudicial no caso Silva vs Empresa ABC.',
+          labels: [
+            { id: 'lbl-r8', text: 'Revisão', color: 'purple' },
+            { id: 'lbl-r9', text: 'Acordo', color: 'green' }
+          ],
+          members: ['Bia Costa', 'Carlos Ramos'],
+          dueDate: '2026-04-16',
+          checklists: [
+            {
+              id: 'cl-r4',
+              title: 'Revisão acordo',
+              items: [
+                { id: 'cli-r13', text: 'Conferir valores propostos', done: false },
+                { id: 'cli-r14', text: 'Verificar cláusulas de confidencialidade', done: false },
+                { id: 'cli-r15', text: 'Revisar forma de pagamento', done: false },
+                { id: 'cli-r16', text: 'Okeyar para cliente', done: false }
+              ]
+            }
+          ],
+          comments: [
+            { id: 'cmt-new3', author: 'Bia Costa', text: 'Aguardando resposta da empresa sobre contraproposta.', createdAt: '09/04/2026 11:15' }
+          ],
+          attachments: [
+            { id: 'att-new1', name: 'Minuta_Acordo_v2.pdf', url: '#', type: 'pdf', size: '750 KB', addedBy: 'Bia Costa', addedAt: '09/04/2026 11:00' }
+          ],
+          cover: 'green', startDate: '', dueDateDone: false, watched: false, customFieldValues: [],
+          archived: false, position: 9, columnId: 'col-1', createdAt: '09/04/2026'
         }
       ]
     },
@@ -377,6 +508,67 @@ export const mockBoard: KanbanBoard = {
           ],
           cover: '', startDate: '', dueDateDone: false, watched: false, customFieldValues: [],
           archived: false, position: 3, columnId: 'col-2', createdAt: '08/04/2026'
+        },
+        {
+          id: 'card-7c',
+          title: 'Sentença em primeiro grau - Caso Oliveira',
+          description: 'Análise sentença condenatória. Preparar apelação para TRT.',
+          labels: [
+            { id: 'lbl-c1', text: 'Sentença', color: 'orange' },
+            { id: 'lbl-c2', text: 'Apelação', color: 'red' }
+          ],
+          members: ['Mariana Costa', 'Lucas Mendes'],
+          dueDate: '2026-04-23',
+          checklists: [
+            {
+              id: 'cl-c1',
+              title: 'Análise e apelação',
+              items: [
+                { id: 'cli-c1', text: 'Ler e resumir sentença', done: true },
+                { id: 'cli-c2', text: 'Identificar vícios de sentença', done: true },
+                { id: 'cli-c3', text: 'Pesquisar jurisprudência', done: false },
+                { id: 'cli-c4', text: 'Redigir apelação', done: false }
+              ]
+            }
+          ],
+          comments: [
+            { id: 'cmt-c1', author: 'Mariana Costa', text: 'Sentença desfavorável. Há boas chances em apelação.', createdAt: '11/04/2026 10:30' }
+          ],
+          attachments: [
+            { id: 'att-c1', name: 'Sentenca_Oliveira_1grau.pdf', url: '#', type: 'pdf', size: '1.2 MB', addedBy: 'Mariana Costa', addedAt: '11/04/2026 10:15' }
+          ],
+          cover: 'orange', startDate: '', dueDateDone: false, watched: true, customFieldValues: [],
+          archived: false, position: 4, columnId: 'col-2', createdAt: '11/04/2026'
+        },
+        {
+          id: 'card-8c',
+          title: 'Cálculo de verbas rescisórias - Santos',
+          description: 'Cálculo completo de férias, 13º, FGTS, multa 40% para rescisão sem justa causa.',
+          labels: [
+            { id: 'lbl-c3', text: 'Financeiro', color: 'green' },
+            { id: 'lbl-c4', text: 'Cálculo', color: 'blue' }
+          ],
+          members: ['Roberto Dias'],
+          dueDate: '2026-04-18',
+          checklists: [
+            {
+              id: 'cl-c2',
+              title: 'Cálculo rescisão',
+              items: [
+                { id: 'cli-c5', text: 'Verifi salários base', done: true },
+                { id: 'cli-c6', text: 'Calcular férias proporcionais', done: true },
+                { id: 'cli-c7', text: 'Calcular 13º proporcional', done: true },
+                { id: 'cli-c8', text: 'Calcular FGTS e multa 40%', done: false },
+                { id: 'cli-c9', text: 'Totalizar valores', done: false }
+              ]
+            }
+          ],
+          comments: [],
+          attachments: [
+            { id: 'att-c2', name: 'Cálculo_Rescisão_Santos_v1.xlsx', url: '#', type: 'xls', size: '450 KB', addedBy: 'Roberto Dias', addedAt: '10/04/2026 14:00' }
+          ],
+          cover: 'green', startDate: '', dueDateDone: false, watched: false, customFieldValues: [],
+          archived: false, position: 5, columnId: 'col-2', createdAt: '10/04/2026'
         }
       ]
     },

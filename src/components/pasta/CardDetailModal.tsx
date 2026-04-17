@@ -76,6 +76,7 @@ export const CardDetailModal: React.FC<{ darkMode?: boolean }> = ({ darkMode }) 
   const setStartDateAction = usePastaStore((s) => s.setStartDate)
   const saveCardAsTemplate = usePastaStore((s) => s.saveCardAsTemplate)
   const setCustomFieldValue = usePastaStore((s) => s.setCustomFieldValue)
+  const linkCardToProcess = usePastaStore((s) => s.linkCardToProcess)
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [editingDesc, setEditingDesc] = useState(false)
@@ -97,6 +98,10 @@ export const CardDetailModal: React.FC<{ darkMode?: boolean }> = ({ darkMode }) 
   const [startDateValue, setStartDateValue] = useState('')
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
   const [templateName, setTemplateName] = useState('')
+  const [showLinkProcess, setShowLinkProcess] = useState(false)
+  const [linkProcessType, setLinkProcessType] = useState<'federal' | 'estadual'>('federal')
+  const [linkProcessSearch, setLinkProcessSearch] = useState('')
+  const [linkProcessNumber, setLinkProcessNumber] = useState('')
 
   // Find card from board
   let card: KanbanCard | undefined
@@ -955,6 +960,85 @@ export const CardDetailModal: React.FC<{ darkMode?: boolean }> = ({ darkMode }) 
                   >
                     Salvar modelo
                   </button>
+                </div>
+              )}
+            </div>
+
+            {/* Link to Process */}
+            <div className="relative">
+              <button onClick={() => { closeAllPopups(); setShowLinkProcess(!showLinkProcess) }} className={cls.sideBtn}>
+                <Sliders size={14} /> Vincular a Processo
+              </button>
+              {showLinkProcess && (
+                <div className={`absolute left-0 top-full mt-1 z-30 w-72 rounded-lg shadow-lg border p-3 ${
+                  darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'
+                }`}>
+                  <p className={`text-xs font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Vincular a Processo</p>
+                  
+                  <div className="space-y-2 mb-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setLinkProcessType('federal')}
+                        className={`flex-1 px-2 py-1 rounded text-xs font-medium transition ${
+                          linkProcessType === 'federal'
+                            ? 'bg-blue-600 text-white'
+                            : darkMode ? 'bg-dark-600 text-gray-300 hover:bg-dark-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Federal
+                      </button>
+                      <button
+                        onClick={() => setLinkProcessType('estadual')}
+                        className={`flex-1 px-2 py-1 rounded text-xs font-medium transition ${
+                          linkProcessType === 'estadual'
+                            ? 'bg-blue-600 text-white'
+                            : darkMode ? 'bg-dark-600 text-gray-300 hover:bg-dark-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Estadual
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Nº do processo ou cliente"
+                      value={linkProcessNumber}
+                      onChange={(e) => setLinkProcessNumber(e.target.value)}
+                      className={`w-full text-xs rounded px-2 py-1.5 ${
+                        darkMode ? 'bg-dark-600 text-white border border-dark-500' : 'bg-white text-gray-900 border border-gray-300'
+                      }`}
+                    />
+                    <button
+                      onClick={() => {
+                        if (linkProcessNumber.trim()) {
+                          linkCardToProcess(card!.id, linkProcessNumber, linkProcessType)
+                          setShowLinkProcess(false)
+                          setLinkProcessNumber('')
+                        }
+                      }}
+                      className="bg-green-600 text-white px-3 py-1.5 rounded text-xs w-full hover:bg-green-700 font-medium"
+                    >
+                      Vincular
+                    </button>
+                  </div>
+
+                  {card!.linkedProcessId && (
+                    <div className={`p-2 rounded text-xs ${darkMode ? 'bg-dark-600' : 'bg-blue-50'}`}>
+                      <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                        <strong>Vinculado:</strong> Processo {card!.linkedProcessType?.toUpperCase()} #{card!.linkedProcessId}
+                      </p>
+                      <button
+                        onClick={() => {
+                          linkCardToProcess(card!.id, '', 'federal')
+                          setShowLinkProcess(false)
+                        }}
+                        className={`text-xs mt-1 text-red-500 hover:text-red-600 font-medium`}
+                      >
+                        Desvincular
+                      </button>
+                    </div>
+                  )}
+
+                  <button onClick={() => setShowLinkProcess(false)} className={`mt-2 w-full text-center text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Fechar</button>
                 </div>
               )}
             </div>

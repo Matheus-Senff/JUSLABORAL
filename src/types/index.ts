@@ -9,8 +9,10 @@ export interface Process {
   processo: string
   cidade: string
   uf: string
+  responsavel: string
   dataInicio: string
   status: string
+  ultimaAlteracao: string
 }
 
 export interface AgendaEvent {
@@ -20,4 +22,10 @@ export interface AgendaEvent {
   cliente: string
   data: Date
   color: 'green' | 'orange' | 'purple'
+  hora?: string
+  local?: string
+  solicitante?: string
+  parceiro?: string
+  observacao?: string
+  status?: string
 }
