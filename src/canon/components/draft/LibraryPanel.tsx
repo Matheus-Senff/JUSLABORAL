@@ -411,8 +411,8 @@ export default function LibraryPanel({
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold border ${member.nivel === "Admin" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
-                                member.nivel === "Editor" ? "bg-violet-500/10 text-violet-600 border-violet-500/20" :
-                                  "bg-muted text-muted-foreground border-border"
+                              member.nivel === "Editor" ? "bg-violet-500/10 text-violet-600 border-violet-500/20" :
+                                "bg-muted text-muted-foreground border-border"
                               }`}>
                               <Shield className="h-2 w-2 inline mr-0.5" />{member.nivel}
                             </span>
