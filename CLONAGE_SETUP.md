@@ -56,6 +56,10 @@ Na raiz do projeto, crie `.env.local`:
 ```env
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-publica-aqui
+
+# Gemini AI Integration (opcional, para o módulo Canon)
+# Obtenha em: https://makersuite.google.com/app/apikeys
+VITE_GEMINI_API_KEY=sua-chave-gemini-aqui
 ```
 
 **IMPORTANTE:** Nunca faça commit do `.env.local` (está no .gitignore)
@@ -160,6 +164,27 @@ Se quiser usar as credenciais pré-preenchidas:
 - Supabase: https://supabase.com
 - React: https://react.dev
 - Tailwind: https://tailwindcss.com
+
+## 📜 Módulo Canon - IA para Documentos
+
+O módulo Canon permite gerar documentos jurídicos com IA. Usa processamento local por padrão (sem dependência de funções serverless).
+
+### Funcionalidades Canon:
+- ✅ Upload de documentos (PDF, imagens, DOCX, TXT)
+- ✅ Extração de texto local com OCR
+- ✅ Geração de minutas com preenchimento automático
+- ✅ Integração com Gemini AI (opcional)
+
+### Ativar Gemini AI (Opcional):
+1. Vá para: https://makersuite.google.com/app/apikeys
+2. Crie uma nova chave de API
+3. Copie e coles no `.env.local`:
+   ```env
+   VITE_GEMINI_API_KEY=sua-chave-aqui
+   ```
+4. Restart o servidor
+
+**Sem a chave Gemini**, o Canon funciona com processamento local apenas.
 
 ---
 
