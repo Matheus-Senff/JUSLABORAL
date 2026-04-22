@@ -49,36 +49,44 @@ export function useDocumentTemplates() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase
-      .from("document_templates" as any)
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("document_templates")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
+      if (error) {
+        console.warn("Erro ao carregar templates do Supabase:", error);
+        // Se der erro (tabela não existe, sem permissão, etc), usa array vazio
+        setTemplates([]);
+        setLoading(false);
+        return;
+      }
+
+      const rows = ((data || []) as unknown) as Array<Omit<DocumentVisualTemplate, "preview_url" | "kind">>;
+
+      const rowsWithPreview = await Promise.all(
+        rows.map(async (template) => {
+          const kind = inferTemplateKind(template.image_filename, template.mime_type);
+          const signedUrlData = kind === "image"
+            ? (await supabase.storage.from(DOCUMENT_TEMPLATES_BUCKET).createSignedUrl(template.image_path, 60 * 60)).data
+            : null;
+
+          return {
+            ...template,
+            preview_url: signedUrlData?.signedUrl || null,
+            kind,
+          } satisfies DocumentVisualTemplate;
+        }),
+      );
+
+      setTemplates(rowsWithPreview);
+    } catch (err) {
+      console.error("Erro ao processar templates:", err);
+      setTemplates([]);
+    } finally {
       setLoading(false);
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-      return;
     }
-
-    const rows = ((data || []) as unknown) as Array<Omit<DocumentVisualTemplate, "preview_url" | "kind">>;
-
-    const rowsWithPreview = await Promise.all(
-      rows.map(async (template) => {
-        const kind = inferTemplateKind(template.image_filename, template.mime_type);
-        const signedUrlData = kind === "image"
-          ? (await supabase.storage.from(DOCUMENT_TEMPLATES_BUCKET).createSignedUrl(template.image_path, 60 * 60)).data
-          : null;
-
-        return {
-          ...template,
-          preview_url: signedUrlData?.signedUrl || null,
-          kind,
-        } satisfies DocumentVisualTemplate;
-      }),
-    );
-
-    setTemplates(rowsWithPreview);
-    setLoading(false);
   }, [toast, user]);
 
   useEffect(() => {
@@ -107,17 +115,18 @@ export function useDocumentTemplates() {
       return;
     }
 
-    const { error: insertError } = await supabase.from("document_templates" as any).insert({
+    const { error: insertError } = await supabase.from("document_templates").insert({
       user_id: user.id,
       name,
       image_path: filePath,
       image_filename: file.name,
-        mime_type: file.type || (fileExt === "docx" ? DOCX_MIME_TYPE : `image/${fileExt}`),
+      mime_type: file.type || (fileExt === "docx" ? DOCX_MIME_TYPE : `image/${fileExt}`),
     });
 
     if (insertError) {
       await supabase.storage.from(DOCUMENT_TEMPLATES_BUCKET).remove([filePath]);
       setUploading(false);
+      console.error("Erro ao inserir template no DB:", insertError);
       toast({ title: "Erro", description: insertError.message, variant: "destructive" });
       return;
     }
@@ -128,39 +137,52 @@ export function useDocumentTemplates() {
   }, [refresh, toast, user]);
 
   const renameTemplate = useCallback(async (id: string, name: string) => {
-    const { error } = await supabase
-      .from("document_templates" as any)
-      .update({ name })
-      .eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("document_templates")
+        .update({ name })
+        .eq("id", id);
 
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-      return;
+      if (error) {
+        console.error("Erro ao renomear template:", error);
+        toast({ title: "Erro", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      setTemplates((prev) => prev.map((template) => (template.id === id ? { ...template, name } : template)));
+      toast({ title: "Nome atualizado" });
+    } catch (err: any) {
+      console.error("Erro ao renomear:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
-
-    setTemplates((prev) => prev.map((template) => (template.id === id ? { ...template, name } : template)));
-    toast({ title: "Nome atualizado" });
   }, [toast]);
 
   const deleteTemplate = useCallback(async (template: DocumentVisualTemplate) => {
-    const { error: storageError } = await supabase.storage
-      .from(DOCUMENT_TEMPLATES_BUCKET)
-      .remove([template.image_path]);
+    try {
+      const { error: storageError } = await supabase.storage
+        .from(DOCUMENT_TEMPLATES_BUCKET)
+        .remove([template.image_path]);
 
-    if (storageError) {
-      toast({ title: "Erro", description: storageError.message, variant: "destructive" });
-      return;
+      if (storageError) {
+        console.error("Erro ao deletar storage:", storageError);
+        toast({ title: "Erro", description: storageError.message, variant: "destructive" });
+        return;
+      }
+
+      const { error } = await supabase.from("document_templates").delete().eq("id", template.id);
+
+      if (error) {
+        console.error("Erro ao deletar template do DB:", error);
+        toast({ title: "Erro", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      setTemplates((prev) => prev.filter((item) => item.id !== template.id));
+      toast({ title: "Template removido" });
+    } catch (err: any) {
+      console.error("Erro ao remover template:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
-
-    const { error } = await supabase.from("document_templates" as any).delete().eq("id", template.id);
-
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    setTemplates((prev) => prev.filter((item) => item.id !== template.id));
-    toast({ title: "Template removido" });
   }, [toast]);
 
   return {

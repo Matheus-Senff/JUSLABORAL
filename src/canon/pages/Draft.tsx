@@ -640,30 +640,41 @@ export default function Draft() {
       }));
 
       const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!geminiApiKey) throw new Error("VITE_GEMINI_API_KEY não configurada no .env");
 
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents: [
-              ...conversationHistory,
-              { role: "user", parts: [{ text: userMessage }] }
-            ],
-          }),
+      // Graceful fallback se Gemini não estiver configurado
+      let assistantText: string;
+
+      if (geminiApiKey) {
+        // Usar Gemini se chave estiver disponível
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: systemPrompt }] },
+              contents: [
+                ...conversationHistory,
+                { role: "user", parts: [{ text: userMessage }] }
+              ],
+            }),
+          }
+        );
+
+        if (!geminiResponse.ok) {
+          const errData = await geminiResponse.json();
+          throw new Error(errData?.error?.message || "Erro na API do Gemini");
         }
-      );
 
-      if (!geminiResponse.ok) {
-        const errData = await geminiResponse.json();
-        throw new Error(errData?.error?.message || "Erro na API do Gemini");
+        const geminiData = await geminiResponse.json();
+        assistantText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "Desculpe, não consegui processar sua mensagem.";
+      } else {
+        // Fallback local: análise simples do documento
+        assistantText = documentText
+          ? `Documento processado localmente:\n\n${documentText.substring(0, 500)}...`
+          : "Nenhum documento anexado. Configure VITE_GEMINI_API_KEY no .env para usar IA.";
       }
 
-      const geminiData = await geminiResponse.json();
-      const assistantText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "Desculpe, não consegui processar sua mensagem.";
       setChatMessages((prev) => [...prev, { role: "assistant", content: assistantText }]);
       if (activeId) {
         chat.addMessage(activeId, { role: "assistant", content: assistantText });
