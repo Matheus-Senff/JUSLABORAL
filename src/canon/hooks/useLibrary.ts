@@ -3,6 +3,27 @@ import { supabase } from "@canon/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useToast } from "./use-toast";
 
+// chave usada pra persistir modelos localmente como backup
+const LS_TEMPLATES_KEY = "canon_user_templates_v1";
+
+function lsLoadTemplates(userId: string): UserTemplate[] {
+  try {
+    const raw = localStorage.getItem(`${LS_TEMPLATES_KEY}_${userId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function lsSaveTemplates(userId: string, list: UserTemplate[]) {
+  try {
+    localStorage.setItem(`${LS_TEMPLATES_KEY}_${userId}`, JSON.stringify(list));
+  } catch { /* quota exceeded */ }
+}
+
+function lsRemoveTemplate(userId: string, id: string) {
+  const current = lsLoadTemplates(userId);
+  lsSaveTemplates(userId, current.filter((t) => t.id !== id));
+}
+
 export interface UserTemplate {
   id: string;
   name: string;
@@ -89,6 +110,10 @@ export function useLibrary() {
 
   const fetchTemplates = useCallback(async () => {
     if (!user) return;
+    // carrega local primeiro pra não travar a UI
+    const local = lsLoadTemplates(user.id);
+    if (local.length > 0) setTemplates(local);
+
     try {
       const { data, error } = await supabase
         .from("user_templates")
@@ -96,16 +121,30 @@ export function useLibrary() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
-        toast({ title: "Erro ao carregar modelos", description: error?.message, variant: "destructive" });
-        setTemplates([]);
+        // Supabase falhou — usa o que veio do localStorage
+        if (local.length === 0) setTemplates([]);
         return;
       }
-      if (data) setTemplates(data as unknown as UserTemplate[]);
+      if (data && data.length > 0) {
+        const merged = data as unknown as UserTemplate[];
+        // mescla: local tem priority se o id não veio do supabase
+        const supabaseIds = new Set(merged.map((t) => t.id));
+        const onlyLocal = local.filter((t) => !supabaseIds.has(t.id));
+        const combined = [...merged, ...onlyLocal].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setTemplates(combined);
+        lsSaveTemplates(user.id, combined);
+      } else if (local.length > 0) {
+        setTemplates(local);
+      } else {
+        setTemplates([]);
+      }
     } catch (err) {
-      console.error("Erro ao buscar templates:", err);
-      setTemplates([]);
+      // fallback silencioso pro localStorage
+      if (local.length === 0) setTemplates([]);
     }
-  }, [user, toast]);
+  }, [user]);
 
   const fetchPrompts = useCallback(async () => {
     if (!user) return;
@@ -231,41 +270,67 @@ export function useLibrary() {
 
   const addTemplate = useCallback(async (name: string, category: string, structure: Record<string, any> = {}) => {
     if (!user) return;
+
+    const now = new Date().toISOString();
+    const localEntry: UserTemplate = {
+      id: crypto.randomUUID(),
+      name,
+      category,
+      structure,
+      font_family: "Times New Roman",
+      font_size: 12,
+      margins: { top: 30, bottom: 20, left: 30, right: 20 },
+      is_default: false,
+      created_at: now,
+      updated_at: now,
+    };
+
     try {
-      const { error } = await supabase.from("user_templates").insert({
+      const { data, error } = await supabase.from("user_templates").insert({
         user_id: user.id,
         name,
         category,
         structure,
-      } as any);
+      } as any).select().single();
+
       if (error) {
-        console.error("Erro ao adicionar template:", error?.message);
-        toast({ title: "Erro", description: error?.message || "Falha ao salvar modelo", variant: "destructive" });
+        // RLS ou sem conexão — persiste só no localStorage
+        const current = lsLoadTemplates(user.id);
+        const updated = [localEntry, ...current];
+        lsSaveTemplates(user.id, updated);
+        setTemplates(updated);
+        toast({ title: "Modelo salvo localmente", description: "Sincronize quando as políticas do banco estiverem configuradas." });
       } else {
+        const saved = (data ?? localEntry) as unknown as UserTemplate;
+        const current = lsLoadTemplates(user.id);
+        const updated = [saved, ...current.filter((t) => t.id !== saved.id)];
+        lsSaveTemplates(user.id, updated);
+        setTemplates(updated);
         toast({ title: "Modelo criado" });
-        fetchTemplates();
       }
-    } catch (err: any) {
-      console.error("Erro ao criar template:", err);
-      toast({ title: "Erro", description: err.message || "Falha ao salvar modelo", variant: "destructive" });
+    } catch {
+      const current = lsLoadTemplates(user.id);
+      const updated = [localEntry, ...current];
+      lsSaveTemplates(user.id, updated);
+      setTemplates(updated);
+      toast({ title: "Modelo salvo localmente" });
     }
-  }, [user, toast, fetchTemplates]);
+  }, [user, toast]);
 
   const deleteTemplate = useCallback(async (id: string) => {
+    if (!user) return;
     try {
       const { error } = await supabase.from("user_templates").delete().eq("id", id);
       if (error) {
-        console.error("Erro ao deletar template:", error?.message);
-        toast({ title: "Erro", description: error?.message, variant: "destructive" });
+        toast({ title: "Erro ao excluir no servidor", description: error.message, variant: "destructive" });
       } else {
-        setTemplates((prev) => prev.filter((t) => t.id !== id));
         toast({ title: "Modelo excluído" });
       }
-    } catch (err: any) {
-      console.error("Erro ao deletar template:", err);
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
-  }, [toast]);
+    } catch { /* ignora erro de rede */ }
+    // remove localmente independente do resultado remoto
+    lsRemoveTemplate(user.id, id);
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+  }, [user, toast]);
 
   const savePrompt = useCallback(async (title: string, content: string) => {
     if (!user) return;

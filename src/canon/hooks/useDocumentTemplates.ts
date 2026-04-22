@@ -99,19 +99,23 @@ export function useDocumentTemplates() {
     setUploading(true);
 
     const fileExt = file.name.split(".").pop()?.toLowerCase() || "docx";
+    const effectiveMimeType = file.type || (fileExt === "docx" ? DOCX_MIME_TYPE : `image/${fileExt}`);
     const filePath = `${user.id}/${crypto.randomUUID()}-${createSafeFileName(file.name)}`;
 
     const { error: uploadError } = await supabase.storage
       .from(DOCUMENT_TEMPLATES_BUCKET)
       .upload(filePath, file, {
         cacheControl: "3600",
-        contentType: file.type,
+        contentType: effectiveMimeType,
         upsert: false,
       });
 
     if (uploadError) {
       setUploading(false);
-      toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
+      const detail = uploadError.message?.includes("Bucket not found")
+        ? "Bucket 'document-templates' não existe. Execute o schema.sql no Supabase."
+        : uploadError.message;
+      toast({ title: "Erro no upload", description: detail, variant: "destructive" });
       return;
     }
 
@@ -120,14 +124,14 @@ export function useDocumentTemplates() {
       name,
       image_path: filePath,
       image_filename: file.name,
-      mime_type: file.type || (fileExt === "docx" ? DOCX_MIME_TYPE : `image/${fileExt}`),
+      mime_type: effectiveMimeType,
     });
 
     if (insertError) {
       await supabase.storage.from(DOCUMENT_TEMPLATES_BUCKET).remove([filePath]);
       setUploading(false);
-      console.error("Erro ao inserir template no DB:", insertError);
-      toast({ title: "Erro", description: insertError.message, variant: "destructive" });
+      const detail = [insertError.message, insertError.details, insertError.hint].filter(Boolean).join(" — ");
+      toast({ title: "Erro ao salvar template", description: detail || "Verifique as políticas RLS no Supabase", variant: "destructive" });
       return;
     }
 
