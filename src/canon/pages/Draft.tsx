@@ -13,9 +13,7 @@ import {
   LayoutTemplate, Library, History, Mic, Star, RotateCcw, Send, User, ScanSearch, Plus, Image, FileAudio, HardDrive, ChevronRight, ChevronLeft
 } from
   "lucide-react";
-import { useChat } from "@canon/contexts/ChatContext";
-import { useExternalConnectors } from "@canon/hooks/useExternalConnectors";
-import SidebarHistory from "@canon/components/draft/SidebarHistory";
+
 import { Button } from "@canon/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@canon/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@canon/components/ui/popover";
@@ -63,11 +61,6 @@ function buildRestrictedResultHtml(content: string) {
     split(/\n{2,}/).
     map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br />")}</p>`).
     join("");
-}
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
 }
 
 interface UploadedDoc {
@@ -133,8 +126,6 @@ export default function Draft() {
   const library = useLibrary();
   const visualTemplates = useDocumentTemplates();
 
-  const chat = useChat();
-  const { isConnected, getEmail, openService, connecting: connectingService } = useExternalConnectors();
   const [showAttachMenu, setShowAttachMenu] = useState(false);
 
   const [connectingSource, setConnectingSource] = useState<string | null>(null);
@@ -150,11 +141,9 @@ export default function Draft() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [modelReady, setModelReady] = useState(false);
   const [extensionMode, setExtensionMode] = useState<"curto" | "longo">("curto");
-  const [aiMode, setAiMode] = useState<"restrito" | "livre">("restrito");
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [libraryInitialTab, setLibraryInitialTab] = useState<LibraryPanelTab>("modelos");
@@ -167,24 +156,7 @@ export default function Draft() {
   const [extractedFields, setExtractedFields] = useState<ExtractedTemplateData>(createEmptyExtractedTemplateData());
   const [isSyncingDocuments, setIsSyncingDocuments] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
-  const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    if (aiMode === "livre" && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatMessages, aiMode]);
-
-  // Sync active thread messages into local state
-  useEffect(() => {
-    if (chat.activeThread) {
-      setChatMessages(chat.activeThread.messages);
-    } else {
-      setChatMessages([]);
-    }
-  }, [chat.activeThreadId]);
 
   const toggleVoiceInput = useCallback(() => {
     if (isListening) {
@@ -523,7 +495,6 @@ export default function Draft() {
     setSyncProgress(0);
     setModelReady(false);
     setSelectedTemplate(null);
-    setChatMessages([]);
 
     setIsSyncingDocuments(true);
 
@@ -594,120 +565,12 @@ export default function Draft() {
   // === LOCAL PROCESSING — only triggered by user clicking "Executar" ===
   const handleGenerate = async (templateId?: string) => {
     const template = templateId || selectedTemplate;
-    const currentPrompt = commandText.trim();
 
-    if (aiMode === "restrito") {
-      // In restricted mode, use Sincronizar flow
-      if (!template) {
-        toast({ title: "Selecione um modelo", description: "Escolha um modelo antes de preencher o documento." });
-        return;
-      }
-      await handleSyncScannerData();
+    if (!template) {
+      toast({ title: "Selecione um modelo", description: "Escolha um modelo antes de preencher o documento." });
       return;
     }
-
-    // Modo livre — chat flow (general knowledge assistant)
-    const readyDocuments = documents.filter((doc) => doc.status === "loaded" || doc.status === "ready");
-    if (!readyDocuments.length && !currentPrompt) return;
-
-    setIsGenerating(true);
-    setMainView("editor");
-
-    const documentText = cleanScannedText(
-      readyDocuments.map((doc) => doc.textContent || "").filter(Boolean).join("\n\n---\n\n")
-    );
-
-    const userMessage = currentPrompt || "Analise o documento anexado.";
-    setCommandText("");
-    // Auto-create thread if none active
-    let activeId = chat.activeThreadId;
-    if (!activeId) {
-      activeId = chat.createThread("livre");
-    }
-    setChatMessages((prev) => [...prev, { role: "user", content: userMessage }]);
-    // Also persist to thread
-    if (activeId) {
-      chat.addMessage(activeId, { role: "user", content: userMessage });
-    }
-
-    try {
-      // Build conversation for AI
-      const systemPrompt = `Você é o Jus Amigo, um assistente virtual inteligente e versátil. Responda sobre qualquer assunto: direito, receitas, esportes, cultura, tecnologia, ciência ou qualquer outro tema. Seja útil, claro e amigável. Responda sempre em português brasileiro.${documentText ? `\n\nO usuário anexou documentos com o seguinte conteúdo:\n${documentText}` : ""}`;
-
-      const conversationHistory = chatMessages.map((m) => ({
-        role: m.role,
-        parts: [{ text: m.content }]
-      }));
-
-      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-      // Graceful fallback se Gemini não estiver configurado
-      let assistantText: string;
-
-      if (geminiApiKey) {
-        // Usar Gemini se chave estiver disponível
-        const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              system_instruction: { parts: [{ text: systemPrompt }] },
-              contents: [
-                ...conversationHistory,
-                { role: "user", parts: [{ text: userMessage }] }
-              ],
-            }),
-          }
-        );
-
-        if (!geminiResponse.ok) {
-          const errData = await geminiResponse.json();
-          throw new Error(errData?.error?.message || "Erro na API do Gemini");
-        }
-
-        const geminiData = await geminiResponse.json();
-        assistantText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "Desculpe, não consegui processar sua mensagem.";
-      } else {
-        // Fallback local: análise simples do documento
-        assistantText = documentText
-          ? `Documento processado localmente:\n\n${documentText.substring(0, 500)}...`
-          : "Nenhum documento anexado. Configure VITE_GEMINI_API_KEY no .env para usar IA.";
-      }
-
-      setChatMessages((prev) => [...prev, { role: "assistant", content: assistantText }]);
-      if (activeId) {
-        chat.addMessage(activeId, { role: "assistant", content: assistantText });
-      }
-      setIsGenerating(false);
-
-      library.saveToHistory({
-        template_name: template || null,
-        prompt_used: currentPrompt || null,
-        extension_mode: extensionMode,
-        effort_level: selectedLevel,
-        result_text: assistantText
-      });
-    } catch (err: any) {
-      console.error("Generation error:", err);
-      const fallbackText = documentText || "Erro ao processar. Tente novamente.";
-      setChatMessages((prev) => [...prev, { role: "assistant", content: fallbackText }]);
-      setIsGenerating(false);
-      const isQuotaError = err.message && (
-        err.message.toLowerCase().includes("quota") ||
-        err.message.toLowerCase().includes("cota") ||
-        err.message.toLowerCase().includes("429") ||
-        err.message.toLowerCase().includes("resource has been exhausted") ||
-        err.message.toLowerCase().includes("rate limit")
-      );
-      toast({
-        title: isQuotaError ? "Limite da API atingido" : "Erro no processamento",
-        description: isQuotaError
-          ? "O limite de requisições da chave Gemini foi atingido. Aguarde alguns minutos e tente novamente."
-          : err.message || "Falha ao processar o documento.",
-        variant: "destructive"
-      });
-    }
+    await handleSyncScannerData();
   };
 
   // Passo 2: selecionar modelo → fechar biblioteca, voltar à página com status verde
@@ -718,10 +581,6 @@ export default function Draft() {
   };
 
   const getExportableContent = () => {
-    if (aiMode === "livre") {
-      return [...chatMessages].reverse().find((message) => message.role === "assistant")?.content?.trim() || "";
-    }
-
     return editorContent;
   };
 
@@ -787,12 +646,8 @@ export default function Draft() {
   const getAvailableDocxTemplates = () => visualTemplates.templates.filter((template) => template.kind === "docx");
 
   const hasGeneratedDocument = useMemo(() => {
-    if (aiMode === "livre") {
-      return chatMessages.some((message) => message.role === "assistant" && message.content.trim().length > 0);
-    }
-
     return !isRichHtmlEmpty(editorContent);
-  }, [aiMode, chatMessages, editorContent]);
+  }, [editorContent]);
 
   const getSuggestedExportFileName = () => {
     const exportContent = getExportableContent();
@@ -830,7 +685,6 @@ export default function Draft() {
     setFileObjects(new Map());
     setCommandText("");
     setEditorContent("");
-    setChatMessages([]);
     setSelectedTemplate(null);
     setModelReady(false);
     setDocumentData({ rawText: "", fields: createEmptyExtractedTemplateData() });
@@ -840,7 +694,6 @@ export default function Draft() {
     setShowQuickAccess(false);
     setShowExportMenu(false);
     setMainView("editor");
-    chat.setActiveThread(null);
   };
 
   // === EXPORT ===
@@ -897,7 +750,7 @@ export default function Draft() {
       let blob;
       try {
         blob = await mergeContentIntoDocxTemplate({
-          contentHtml: aiMode === "livre" ? markdownToRichHtml(exportContent) : exportContent,
+          contentHtml: exportContent,
           templateBlob
         });
       } catch (mergeErr: any) {
@@ -956,31 +809,11 @@ export default function Draft() {
 
   return (
     <div className="h-full bg-background text-foreground flex overflow-hidden">
-      {/* Histórico de conversas — sidebar esquerda */}
-      {aiMode === "livre" && (
-        <div
-          className="relative shrink-0 flex flex-col border-r border-border/50 bg-card/30 transition-all duration-200 overflow-visible"
-          style={{ width: sidebarExpanded ? 260 : 32 }}
-        >
-          <>
-            <SidebarHistory expanded={sidebarExpanded} onToggle={() => setSidebarExpanded(v => !v)} />
-            {/* Botão abrir/fechar — sempre fixo na borda direita */}
-            <button
-              onClick={() => setSidebarExpanded(v => !v)}
-              className="absolute top-3 -right-3 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-border/60 bg-card text-muted-foreground hover:text-foreground shadow-sm transition-colors"
-              title={sidebarExpanded ? "Fechar histórico" : "Abrir histórico"}
-            >
-              {sidebarExpanded ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            </button>
-          </>
-        </div>
-      )}
-
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col min-w-0">
 
         {/* Barra de controles compacta acima do input */}
-        {(!hasGeneratedDocument || aiMode === "livre") && aiMode !== "livre" && (
+        {!hasGeneratedDocument && (
           <div className="w-full flex justify-end items-center gap-2 px-6 pt-2 pb-1 z-20" style={{ position: 'relative' }}>
             <button
               onClick={handleResetWorkspace}
@@ -1111,428 +944,241 @@ export default function Draft() {
 
                 <div className={`flex flex-col flex-1 transition-all duration-300 ${hasGeneratedDocument ? "pb-0" : "pb-0"}`} style={{ minHeight: 0 }}>
                   {/* Content area */}
-                  {aiMode === "livre" ?
-                    <div className="z-10 flex-1 flex flex-col overflow-hidden">
-                      {/* Coluna full-width — chat vai até a borda direita */}
-                      <div className="w-full flex-1 flex flex-col overflow-hidden chat-livre-typography">
-                        {/* Área de mensagens — scroll sem barra visível */}
-                        <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                          {chatMessages.length === 0 ? (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.4, ease: "easeOut" }}
-                              className="flex flex-col items-center justify-center gap-5 h-full min-h-[400px]"
-                            >
-                              <div className="flex flex-col items-center justify-center gap-5">
-                                <div className="relative flex flex-col items-center justify-center gap-4">
-                                  <div className="h-36 w-36 rounded-full bg-primary/10 ring-4 ring-primary/20 flex items-center justify-center overflow-hidden">
-                                    <img src={jusAmigoImg} alt="Jus Amigo" className="h-32 w-32 object-cover object-top" />
-                                  </div>
-                                  <div className="relative max-w-sm rounded-2xl bg-secondary/70 backdrop-blur-sm border border-border/40 px-6 py-4 flex items-center justify-center">
-                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-secondary/70 border-l border-t border-border/40 rotate-45" />
-                                    <p className="text-sm text-foreground text-center leading-relaxed">
-                                      Olá, sou seu assistente virtual. Pergunte-me o que desejar.
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          ) : (
-                            <div className="py-6 space-y-4">
-                              {chatMessages.map((msg, i) =>
-                                <motion.div
-                                  key={i}
-                                  initial={{ opacity: 0, y: 8 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                  className={`flex gap-3 items-end ${msg.role === "user" ? "justify-end pl-16" : "justify-start pr-16"}`}>
-                                  {msg.role === "assistant" &&
-                                    <div className="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/20">
-                                      <img src={jusAmigoImg} alt="Jus Amigo" className="h-9 w-9 object-cover object-top" />
+                  {hasGeneratedDocument ?
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="flex min-h-0 flex-1 bg-background">
+
+                      <div className="min-h-0 flex-1">
+                        <WordStyleEditor
+                          value={editorContent}
+                          onChange={setEditorContent}
+                          placeholder="" />
+
+                      </div>
+                    </motion.div> :
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="flex-1 bg-background px-4 pt-6 pb-0 md:px-6 md:pt-8 md:pb-0">
+
+                      <div className="flex h-full flex-col items-center">
+                        <div className="flex w-full max-w-[54vw] min-w-0 flex-1 flex-col items-center justify-between text-center">
+                          <div className="flex w-full flex-1 flex-col items-center justify-center gap-6">
+                            <div className="flex w-full max-w-[54vw] flex-wrap items-center justify-center gap-3">
+                              {importSources.map((source) => {
+                                const Icon = source.icon;
+                                const isConnecting = connectingSource === source.id;
+
+                                return (
+                                  <button
+                                    key={source.id}
+                                    type="button"
+                                    disabled={isConnecting}
+                                    onClick={() => triggerImportSource(source.id)}
+                                    className="flex min-w-[180px] items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/50 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-card disabled:opacity-60">
+
+                                    {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+                                    <span>{isConnecting ? "Conectando..." : source.label}</span>
+                                  </button>);
+
+                              })}
+                            </div>
+
+                            <div
+                              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                              onDragLeave={() => setIsDragOver(false)}
+                              onDrop={handleFileDrop}
+                              onClick={!hasDocuments ? openFilePicker : undefined}
+                              className={`flex w-full max-w-[54vw] items-center justify-center rounded-2xl border-2 border-dashed px-4 py-24 transition-all ${isSyncingDocuments || isGenerating ?
+                                "border-primary bg-primary/5" :
+                                modelReady && hasDocuments ?
+                                  "border-green-500 bg-green-500/10" :
+                                  isDragOver ?
+                                    "border-foreground/40 bg-foreground/5" :
+                                    hasDocuments ?
+                                      "border-border bg-card/20" :
+                                      "border-border bg-card/20 hover:border-foreground/30 cursor-pointer"}`
+                              }>
+
+                              <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
+                                {isSyncingDocuments || isGenerating ?
+                                  <div className="flex w-full max-w-lg flex-col items-center justify-center gap-4">
+                                    <div className="w-full overflow-hidden rounded-full bg-secondary/80">
+                                      <div
+                                        className="h-3 rounded-full bg-primary transition-all duration-300"
+                                        style={{ width: `${uploadProgress}%` }} />
+
                                     </div>
-                                  }
-                                  <div className={`w-fit max-w-[50%] rounded-2xl px-5 py-3.5 ${msg.role === "user" ?
-                                    "bg-primary text-primary-foreground rounded-br-sm" :
-                                    "bg-secondary/70 backdrop-blur-sm border border-border/40 rounded-bl-sm"
-                                    }`}>
-                                    {msg.role === "assistant" ? (
+                                    <div className="space-y-1">
+                                      <p className="text-2xl font-semibold text-primary">{uploadProgress}%</p>
+                                      <p className="text-sm text-muted-foreground">{isGenerating ? "Gerando documento" : "Analisando documentos via IA..."}</p>
+                                    </div>
+                                  </div> :
+                                  modelReady && hasDocuments ?
+                                    <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-5 text-center">
+                                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
+                                        <FileText className="h-8 w-8 text-green-600" />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <p className="text-lg font-semibold text-green-600">Documentação e Modelo Carregados</p>
+                                        <p className="text-sm text-muted-foreground">
+                                          Modelo: <span className="font-semibold text-foreground">{selectedTemplateLabel}</span>
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                          {documents.length} documento{documents.length > 1 ? "s" : ""} carregado{documents.length > 1 ? "s" : ""}
+                                        </p>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">Escreva instruções no prompt (opcional) e clique em <strong>Sincronizar</strong></p>
+                                    </div> :
+                                    hasDocuments ?
+                                      <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-5 text-center">
+                                        <div className="space-y-2">
+                                          <p className="text-lg font-semibold text-foreground">Documentos carregados</p>
+                                          <p className="text-sm text-muted-foreground">Selecione um modelo na biblioteca para continuar.</p>
+                                        </div>
+                                        <div className="flex w-full flex-wrap justify-center gap-3">
+                                          {documents.map((doc) =>
+                                            <div key={doc.id} className="min-w-[180px] rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left">
+                                              <p className="truncate text-sm font-semibold text-foreground">{doc.name}</p>
+                                              <p className="mt-1 text-xs text-muted-foreground">{doc.type} · {doc.size}</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div> :
+
                                       <>
-                                        <p className="text-[10px] font-bold text-primary mb-1.5">Jus Amigo</p>
-                                        <div className="prose prose-sm dark:prose-invert max-w-none text-foreground [&>p]:mb-4 [&>p]:leading-relaxed [&>h3]:mt-6 [&>h3]:mb-3 [&>h3]:text-sm [&>h3]:font-bold [&>ul]:my-3 [&>ol]:my-3 [&>li]:my-1 [&>hr]:my-5 [&>hr]:border-border/40 [&>strong]:text-foreground [&>p>strong]:text-foreground">
-                                          <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                          {isGenerating && i === chatMessages.length - 1 &&
-                                            <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-middle" />
-                                          }
+                                        <UploadCloud className="h-10 w-10 text-muted-foreground" />
+                                        <div className="space-y-1">
+                                          <p className="text-lg font-semibold text-foreground">Arrastar Arquivo</p>
+                                          <p className="text-sm text-muted-foreground">PDF, DOCX, TXT e imagens</p>
                                         </div>
                                       </>
-                                    ) : (
-                                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                                    )}
-                                  </div>
-                                  {msg.role === "user" &&
-                                    <div className="shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                                      <User className="h-5 w-5 text-muted-foreground" />
-                                    </div>
-                                  }
-                                </motion.div>
-                              )}
-                              <div ref={chatEndRef} />
+                                }
+                              </div>
                             </div>
-                          )}
-                        </div>
+                          </div>
+                          {/* ===== PROMPT INLINE — RESTRITO ===== */}
+                          <div className="w-full pb-4">
+                            <div className="w-full flex min-w-0 flex-col gap-3">
+                              {/* Quick Access Menu */}
+                              <AnimatePresence>
+                                {showQuickAccess && library.prompts.length > 0 &&
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 4 }}
+                                    className="relative z-50">
+                                    <div className="rounded-2xl border border-border bg-background p-2 shadow-lg">
+                                      <div className="max-h-52 space-y-1 overflow-y-auto">
+                                        {library.prompts.filter((p) => p.is_favorite).length > 0 &&
+                                          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider px-2 pt-1">⭐ Favoritos</p>
+                                        }
+                                        {library.prompts.filter((p) => p.is_favorite).map((p) =>
+                                          <button
+                                            key={p.id}
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => { setCommandText(p.content); setShowQuickAccess(false); }}
+                                            className="w-full text-left px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors truncate bg-yellow-400/90 text-yellow-900 hover:bg-yellow-300 border border-yellow-500"
+                                          >
+                                            <Star className="h-2.5 w-2.5 inline mr-1.5 text-yellow-700 fill-yellow-600" />{p.title}
+                                          </button>
+                                        )}
+                                        {library.prompts.filter((p) => !p.is_favorite).length > 0 &&
+                                          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider px-2 pt-1">Prompts</p>
+                                        }
+                                        {library.prompts.filter((p) => !p.is_favorite).map((p) =>
+                                          <button key={p.id} onMouseDown={(e) => e.preventDefault()} onClick={() => { setCommandText(p.content); setShowQuickAccess(false); }}
+                                            className="w-full text-left px-2 py-1.5 rounded-lg text-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors truncate">
+                                            {p.title}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                }
+                              </AnimatePresence>
 
-                        {/* Prompt inline — centralizado */}
-                        <div className="pb-4 shrink-0 max-w-2xl mx-auto w-full flex flex-col gap-2">
-                          {/* Quick Access — Favoritos (Modo Livre) */}
-                          <AnimatePresence>
-                            {showQuickAccess && library.prompts.filter((p) => p.is_favorite).length > 0 &&
-                              <motion.div
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 4 }}
-                                className="relative z-50">
-                                <div className="rounded-2xl border border-yellow-500/40 bg-background p-2 shadow-lg">
-                                  <p className="text-[9px] text-yellow-500 uppercase tracking-wider px-2 pt-1 pb-1">⭐ Favoritos</p>
-                                  <div className="max-h-40 space-y-1 overflow-y-auto">
-                                    {library.prompts.filter((p) => p.is_favorite).map((p) =>
-                                      <button
-                                        key={p.id}
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={() => { setCommandText(p.content); setShowQuickAccess(false); }}
-                                        className="w-full text-left px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors truncate bg-yellow-400/90 text-yellow-900 hover:bg-yellow-300 border border-yellow-500"
-                                      >
-                                        <Star className="h-2.5 w-2.5 inline mr-1.5 text-yellow-700 fill-yellow-600" />{p.title}
-                                      </button>
-                                    )}
+                              <div className="relative rounded-[1.75rem] border border-border/60 bg-background/95 p-1.5 shadow-lg backdrop-blur-xl">
+                                <div className="flex items-end gap-2">
+                                  <div className="flex shrink-0 flex-col gap-2 pb-1 justify-center pl-1">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="h-8 min-w-[132px] rounded-xl bg-blue-600 px-4 text-xs text-white hover:bg-blue-700"
+                                      onClick={() => { setLibraryInitialTab("modelos"); setMainView("library"); }}
+                                      title="Abrir Biblioteca de Modelos"
+                                    >
+                                      <Library className="h-4 w-4 mr-2" />
+                                      Biblioteca
+                                    </Button>
                                   </div>
-                                </div>
-                              </motion.div>
-                            }
-                          </AnimatePresence>
-                          <div className="relative rounded-[1.75rem] border border-border/60 bg-background/95 p-1.5 shadow-lg backdrop-blur-xl">
-                            <div className="flex items-end gap-2">
-                              <div className="flex shrink-0 flex-col gap-2 pb-1 justify-center pl-1">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  className="min-h-[52px] h-[52px] min-w-[100px] rounded-xl bg-green-600 px-3 text-xs text-white hover:bg-green-700 border border-green-700 flex items-center justify-center"
-                                  onClick={() => setAiMode("restrito")}
-                                >
-                                  Modo Livre
-                                </Button>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <Textarea
-                                  value={commandText}
-                                  onChange={(e) => setCommandText(e.target.value)}
-                                  onFocus={() => setShowQuickAccess(true)}
-                                  onBlur={() => setTimeout(() => setShowQuickAccess(false), 200)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                      e.preventDefault();
-                                      if (commandText.trim()) handleGenerate();
+
+                                  <div className="min-w-0 flex-1">
+                                    {hasExtractedFieldValues &&
+                                      <div className="mb-2 flex flex-wrap items-center gap-2 px-1">
+                                        {extractedFieldLabels.map(({ key, label }) => extractedFields[key] ?
+                                          <span key={key} className="rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-foreground">
+                                            {label}: {extractedFields[key]}
+                                          </span> :
+                                          null)}
+                                      </div>
                                     }
-                                  }}
-                                  placeholder=""
-                                  className="min-h-[52px] w-full resize-none rounded-[1.35rem] border border-draft-action/30 bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-draft-action"
-                                  disabled={isGenerating}
-                                />
-                              </div>
-                              <div className="flex shrink-0 flex-col items-end gap-1.5 pb-1 pr-1">
-                                <div className="flex flex-row gap-2 items-end">
-                                  <Popover open={showAttachMenu} onOpenChange={setShowAttachMenu}>
-                                    <PopoverTrigger asChild>
-                                      <Button type="button" size="sm" className="h-8 w-8 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 border border-border/60 p-0" title="Anexar arquivo">
-                                        <Plus className="h-4 w-4" />
+                                    <Textarea
+                                      value={commandText}
+                                      onChange={(e) => setCommandText(e.target.value)}
+                                      onFocus={() => setShowQuickAccess(true)}
+                                      onBlur={() => setTimeout(() => setShowQuickAccess(false), 200)}
+                                      onKeyDown={(e) => {
+                                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                                          e.preventDefault();
+                                          handleGenerate();
+                                          setShowQuickAccess(false);
+                                        }
+                                      }}
+                                      placeholder="Instruções antes de sincronizar (ex: remova a cláusula X, adicione foro Y)..."
+                                      className="min-h-[52px] w-full resize-none rounded-[1.35rem] border border-draft-action/30 bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-draft-action"
+                                      disabled={isGenerating} />
+                                  </div>
+
+                                  <div className="flex shrink-0 flex-col items-end gap-1.5 pb-1 pr-1">
+                                    {selectedTemplate &&
+                                      <div className="text-right">
+                                        {selectedTemplateLabel &&
+                                          <p className="max-w-[180px] truncate text-[11px] font-semibold text-foreground">{selectedTemplateLabel}</p>
+                                        }
+                                      </div>
+                                    }
+                                    <div className="flex flex-row gap-2 items-end">
+                                      <button
+                                        onClick={toggleVoiceInput}
+                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all ${isListening ?
+                                          "border-destructive bg-destructive/10 text-destructive animate-pulse" :
+                                          "border-muted-foreground/40 text-muted-foreground hover:border-foreground hover:text-foreground"}`}
+                                        aria-label="Ativar microfone">
+                                        <Mic className="h-4 w-4" />
+                                      </button>
+                                      <Button
+                                        onClick={() => handleGenerate()}
+                                        disabled={isGenerating || isSyncingDocuments || (!selectedTemplate || !hasDocuments)}
+                                        className="h-8 w-8 px-0 rounded-xl bg-draft-action/70 text-draft-action-foreground hover:bg-draft-action/85 shadow-[0_0_10px_hsl(var(--draft-action)/0.2)] hover:shadow-[0_0_16px_hsl(var(--draft-action)/0.4)] transition-all duration-300 shrink-0">
+                                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                                       </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent side="top" align="end" className="w-56 p-1 rounded-xl">
-                                      <button onClick={() => { openFilePicker(); setShowAttachMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors">
-                                        <UploadCloud className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Enviar arquivos</span>
-                                      </button>
-                                      <button onClick={async () => { setShowAttachMenu(false); await openService("google-drive"); }} disabled={connectingService === "google"} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors disabled:opacity-60">
-                                        <HardDrive className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Google Drive</span>
-                                        {connectingService === "google" ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" /> : isConnected("google") ? <span className="flex items-center gap-1 text-[9px] text-green-500 font-semibold"><span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />{getEmail("google") ? getEmail("google")!.split("@")[0] : "Conectado"}</span> : <span className="text-[9px] text-muted-foreground/60">Vincular</span>}
-                                      </button>
-                                      <button onClick={async () => { setShowAttachMenu(false); await openService("onedrive"); }} disabled={connectingService === "microsoft"} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors disabled:opacity-60">
-                                        <Cloud className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">OneDrive</span>
-                                        {connectingService === "microsoft" ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" /> : isConnected("microsoft") ? <span className="flex items-center gap-1 text-[9px] text-blue-400 font-semibold"><span className="h-1.5 w-1.5 rounded-full bg-blue-400 inline-block" />{getEmail("microsoft") ? getEmail("microsoft")!.split("@")[0] : "Conectado"}</span> : <span className="text-[9px] text-muted-foreground/60">Vincular</span>}
-                                      </button>
-                                      <button onClick={async () => { setShowAttachMenu(false); await openService("gmail"); }} disabled={connectingService === "google"} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors disabled:opacity-60">
-                                        <Mail className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Gmail</span>
-                                        {isConnected("google") ? <span className="flex items-center gap-1 text-[9px] text-green-500 font-semibold"><span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />Ativo</span> : <span className="text-[9px] text-muted-foreground/60">Vincular</span>}
-                                      </button>
-                                      <button onClick={() => { cameraInputRef.current?.click(); setShowAttachMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors">
-                                        <Image className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Fotos</span>
-                                      </button>
-                                      <button onClick={() => { toggleVoiceInput(); setShowAttachMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors">
-                                        <FileAudio className="h-4 w-4 shrink-0" /><span className="flex-1 text-left">Áudio</span>
-                                      </button>
-                                    </PopoverContent>
-                                  </Popover>
-                                  <button
-                                    onClick={toggleVoiceInput}
-                                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all ${isListening ? "border-destructive bg-destructive/10 text-destructive animate-pulse" : "border-muted-foreground/40 text-muted-foreground hover:border-foreground hover:text-foreground"}`}
-                                    aria-label="Ativar microfone">
-                                    <Mic className="h-4 w-4" />
-                                  </button>
-                                  <Button
-                                    onClick={() => handleGenerate()}
-                                    disabled={isGenerating || (!commandText.trim())}
-                                    className="h-8 w-8 px-0 rounded-xl bg-draft-action/70 text-draft-action-foreground hover:bg-draft-action/85 shadow-[0_0_10px_hsl(var(--draft-action)/0.2)] hover:shadow-[0_0_16px_hsl(var(--draft-action)/0.4)] transition-all duration-300 shrink-0">
-                                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                  </Button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div> :
-                    hasGeneratedDocument ?
-                      <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -12 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="flex min-h-0 flex-1 bg-background">
-
-                        <div className="min-h-0 flex-1">
-                          <WordStyleEditor
-                            value={editorContent}
-                            onChange={setEditorContent}
-                            placeholder="" />
-
-                        </div>
-                      </motion.div> :
-
-                      <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -12 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="flex-1 bg-background px-4 pt-6 pb-0 md:px-6 md:pt-8 md:pb-0">
-
-                        <div className="flex h-full flex-col items-center">
-                          <div className="flex w-full max-w-[54vw] min-w-0 flex-1 flex-col items-center justify-between text-center">
-                            <div className="flex w-full flex-1 flex-col items-center justify-center gap-6">
-                              <div className="flex w-full max-w-[54vw] flex-wrap items-center justify-center gap-3">
-                                {importSources.map((source) => {
-                                  const Icon = source.icon;
-                                  const isConnecting = connectingSource === source.id;
-
-                                  return (
-                                    <button
-                                      key={source.id}
-                                      type="button"
-                                      disabled={isConnecting}
-                                      onClick={() => triggerImportSource(source.id)}
-                                      className="flex min-w-[180px] items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/50 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-card disabled:opacity-60">
-
-                                      {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
-                                      <span>{isConnecting ? "Conectando..." : source.label}</span>
-                                    </button>);
-
-                                })}
-                              </div>
-
-                              <div
-                                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                                onDragLeave={() => setIsDragOver(false)}
-                                onDrop={handleFileDrop}
-                                onClick={!hasDocuments ? openFilePicker : undefined}
-                                className={`flex w-full max-w-[54vw] items-center justify-center rounded-2xl border-2 border-dashed px-4 py-24 transition-all ${isSyncingDocuments || isGenerating ?
-                                  "border-primary bg-primary/5" :
-                                  modelReady && hasDocuments ?
-                                    "border-green-500 bg-green-500/10" :
-                                    isDragOver ?
-                                      "border-foreground/40 bg-foreground/5" :
-                                      hasDocuments ?
-                                        "border-border bg-card/20" :
-                                        "border-border bg-card/20 hover:border-foreground/30 cursor-pointer"}`
-                                }>
-
-                                <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
-                                  {isSyncingDocuments || isGenerating ?
-                                    <div className="flex w-full max-w-lg flex-col items-center justify-center gap-4">
-                                      <div className="w-full overflow-hidden rounded-full bg-secondary/80">
-                                        <div
-                                          className="h-3 rounded-full bg-primary transition-all duration-300"
-                                          style={{ width: `${uploadProgress}%` }} />
-
-                                      </div>
-                                      <div className="space-y-1">
-                                        <p className="text-2xl font-semibold text-primary">{uploadProgress}%</p>
-                                        <p className="text-sm text-muted-foreground">{isGenerating ? "Gerando documento" : "Analisando documentos via IA..."}</p>
-                                      </div>
-                                    </div> :
-                                    modelReady && hasDocuments ?
-                                      <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-5 text-center">
-                                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
-                                          <FileText className="h-8 w-8 text-green-600" />
-                                        </div>
-                                        <div className="space-y-2">
-                                          <p className="text-lg font-semibold text-green-600">Documentação e Modelo Carregados</p>
-                                          <p className="text-sm text-muted-foreground">
-                                            Modelo: <span className="font-semibold text-foreground">{selectedTemplateLabel}</span>
-                                          </p>
-                                          <p className="text-sm text-muted-foreground">
-                                            {documents.length} documento{documents.length > 1 ? "s" : ""} carregado{documents.length > 1 ? "s" : ""}
-                                          </p>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">Escreva instruções no prompt (opcional) e clique em <strong>Sincronizar</strong></p>
-                                      </div> :
-                                      hasDocuments ?
-                                        <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-5 text-center">
-                                          <div className="space-y-2">
-                                            <p className="text-lg font-semibold text-foreground">Documentos carregados</p>
-                                            <p className="text-sm text-muted-foreground">Selecione um modelo na biblioteca para continuar.</p>
-                                          </div>
-                                          <div className="flex w-full flex-wrap justify-center gap-3">
-                                            {documents.map((doc) =>
-                                              <div key={doc.id} className="min-w-[180px] rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left">
-                                                <p className="truncate text-sm font-semibold text-foreground">{doc.name}</p>
-                                                <p className="mt-1 text-xs text-muted-foreground">{doc.type} · {doc.size}</p>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div> :
-
-                                        <>
-                                          <UploadCloud className="h-10 w-10 text-muted-foreground" />
-                                          <div className="space-y-1">
-                                            <p className="text-lg font-semibold text-foreground">Arrastar Arquivo</p>
-                                            <p className="text-sm text-muted-foreground">PDF, DOCX, TXT e imagens</p>
-                                          </div>
-                                        </>
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                            {/* ===== PROMPT INLINE — RESTRITO ===== */}
-                            <div className="w-full pb-4">
-                              <div className="w-full flex min-w-0 flex-col gap-3">
-                                {/* Quick Access Menu */}
-                                <AnimatePresence>
-                                  {showQuickAccess && library.prompts.length > 0 &&
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 4 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      exit={{ opacity: 0, y: 4 }}
-                                      className="relative z-50">
-                                      <div className="rounded-2xl border border-border bg-background p-2 shadow-lg">
-                                        <div className="max-h-52 space-y-1 overflow-y-auto">
-                                          {library.prompts.filter((p) => p.is_favorite).length > 0 &&
-                                            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider px-2 pt-1">⭐ Favoritos</p>
-                                          }
-                                          {library.prompts.filter((p) => p.is_favorite).map((p) =>
-                                            <button
-                                              key={p.id}
-                                              onMouseDown={(e) => e.preventDefault()}
-                                              onClick={() => { setCommandText(p.content); setShowQuickAccess(false); }}
-                                              className="w-full text-left px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors truncate bg-yellow-400/90 text-yellow-900 hover:bg-yellow-300 border border-yellow-500"
-                                            >
-                                              <Star className="h-2.5 w-2.5 inline mr-1.5 text-yellow-700 fill-yellow-600" />{p.title}
-                                            </button>
-                                          )}
-                                          {library.prompts.filter((p) => !p.is_favorite).length > 0 &&
-                                            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider px-2 pt-1">Prompts</p>
-                                          }
-                                          {library.prompts.filter((p) => !p.is_favorite).map((p) =>
-                                            <button key={p.id} onMouseDown={(e) => e.preventDefault()} onClick={() => { setCommandText(p.content); setShowQuickAccess(false); }}
-                                              className="w-full text-left px-2 py-1.5 rounded-lg text-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors truncate">
-                                              {p.title}
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  }
-                                </AnimatePresence>
-
-                                <div className="relative rounded-[1.75rem] border border-border/60 bg-background/95 p-1.5 shadow-lg backdrop-blur-xl">
-                                  <div className="flex items-end gap-2">
-                                    <div className="flex shrink-0 flex-col gap-2 pb-1 justify-center pl-1">
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        className="h-8 min-w-[132px] rounded-xl bg-blue-600 px-4 text-xs text-white hover:bg-blue-700"
-                                        onClick={() => { setLibraryInitialTab("modelos"); setMainView("library"); }}
-                                        title="Abrir Biblioteca de Modelos"
-                                      >
-                                        <Library className="h-4 w-4 mr-2" />
-                                        Biblioteca
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        className="h-8 min-w-[132px] rounded-xl bg-red-600 px-4 text-xs text-white hover:bg-red-700 border border-red-700"
-                                        onClick={() => setAiMode("livre")}
-                                      >
-                                        Modo Restrito
-                                      </Button>
-                                    </div>
-
-                                    <div className="min-w-0 flex-1">
-                                      {hasExtractedFieldValues &&
-                                        <div className="mb-2 flex flex-wrap items-center gap-2 px-1">
-                                          {extractedFieldLabels.map(({ key, label }) => extractedFields[key] ?
-                                            <span key={key} className="rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-foreground">
-                                              {label}: {extractedFields[key]}
-                                            </span> :
-                                            null)}
-                                        </div>
-                                      }
-                                      <Textarea
-                                        value={commandText}
-                                        onChange={(e) => setCommandText(e.target.value)}
-                                        onFocus={() => setShowQuickAccess(true)}
-                                        onBlur={() => setTimeout(() => setShowQuickAccess(false), 200)}
-                                        onKeyDown={(e) => {
-                                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleGenerate();
-                                            setShowQuickAccess(false);
-                                          }
-                                        }}
-                                        placeholder="Instruções antes de sincronizar (ex: remova a cláusula X, adicione foro Y)..."
-                                        className="min-h-[52px] w-full resize-none rounded-[1.35rem] border border-draft-action/30 bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-draft-action"
-                                        disabled={isGenerating} />
-                                    </div>
-
-                                    <div className="flex shrink-0 flex-col items-end gap-1.5 pb-1 pr-1">
-                                      {selectedTemplate &&
-                                        <div className="text-right">
-                                          {selectedTemplateLabel &&
-                                            <p className="max-w-[180px] truncate text-[11px] font-semibold text-foreground">{selectedTemplateLabel}</p>
-                                          }
-                                        </div>
-                                      }
-                                      <div className="flex flex-row gap-2 items-end">
-                                        <button
-                                          onClick={toggleVoiceInput}
-                                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all ${isListening ?
-                                            "border-destructive bg-destructive/10 text-destructive animate-pulse" :
-                                            "border-muted-foreground/40 text-muted-foreground hover:border-foreground hover:text-foreground"}`}
-                                          aria-label="Ativar microfone">
-                                          <Mic className="h-4 w-4" />
-                                        </button>
-                                        <Button
-                                          onClick={() => handleGenerate()}
-                                          disabled={isGenerating || isSyncingDocuments || (!selectedTemplate || !hasDocuments)}
-                                          className="h-8 w-8 px-0 rounded-xl bg-draft-action/70 text-draft-action-foreground hover:bg-draft-action/85 shadow-[0_0_10px_hsl(var(--draft-action)/0.2)] hover:shadow-[0_0_16px_hsl(var(--draft-action)/0.4)] transition-all duration-300 shrink-0">
-                                          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
+                    </motion.div>
                   }
                 </div>
           }
