@@ -1,6 +1,8 @@
 /**
  * Calcula a distância de Levenshtein entre duas strings
  * (número de operações necessárias para transformar uma string em outra)
+ * 
+ * Eu implementei isso aqui pra fazer busca fuzzy - meio complexo mas funciona
  */
 export const levenshteinDistance = (str1: string, str2: string): number => {
     const s1 = str1.toLowerCase()
@@ -10,6 +12,7 @@ export const levenshteinDistance = (str1: string, str2: string): number => {
     if (s1.length === 0) return s2.length
     if (s2.length === 0) return s1.length
 
+    // TODO: otimizar isso depois com algoritmo melhor
     const matrix: number[][] = Array(s2.length + 1)
         .fill(null)
         .map(() => Array(s1.length + 1).fill(0))

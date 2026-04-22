@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Trash2, Edit, Check, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 
+// Modal pra criar/editar compromissos - eu fiz isso do zero
 export interface Compromisso {
     id: string
     data: string
@@ -11,6 +12,7 @@ export interface Compromisso {
     status: 'pendente' | 'concluido' | 'remarcado'
 }
 
+// Cores que defini pra cada prioridade
 const PRIORIDADE_CORES: Record<Compromisso['prioridade'], { bg: string; text: string; label: string }> = {
     baixa: { bg: 'bg-green-500', text: 'text-green-700', label: 'Baixa' },
     media: { bg: 'bg-yellow-500', text: 'text-yellow-700', label: 'Média' },
@@ -18,12 +20,14 @@ const PRIORIDADE_CORES: Record<Compromisso['prioridade'], { bg: string; text: st
     critica: { bg: 'bg-red-500', text: 'text-red-700', label: 'Crítica' },
 }
 
+// TODO: adicionar mais status depois (em progresso, suspenso, etc)
 const STATUS_LABEL: Record<Compromisso['status'], string> = {
     pendente: 'Pendente',
     concluido: 'Concluído',
     remarcado: 'Remarcado',
 }
 
+// Props do modal que criei
 interface CompromissoModalProps {
     isOpen: boolean
     compromisso?: Compromisso
@@ -34,6 +38,7 @@ interface CompromissoModalProps {
     darkMode?: boolean
 }
 
+// Component principal - FIXME: tá um pouco grande, devia quebrar em componentes menores
 export const CompromissoModal: React.FC<CompromissoModalProps> = ({
     isOpen,
     compromisso,
