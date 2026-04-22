@@ -58,6 +58,17 @@ export interface SharedPrompt {
   created_at: string;
 }
 
+export interface OrgMember {
+  id: string;
+  org_id: string;
+  nome: string;
+  email: string;
+  nivel: string;
+  equipe: string;
+  setor: string;
+  created_at?: string;
+}
+
 export interface OrgInfo {
   id: string;
   name: string;
@@ -72,6 +83,7 @@ export function useLibrary() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [sharedTemplates, setSharedTemplates] = useState<SharedTemplate[]>([]);
   const [sharedPrompts, setSharedPrompts] = useState<SharedPrompt[]>([]);
+  const [orgMembers, setOrgMembers] = useState<OrgMember[]>([]);
   const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -81,9 +93,10 @@ export function useLibrary() {
       const { data, error } = await supabase
         .from("user_templates")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
-        console.warn("Erro ao carregar user_templates:", error?.message);
+        toast({ title: "Erro ao carregar modelos", description: error?.message, variant: "destructive" });
         setTemplates([]);
         return;
       }
@@ -92,7 +105,7 @@ export function useLibrary() {
       console.error("Erro ao buscar templates:", err);
       setTemplates([]);
     }
-  }, [user]);
+  }, [user, toast]);
 
   const fetchPrompts = useCallback(async () => {
     if (!user) return;
@@ -174,12 +187,14 @@ export function useLibrary() {
         const o = org as any;
         setOrgInfo({ id: o.id, name: o.name, plan: o.plan });
 
-        const [templatesRes, promptsRes] = await Promise.all([
+        const [templatesRes, promptsRes, membersRes] = await Promise.all([
           supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
           supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+          supabase.from("team_members" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
         ]);
         if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
         if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
+        if (membersRes.data) setOrgMembers(membersRes.data as unknown as OrgMember[]);
       }
     } catch (err) {
       console.error("Erro ao buscar dados da organização:", err);
@@ -365,12 +380,60 @@ export function useLibrary() {
     }
   }, [toast]);
 
+  const addOrgMember = useCallback(async (member: Omit<OrgMember, "id" | "org_id" | "created_at">) => {
+    if (!orgInfo) return;
+    try {
+      const { error } = await supabase.from("team_members" as any).insert({
+        org_id: orgInfo.id,
+        ...member,
+      });
+      if (error) {
+        toast({ title: "Erro ao adicionar membro", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Membro adicionado" });
+        fetchOrgData();
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  }, [orgInfo, toast, fetchOrgData]);
+
+  const updateOrgMember = useCallback(async (id: string, updates: Partial<OrgMember>) => {
+    try {
+      const { error } = await supabase.from("team_members" as any).update(updates).eq("id", id);
+      if (error) {
+        toast({ title: "Erro ao atualizar membro", description: error.message, variant: "destructive" });
+      } else {
+        setOrgMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+        toast({ title: "Membro atualizado" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  }, [toast]);
+
+  const removeOrgMember = useCallback(async (id: string) => {
+    try {
+      const { error } = await supabase.from("team_members" as any).delete().eq("id", id);
+      if (error) {
+        toast({ title: "Erro ao remover membro", description: error.message, variant: "destructive" });
+      } else {
+        setOrgMembers((prev) => prev.filter((m) => m.id !== id));
+        toast({ title: "Membro removido" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  }, [toast]);
+
   return {
     templates, prompts, history, loading,
     sharedTemplates, sharedPrompts, orgInfo,
+    orgMembers,
     addTemplate, deleteTemplate, updateTemplate,
     savePrompt, toggleFavorite, deletePrompt,
     saveToHistory, refresh,
     shareTemplate, sharePrompt, deleteSharedTemplate, deleteSharedPrompt,
+    addOrgMember, updateOrgMember, removeOrgMember,
   };
 }

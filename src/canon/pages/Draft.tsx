@@ -926,7 +926,11 @@ export default function Draft() {
                 onShareTemplate={library.shareTemplate}
                 onSharePrompt={library.sharePrompt}
                 onDeleteSharedTemplate={library.deleteSharedTemplate}
-                onDeleteSharedPrompt={library.deleteSharedPrompt} /> :
+                onDeleteSharedPrompt={library.deleteSharedPrompt}
+                orgMembers={library.orgMembers}
+                onAddOrgMember={library.addOrgMember}
+                onUpdateOrgMember={library.updateOrgMember}
+                onRemoveOrgMember={library.removeOrgMember} /> :
 
               mainView === "history" ?
                 <HistoryPanel
@@ -1104,8 +1108,8 @@ export default function Draft() {
                               </AnimatePresence>
 
                               <div className="relative rounded-[1.75rem] border border-border/60 bg-background/95 p-1.5 shadow-lg backdrop-blur-xl">
-                                <div className="flex items-end gap-2">
-                                  <div className="flex shrink-0 flex-col gap-2 pb-1 justify-center pl-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex shrink-0 pl-1">
                                     <Button
                                       type="button"
                                       size="sm"
@@ -1145,7 +1149,7 @@ export default function Draft() {
                                       disabled={isGenerating} />
                                   </div>
 
-                                  <div className="flex shrink-0 flex-col items-end gap-1.5 pb-1 pr-1">
+                                  <div className="flex shrink-0 flex-col items-end gap-1.5 pr-1">
                                     {selectedTemplate &&
                                       <div className="text-right">
                                         {selectedTemplateLabel &&
@@ -1184,6 +1188,6 @@ export default function Draft() {
 
       </div>
 
-    </div>);
+    </div >);
 
 }

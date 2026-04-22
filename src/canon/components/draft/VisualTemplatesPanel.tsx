@@ -68,7 +68,13 @@ export default function VisualTemplatesPanel({
           type="file"
           accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           className="hidden"
-          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            setSelectedFile(file);
+            if (file && !templateName.trim()) {
+              setTemplateName(file.name.replace(/\.docx$/i, ""));
+            }
+          }}
         />
 
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
