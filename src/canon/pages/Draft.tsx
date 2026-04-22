@@ -10,7 +10,7 @@ import {
   FileText, Sparkles,
   Download, Loader2,
   FolderOpen, Cloud, UploadCloud, Mail,
-  LayoutTemplate, Library, History, Mic, Star, RotateCcw, Send, User, ScanSearch, Plus, Image, FileAudio, HardDrive, ChevronRight, ChevronLeft
+  LayoutTemplate, Library, History, Mic, Star, RotateCcw, ScanSearch, Plus, Image, FileAudio, HardDrive, ChevronRight, ChevronLeft
 } from
   "lucide-react";
 
@@ -28,15 +28,13 @@ import { supabase } from "@canon/integrations/supabase/client";
 import { extractStructuredTextFromFile } from "@canon/lib/document-text";
 import { buildOverlappingChunks, isImageFile } from "@canon/lib/document-preprocessing";
 import { mergeContentIntoDocxTemplate } from "@canon/lib/docx-template-merge";
-import { supabase as sbClient } from "@canon/integrations/supabase/client";
-import { isRichHtmlEmpty, markdownToRichHtml } from "@canon/lib/rich-text";
-// TODO: remover essas importações não usadas e refatorar depois
+import { isRichHtmlEmpty } from "@canon/lib/rich-text";
 import { cleanScannedText, createEmptyExtractedTemplateData, extractTemplateData, extractTemplatePlaceholders, type ExtractedTemplateData, fillTemplatePlaceholders } from "@canon/lib/template-placeholder-fill";
 import TemplateSelector from "@canon/components/draft/TemplateSelector";
 import LibraryPanel, { type LibraryPanelTab } from "@canon/components/draft/LibraryPanel";
 import HistoryPanel from "@canon/components/draft/HistoryPanel";
 import WordStyleEditor from "@canon/components/draft/WordStyleEditor";
-import ReactMarkdown from "react-markdown";
+
 
 // função auxiliar que fiz pra escapar HTML
 function escapeHtml(value: string) {
