@@ -40,8 +40,8 @@ interface LibraryPanelProps {
   onDeleteSharedTemplate?: (id: string) => void;
   onDeleteSharedPrompt?: (id: string) => void;
   orgMembers: OrgMember[];
-  onAddOrgMember: (member: Omit<OrgMember, "id" | "org_id" | "created_at">) => void;
-  onUpdateOrgMember: (id: string, updates: Partial<OrgMember>) => void;
+  onAddOrgMember: (member: Omit<OrgMember, "id" | "user_id" | "created_at">) => void;
+  onUpdateOrgMember: (id: string, updates: Partial<Omit<OrgMember, "id" | "user_id" | "created_at">>) => void;
   onRemoveOrgMember: (id: string) => void;
 }
 
@@ -320,7 +320,7 @@ export default function LibraryPanel({
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-emerald-500" />
                     <p className="text-xs text-muted-foreground">
-                      Equipe: <span className="text-foreground font-medium">{orgName || "Organização"}</span>
+                      Equipe: <span className="text-foreground font-medium">{orgName || "Sua Equipe"}</span>
                     </p>
                   </div>
                   <Button

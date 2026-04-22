@@ -81,7 +81,7 @@ export interface SharedPrompt {
 
 export interface OrgMember {
   id: string;
-  org_id: string;
+  user_id: string;
   nome: string;
   email: string;
   nivel: string;
@@ -186,66 +186,71 @@ export function useLibrary() {
     }
   }, [user]);
 
+  const fetchTeamMembers = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from("team_members" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.warn("Erro ao carregar membros da equipe:", error?.message);
+        setOrgMembers([]);
+        return;
+      }
+      if (data) setOrgMembers(data as unknown as OrgMember[]);
+    } catch (err) {
+      console.error("Erro ao buscar membros:", err);
+      setOrgMembers([]);
+    }
+  }, [user]);
+
   const fetchOrgData = useCallback(async () => {
     if (!user) return;
     try {
-      // Check if user belongs to an org
       const { data: membership, error: memberError } = await supabase
         .from("organization_members" as any)
         .select("org_id")
         .eq("user_id", user.id)
         .limit(1);
 
-      if (memberError) {
-        console.warn("Erro ao carregar organization_members:", memberError?.message);
-        setOrgInfo(null);
-        return;
-      }
-
-      if (!membership || membership.length === 0) {
+      if (memberError || !membership || membership.length === 0) {
         setOrgInfo(null);
         return;
       }
 
       const orgId = (membership[0] as any).org_id;
 
-      // Get org info
       const { data: org, error: orgError } = await supabase
         .from("organizations" as any)
         .select("*")
         .eq("id", orgId)
         .single();
 
-      if (orgError) {
-        console.warn("Erro ao carregar organizations:", orgError?.message);
+      if (orgError || !org) {
         setOrgInfo(null);
         return;
       }
 
-      if (org) {
-        const o = org as any;
-        setOrgInfo({ id: o.id, name: o.name, plan: o.plan });
+      const o = org as any;
+      setOrgInfo({ id: o.id, name: o.name, plan: o.plan });
 
-        const [templatesRes, promptsRes, membersRes] = await Promise.all([
-          supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-          supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-          supabase.from("team_members" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-        ]);
-        if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
-        if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
-        if (membersRes.data) setOrgMembers(membersRes.data as unknown as OrgMember[]);
-      }
+      const [templatesRes, promptsRes] = await Promise.all([
+        supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+        supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+      ]);
+      if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
+      if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
     } catch (err) {
-      console.error("Erro ao buscar dados da organização:", err);
       setOrgInfo(null);
     }
   }, [user]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchTemplates(), fetchPrompts(), fetchHistory(), fetchOrgData()]);
+    await Promise.all([fetchTemplates(), fetchPrompts(), fetchHistory(), fetchOrgData(), fetchTeamMembers()]);
     setLoading(false);
-  }, [fetchTemplates, fetchPrompts, fetchHistory, fetchOrgData]);
+  }, [fetchTemplates, fetchPrompts, fetchHistory, fetchOrgData, fetchTeamMembers]);
 
   useEffect(() => {
     if (user) refresh();
@@ -445,25 +450,25 @@ export function useLibrary() {
     }
   }, [toast]);
 
-  const addOrgMember = useCallback(async (member: Omit<OrgMember, "id" | "org_id" | "created_at">) => {
-    if (!orgInfo) return;
+  const addOrgMember = useCallback(async (member: Omit<OrgMember, "id" | "user_id" | "created_at">) => {
+    if (!user) return;
     try {
       const { error } = await supabase.from("team_members" as any).insert({
-        org_id: orgInfo.id,
+        user_id: user.id,
         ...member,
       });
       if (error) {
         toast({ title: "Erro ao adicionar membro", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Membro adicionado" });
-        fetchOrgData();
+        fetchTeamMembers();
       }
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
-  }, [orgInfo, toast, fetchOrgData]);
+  }, [user, toast, fetchTeamMembers]);
 
-  const updateOrgMember = useCallback(async (id: string, updates: Partial<OrgMember>) => {
+  const updateOrgMember = useCallback(async (id: string, updates: Partial<Omit<OrgMember, "id" | "user_id" | "created_at">>) => {
     try {
       const { error } = await supabase.from("team_members" as any).update(updates).eq("id", id);
       if (error) {
