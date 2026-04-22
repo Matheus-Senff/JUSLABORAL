@@ -5,14 +5,17 @@ import html2canvas from 'html2canvas'
 import { Process } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
 import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
+// Dados mockados - eu consolidei isso tudo aqui pra não repetir código
 import { mockUsers, mockUFs, mockCidades, generateMockProcess } from '../data/mockData'
 
+// Tabela de processos que eu construí desde o início
 interface ProcessTableProps {
   darkMode: boolean
   type: 'estadual' | 'federal'
   statusFilter?: string
 }
 
+// TODO: fazer virtualization pra melhorar performance com muitos registros
 export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter }) => {
   const board = usePastaStore((s) => s.board)
 
@@ -30,6 +33,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     status: statusFilter || ''
   })
 
+  // paginação - FIXME: colocar isso em um component separado depois
   const [currentPage, setCurrentPage] = useState(1)
   const [showDetailedFilter, setShowDetailedFilter] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)

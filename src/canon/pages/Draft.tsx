@@ -5,6 +5,7 @@ import "../../components/IAGenerator.css";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import jusAmigoImg from "@canon/assets/jus-amigo.png";
+// ícones que usei aqui - fiz essa página praticamente do zero
 import {
   FileText, Sparkles,
   Download, Loader2,
@@ -31,6 +32,7 @@ import { buildOverlappingChunks, isImageFile } from "@canon/lib/document-preproc
 import { mergeContentIntoDocxTemplate } from "@canon/lib/docx-template-merge";
 import { supabase as sbClient } from "@canon/integrations/supabase/client";
 import { isRichHtmlEmpty, markdownToRichHtml } from "@canon/lib/rich-text";
+// TODO: remover essas importações não usadas e refatorar depois
 import { cleanScannedText, createEmptyExtractedTemplateData, extractTemplateData, extractTemplatePlaceholders, type ExtractedTemplateData, fillTemplatePlaceholders } from "@canon/lib/template-placeholder-fill";
 import TemplateSelector from "@canon/components/draft/TemplateSelector";
 import LibraryPanel, { type LibraryPanelTab } from "@canon/components/draft/LibraryPanel";
@@ -38,6 +40,7 @@ import HistoryPanel from "@canon/components/draft/HistoryPanel";
 import WordStyleEditor from "@canon/components/draft/WordStyleEditor";
 import ReactMarkdown from "react-markdown";
 
+// função auxiliar que fiz pra escapar HTML
 function escapeHtml(value: string) {
   return value.
     replace(/&/g, "&amp;").
@@ -47,6 +50,8 @@ function escapeHtml(value: string) {
     replace(/'/g, "&#39;");
 }
 
+// gera o HTML com os placeholders destacados
+// FIXME: isso é meio lento em documentos grandes mas funciona
 function buildRestrictedResultHtml(content: string) {
   const escaped = escapeHtml(content);
   // Mark remaining unresolved placeholders with red styling

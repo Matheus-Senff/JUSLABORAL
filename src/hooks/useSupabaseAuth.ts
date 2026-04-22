@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 
+// Hook que eu criei pra gerenciar autenticação com Supabase
 export const useSupabaseAuth = () => {
     const [user, setUser] = useState<User | null>(null)
     const [session, setSession] = useState<Session | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
+    // TODO: refatorar isso pra usar context no lugar de props
     useEffect(() => {
         let isMounted = true
 
@@ -19,10 +21,12 @@ export const useSupabaseAuth = () => {
                 if (isMounted) {
                     setSession(session)
                     setUser(session?.user ?? null)
+                    // console.log('sessão carregada:', session?.user?.email) // TODO: remover depois
                 }
             } catch (err) {
                 if (isMounted) {
                     setError(err instanceof Error ? err.message : 'Erro ao carregar sessão')
+                    console.error('erro na sessão:', err) // FIXME: lembrar de remover log
                 }
             } finally {
                 if (isMounted) {
@@ -33,6 +37,7 @@ export const useSupabaseAuth = () => {
 
         getSession()
 
+        // Subscribe pra mudanças de autenticação
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (isMounted) {
                 setSession(session)

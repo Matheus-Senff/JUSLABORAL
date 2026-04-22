@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase/client'
 import type { Compromisso } from '@/components/pasta/CompromissoModal'
 
+// Hook que gerencia todos os compromissos do usuário (eu fiz esse)
 export const useSupabaseCompromissos = (userId: string | undefined) => {
     const [compromissos, setCompromissos] = useState<Compromisso[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    // Carregar compromissos do Supabase
+    // Carregar compromissos do BD e sincronizar em real-time
     useEffect(() => {
         if (!userId) {
             setCompromissos([])
@@ -20,6 +21,7 @@ export const useSupabaseCompromissos = (userId: string | undefined) => {
                 setError(null)
                 setLoading(true)
 
+                // Query no Supabase
                 const { data, error: fetchError } = await supabase
                     .from('compromissos')
                     .select('*')
@@ -28,6 +30,7 @@ export const useSupabaseCompromissos = (userId: string | undefined) => {
 
                 if (fetchError) throw fetchError
                 setCompromissos(data || [])
+                console.log('compromissos carregados:', data?.length) // debug
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Erro ao carregar compromissos'
                 setError(message)
@@ -39,7 +42,8 @@ export const useSupabaseCompromissos = (userId: string | undefined) => {
 
         fetchCompromissos()
 
-        // Subscribe to realtime changes
+        // Subscribe to realtime changes - sincronização automática
+        // TODO: melhorar isso depois pra não fazer tantas queries
         const channel = supabase
             .channel(`compromissos:${userId}`)
             .on(

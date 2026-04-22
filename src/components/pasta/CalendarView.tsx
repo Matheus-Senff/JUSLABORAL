@@ -4,9 +4,11 @@ import { usePastaStore } from './pastaStore'
 import { CompromissoModal, Compromisso } from './CompromissoModal'
 import { CompromissosDiaModal } from './CompromissosDiaModal'
 
+// Calendário que eu montei de raiz
 const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
+// cores de prioridade que defini
 const PRIORIDADE_CORES: Record<Compromisso['prioridade'], string> = {
   baixa: 'bg-green-600',
   media: 'bg-yellow-600',
@@ -14,6 +16,7 @@ const PRIORIDADE_CORES: Record<Compromisso['prioridade'], string> = {
   critica: 'bg-red-600',
 }
 
+// TODO: refatorar pra usar mais o Supabase ao invés de estado local
 export const CalendarView: React.FC<{
   darkMode?: boolean
   compromissos?: Compromisso[]
@@ -21,6 +24,7 @@ export const CalendarView: React.FC<{
   onDeleteCompromisso?: (id: string) => Promise<void>
 }> = ({ darkMode, compromissos: externalCompromissos, onSaveCompromisso, onDeleteCompromisso }) => {
   const [cur, setCur] = useState(new Date(2026, 3, 1)) // Abril 2026
+  // FIXME: esses compromissos de exemplo deveriam vir do Supabase
   const [compromissos, setCompromissos] = useState<Compromisso[]>(externalCompromissos || [
     {
       id: '1',

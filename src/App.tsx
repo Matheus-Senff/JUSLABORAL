@@ -13,9 +13,11 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { useSupabaseAuth } from './hooks/useSupabaseAuth'
 import { useSupabaseCompromissos } from './hooks/useSupabaseCompromissos'
 
+// Eu montei o layout principal aqui
 function AppContent() {
   const { darkMode, toggleDarkMode } = useTheme()
   const { user, isAuthenticated, loading: authLoading } = useSupabaseAuth()
+  // TODO: refatorar isso depois pra ficar mais limpo
   const { compromissos, saveCompromisso, deleteCompromisso, loading: compromissosLoading } = useSupabaseCompromissos(user?.id)
   const [activePage, setActivePage] = React.useState<'agenda' | 'clientes' | 'estadual' | 'federal' | 'pasta' | 'canon' | 'calculo' | 'configuracoes' | 'estadual-status' | 'federal-status' | 'compromissos'>('compromissos')
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null)

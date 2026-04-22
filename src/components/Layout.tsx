@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Calendar, Scale, Gavel, Cpu, Calculator, Folder, Moon, Sun, Users, Settings } from 'lucide-react'
 
+// Interface do layout - eu refatorei isso do projeto antigo
 interface LayoutProps {
   children: React.ReactNode
   activePage: string
@@ -10,6 +11,7 @@ interface LayoutProps {
   onDarkModeToggle: () => void
 }
 
+// TODO: mover essas interfaces pra um arquivo separado
 interface SidebarProps {
   activePage: string
   selectedStatus?: string | null
@@ -25,6 +27,7 @@ interface HeaderProps {
   onPageChange: (page: string) => void
 }
 
+// Main layout component - estrutura base que defini
 export const Layout: React.FC<LayoutProps> = ({
   children,
   activePage,
@@ -35,7 +38,7 @@ export const Layout: React.FC<LayoutProps> = ({
 }: LayoutProps) => {
   return (
     <div className={`flex h-screen ${darkMode ? 'bg-dark-900' : 'bg-gray-50'}`}>
-      {/* Sidebar */}
+      {/* Sidebar - navegação à esquerda */}
       <Sidebar activePage={activePage} selectedStatus={selectedStatus} onPageChange={onPageChange} darkMode={darkMode} onDarkModeToggle={onDarkModeToggle} />
 
       {/* Main Content */}
@@ -76,7 +79,9 @@ export const Layout: React.FC<LayoutProps> = ({
   )
 }
 
+// Sidebar que eu montei com os botões de navegação
 const Sidebar: React.FC<SidebarProps> = ({ activePage, selectedStatus, onPageChange, darkMode, onDarkModeToggle }: SidebarProps) => {
+  // FIXME: esse dropdown tá meio bugado mas funciona
   const [showEstadualDropdown, setShowEstadualDropdown] = React.useState(false)
   const [showFederalDropdown, setShowFederalDropdown] = React.useState(false)
 
