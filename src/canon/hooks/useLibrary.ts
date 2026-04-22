@@ -77,66 +77,113 @@ export function useLibrary() {
 
   const fetchTemplates = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("user_templates")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setTemplates(data as unknown as UserTemplate[]);
+    try {
+      const { data, error } = await supabase
+        .from("user_templates")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.warn("Erro ao carregar user_templates:", error?.message);
+        setTemplates([]);
+        return;
+      }
+      if (data) setTemplates(data as unknown as UserTemplate[]);
+    } catch (err) {
+      console.error("Erro ao buscar templates:", err);
+      setTemplates([]);
+    }
   }, [user]);
 
   const fetchPrompts = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("saved_prompts")
-      .select("*")
-      .order("is_favorite", { ascending: false })
-      .order("created_at", { ascending: false });
-    if (!error && data) setPrompts(data as unknown as SavedPrompt[]);
+    try {
+      const { data, error } = await supabase
+        .from("saved_prompts")
+        .select("*")
+        .order("is_favorite", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.warn("Erro ao carregar saved_prompts:", error?.message);
+        setPrompts([]);
+        return;
+      }
+      if (data) setPrompts(data as unknown as SavedPrompt[]);
+    } catch (err) {
+      console.error("Erro ao buscar prompts:", err);
+      setPrompts([]);
+    }
   }, [user]);
 
   const fetchHistory = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("generation_history")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (!error && data) setHistory(data as unknown as HistoryEntry[]);
+    try {
+      const { data, error } = await supabase
+        .from("generation_history")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) {
+        console.warn("Erro ao carregar generation_history:", error?.message);
+        setHistory([]);
+        return;
+      }
+      if (data) setHistory(data as unknown as HistoryEntry[]);
+    } catch (err) {
+      console.error("Erro ao buscar histórico:", err);
+      setHistory([]);
+    }
   }, [user]);
 
   const fetchOrgData = useCallback(async () => {
     if (!user) return;
-    // Check if user belongs to an org
-    const { data: membership } = await supabase
-      .from("organization_members" as any)
-      .select("org_id")
-      .eq("user_id", user.id)
-      .limit(1);
+    try {
+      // Check if user belongs to an org
+      const { data: membership, error: memberError } = await supabase
+        .from("organization_members" as any)
+        .select("org_id")
+        .eq("user_id", user.id)
+        .limit(1);
 
-    if (!membership || membership.length === 0) {
+      if (memberError) {
+        console.warn("Erro ao carregar organization_members:", memberError?.message);
+        setOrgInfo(null);
+        return;
+      }
+
+      if (!membership || membership.length === 0) {
+        setOrgInfo(null);
+        return;
+      }
+
+      const orgId = (membership[0] as any).org_id;
+
+      // Get org info
+      const { data: org, error: orgError } = await supabase
+        .from("organizations" as any)
+        .select("*")
+        .eq("id", orgId)
+        .single();
+
+      if (orgError) {
+        console.warn("Erro ao carregar organizations:", orgError?.message);
+        setOrgInfo(null);
+        return;
+      }
+
+      if (org) {
+        const o = org as any;
+        setOrgInfo({ id: o.id, name: o.name, plan: o.plan });
+
+        const [templatesRes, promptsRes] = await Promise.all([
+          supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+          supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
+        ]);
+        if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
+        if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar dados da organização:", err);
       setOrgInfo(null);
-      return;
-    }
-
-    const orgId = (membership[0] as any).org_id;
-
-    // Get org info
-    const { data: org } = await supabase
-      .from("organizations" as any)
-      .select("*")
-      .eq("id", orgId)
-      .single();
-
-    if (org) {
-      const o = org as any;
-      setOrgInfo({ id: o.id, name: o.name, plan: o.plan });
-
-      const [templatesRes, promptsRes] = await Promise.all([
-        supabase.from("shared_templates" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-        supabase.from("shared_prompts" as any).select("*").eq("org_id", orgId).order("created_at", { ascending: false }),
-      ]);
-      if (templatesRes.data) setSharedTemplates(templatesRes.data as unknown as SharedTemplate[]);
-      if (promptsRes.data) setSharedPrompts(promptsRes.data as unknown as SharedPrompt[]);
     }
   }, [user]);
 
@@ -169,25 +216,39 @@ export function useLibrary() {
 
   const addTemplate = useCallback(async (name: string, category: string, structure: Record<string, any> = {}) => {
     if (!user) return;
-    const { error } = await supabase.from("user_templates").insert({
-      user_id: user.id,
-      name,
-      category,
-      structure,
-    } as any);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Modelo criado" });
-      fetchTemplates();
+    try {
+      const { error } = await supabase.from("user_templates").insert({
+        user_id: user.id,
+        name,
+        category,
+        structure,
+      } as any);
+      if (error) {
+        console.error("Erro ao adicionar template:", error?.message);
+        toast({ title: "Erro", description: error?.message || "Falha ao salvar modelo", variant: "destructive" });
+      } else {
+        toast({ title: "Modelo criado" });
+        fetchTemplates();
+      }
+    } catch (err: any) {
+      console.error("Erro ao criar template:", err);
+      toast({ title: "Erro", description: err.message || "Falha ao salvar modelo", variant: "destructive" });
     }
   }, [user, toast, fetchTemplates]);
 
   const deleteTemplate = useCallback(async (id: string) => {
-    const { error } = await supabase.from("user_templates").delete().eq("id", id);
-    if (!error) {
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast({ title: "Modelo excluído" });
+    try {
+      const { error } = await supabase.from("user_templates").delete().eq("id", id);
+      if (error) {
+        console.error("Erro ao deletar template:", error?.message);
+        toast({ title: "Erro", description: error?.message, variant: "destructive" });
+      } else {
+        setTemplates((prev) => prev.filter((t) => t.id !== id));
+        toast({ title: "Modelo excluído" });
+      }
+    } catch (err: any) {
+      console.error("Erro ao deletar template:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
   }, [toast]);
 
@@ -236,13 +297,21 @@ export function useLibrary() {
   }, [user, fetchHistory]);
 
   const updateTemplate = useCallback(async (id: string, updates: Partial<UserTemplate>) => {
-    const { error } = await supabase
-      .from("user_templates")
-      .update(updates as any)
-      .eq("id", id);
-    if (!error) {
-      fetchTemplates();
-      toast({ title: "Modelo atualizado" });
+    try {
+      const { error } = await supabase
+        .from("user_templates")
+        .update(updates as any)
+        .eq("id", id);
+      if (error) {
+        console.error("Erro ao atualizar template:", error?.message);
+        toast({ title: "Erro", description: error?.message, variant: "destructive" });
+      } else {
+        fetchTemplates();
+        toast({ title: "Modelo atualizado" });
+      }
+    } catch (err: any) {
+      console.error("Erro ao atualizar template:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
   }, [toast, fetchTemplates]);
 

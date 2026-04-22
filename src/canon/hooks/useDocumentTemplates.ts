@@ -185,6 +185,36 @@ export function useDocumentTemplates() {
     }
   }, [toast]);
 
+  // Converter DOCX para template de texto - permite usar Modelos Word como templates
+  const convertDocxToTextTemplate = useCallback(async (file: File, templateName: string) => {
+    try {
+      // Importar função de extração localmente aqui
+      const { extractStructuredTextFromFile } = await import("@canon/lib/document-text");
+
+      const extracted = await extractStructuredTextFromFile(file);
+      if (!extracted.text.trim()) {
+        toast({ title: "Erro", description: "Não foi possível extrair texto do arquivo DOCX", variant: "destructive" });
+        return null;
+      }
+
+      return {
+        name: templateName || file.name.replace(/\.docx?$/i, ""),
+        category: "modelo", // categoria detectada automaticamente
+        structure: {
+          content: extracted.text,
+          texto: extracted.text,
+          kind: "docx",
+          sourceFile: file.name,
+          extractedAt: new Date().toISOString(),
+        }
+      };
+    } catch (err: any) {
+      console.error("Erro ao converter DOCX para template:", err);
+      toast({ title: "Erro", description: "Falha ao processar arquivo DOCX", variant: "destructive" });
+      return null;
+    }
+  }, [toast]);
+
   return {
     templates,
     loading,
@@ -193,5 +223,6 @@ export function useDocumentTemplates() {
     uploadTemplate,
     renameTemplate,
     deleteTemplate,
+    convertDocxToTextTemplate, // Nova funcionalidade
   };
 }
