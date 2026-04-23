@@ -163,17 +163,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             data: new Date().toLocaleString('pt-BR'),
         }
         setNotes(prev => [note, ...prev])
-        const hist: ProcessHistoryEntry = {
-            id: Date.now().toString() + 'h',
-            processId: process.id,
-            tipo: 'auditoria',
-            texto: `Anotação adicionada${note.titulo ? ': ' + note.titulo : ''}`,
-            autor: process.responsavel,
-            data: new Date().toLocaleString('pt-BR'),
-        }
-        setHistory(prev => [hist, ...prev])
         setNoteForm({ titulo: '', numeroCat: '', senhaInss: '', rg: '', observacao: '' })
-        setShowNoteModal(false)
     }
 
     const handleDeleteNote = (id: string) => {
@@ -571,56 +561,117 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             {/* ===== MODAL ANOTAÇÃO ===== */}
             {showNoteModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-md`}>
-                        <div className={`flex items-center justify-between p-5 border-b ${border}`}>
-                            <h3 className={`text-base font-bold ${text}`}>Anotação</h3>
-                            <button onClick={() => setShowNoteModal(false)} className={`p-1 rounded hover:bg-gray-200 ${muted}`}><X size={20} /></button>
+                    <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-md max-h-[90vh] flex flex-col`}>
+                        <div className={`flex items-center justify-between p-5 border-b ${border} shrink-0`}>
+                            <h3 className={`text-base font-bold ${text}`}>Anotações do Processo</h3>
+                            <button onClick={() => setShowNoteModal(false)} className={`p-1 rounded hover:opacity-70 ${muted}`}><X size={20} /></button>
                         </div>
-                        <div className="p-5 space-y-3">
-                            <div>
-                                <label className={labelCls}>Título <span className="normal-case font-normal opacity-60 text-xs">(opcional)</span></label>
-                                <input
-                                    type="text"
-                                    value={noteForm.titulo}
-                                    onChange={e => setNoteForm(f => ({ ...f, titulo: e.target.value }))}
-                                    placeholder="Título da anotação"
-                                    className={inputCls}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className={labelCls}>Número CAT</label>
-                                    <input type="text" value={noteForm.numeroCat} onChange={e => setNoteForm(f => ({ ...f, numeroCat: e.target.value }))} placeholder="0000000000" className={inputCls} />
+
+                        <div className="overflow-y-auto flex-1 p-5 space-y-5">
+                            {/* Notas salvas */}
+                            {notes.length > 0 && (
+                                <div className="space-y-3">
+                                    <p className={`text-xs font-bold uppercase tracking-wider ${muted}`}>Salvas</p>
+                                    {notes.map(note => (
+                                        <div key={note.id} className={`rounded-lg border ${border} p-3`}>
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div>
+                                                    {note.titulo && <p className={`font-semibold text-sm ${text}`}>{note.titulo}</p>}
+                                                    <span className={`text-xs ${muted}`}>{note.data}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDeleteNote(note.id)}
+                                                    className="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition ml-2 shrink-0"
+                                                    title="Excluir anotação"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-1.5 text-xs">
+                                                {note.numeroCat && (
+                                                    <div className={`rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>Nº CAT</span>
+                                                        <span className={text}>{note.numeroCat}</span>
+                                                    </div>
+                                                )}
+                                                {note.senhaInss && (
+                                                    <div className={`rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>Senha INSS</span>
+                                                        <span className={text}>{note.senhaInss}</span>
+                                                    </div>
+                                                )}
+                                                {note.rg && (
+                                                    <div className={`rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>RG</span>
+                                                        <span className={text}>{note.rg}</span>
+                                                    </div>
+                                                )}
+                                                {note.observacao && (
+                                                    <div className={`col-span-2 rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>Observação</span>
+                                                        <span className={`${text} whitespace-pre-wrap`}>{note.observacao}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div>
-                                    <label className={labelCls}>Senha INSS</label>
-                                    <input type="text" value={noteForm.senhaInss} onChange={e => setNoteForm(f => ({ ...f, senhaInss: e.target.value }))} placeholder="••••••••" className={inputCls} />
+                            )}
+
+                            {/* Formulário nova anotação */}
+                            <div className={notes.length > 0 ? `pt-4 border-t ${border}` : ''}>
+                                <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${muted}`}>Nova Anotação</p>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className={labelCls}>Título <span className="normal-case font-normal opacity-60 text-xs">(opcional)</span></label>
+                                        <input
+                                            type="text"
+                                            value={noteForm.titulo}
+                                            onChange={e => setNoteForm(f => ({ ...f, titulo: e.target.value }))}
+                                            placeholder="Título da anotação"
+                                            className={inputCls}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className={labelCls}>Número CAT</label>
+                                            <input type="text" value={noteForm.numeroCat} onChange={e => setNoteForm(f => ({ ...f, numeroCat: e.target.value }))} placeholder="0000000000" className={inputCls} />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>Senha INSS</label>
+                                            <input type="text" value={noteForm.senhaInss} onChange={e => setNoteForm(f => ({ ...f, senhaInss: e.target.value }))} placeholder="••••••••" className={inputCls} />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>RG</label>
+                                            <input type="text" value={noteForm.rg} onChange={e => setNoteForm(f => ({ ...f, rg: e.target.value }))} placeholder="00.000.000-0" className={inputCls} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Observação</label>
+                                        <textarea
+                                            value={noteForm.observacao}
+                                            onChange={e => setNoteForm(f => ({ ...f, observacao: e.target.value }))}
+                                            rows={3}
+                                            placeholder="Observações..."
+                                            className={`${inputCls} resize-none`}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSaveNote}
+                                        className="w-full px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-white text-sm font-bold transition flex items-center justify-center gap-1.5 shadow"
+                                    >
+                                        <Save size={14} /> Salvar Anotação
+                                    </button>
                                 </div>
-                                <div>
-                                    <label className={labelCls}>RG</label>
-                                    <input type="text" value={noteForm.rg} onChange={e => setNoteForm(f => ({ ...f, rg: e.target.value }))} placeholder="00.000.000-0" className={inputCls} />
-                                </div>
-                            </div>
-                            <div>
-                                <label className={labelCls}>Observação</label>
-                                <textarea
-                                    value={noteForm.observacao}
-                                    onChange={e => setNoteForm(f => ({ ...f, observacao: e.target.value }))}
-                                    rows={3}
-                                    placeholder="Observações..."
-                                    className={`${inputCls} resize-none`}
-                                />
                             </div>
                         </div>
-                        <div className={`flex gap-2 p-5 border-t ${border}`}>
-                            <button onClick={() => setShowNoteModal(false)} className={`flex-1 px-4 py-2 rounded-lg text-sm transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600' : 'bg-gray-200 hover:bg-gray-300'} ${text}`}>
-                                Cancelar
-                            </button>
+
+                        <div className={`p-4 border-t ${border} shrink-0`}>
                             <button
-                                onClick={handleSaveNote}
-                                className="flex-1 px-4 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium transition flex items-center justify-center gap-1.5"
+                                onClick={() => setShowNoteModal(false)}
+                                className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                             >
-                                <Save size={14} /> Salvar
+                                Fechar
                             </button>
                         </div>
                     </div>
