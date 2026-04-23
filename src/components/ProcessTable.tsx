@@ -32,7 +32,12 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     cidade: '',
     uf: '',
     responsavel: '',
-    status: statusFilter || ''
+    status: statusFilter || '',
+    setor: '',
+    nProcesso: '',
+    dataAlteracaoSetor: '',
+    dataAlteracaoResponsavel: '',
+    dataAlteracaoStatus: '',
   })
 
   // paginação - FIXME: colocar isso em um component separado depois
@@ -60,7 +65,9 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     cidade: [],
     uf: [],
     responsavel: [],
-    status: []
+    status: [],
+    setor: [],
+    nProcesso: [],
   })
   const [formData, setFormData] = useState({
     atividade: '',
@@ -188,9 +195,19 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
         matches = matches && process.responsavel.toLowerCase().includes(filters.responsavel.toLowerCase())
       }
 
-      // Status
+      // Status - correspondência exata para evitar falsos positivos
       if (filters.status && matches) {
-        matches = matches && process.status.toLowerCase().includes(filters.status.toLowerCase())
+        matches = matches && process.status.toLowerCase() === filters.status.toLowerCase()
+      }
+
+      // Setor
+      if (filters.setor && matches) {
+        matches = matches && (process.setor || '').toLowerCase().includes(filters.setor.toLowerCase())
+      }
+
+      // N Processo
+      if (filters.nProcesso && matches) {
+        matches = matches && (process.nProcesso || '').toLowerCase().includes(filters.nProcesso.toLowerCase())
       }
 
       return matches
@@ -281,7 +298,9 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
         cidade: [],
         uf: [],
         responsavel: [],
-        status: []
+        status: [],
+        setor: [],
+        nProcesso: [],
       })
     }
   }
@@ -494,6 +513,74 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
             </div>
           </div>
         </div>
+
+        {/* Filtro Detalhado expandido */}
+        {showDetailedFilter && (
+          <div className={`mt-4 pt-4 border-t ${borderColor}`}>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Setor</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Jurídico"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.setor}
+                  onChange={(e) => handleFilterChange('setor', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>N° Processo</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 0000001-01.2024..."
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.nProcesso}
+                  onChange={(e) => handleFilterChange('nProcesso', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Status</label>
+                <select
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {['Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado'].map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Setor</label>
+                <input
+                  type="date"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.dataAlteracaoSetor}
+                  onChange={(e) => handleFilterChange('dataAlteracaoSetor', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Responsável</label>
+                <input
+                  type="date"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.dataAlteracaoResponsavel}
+                  onChange={(e) => handleFilterChange('dataAlteracaoResponsavel', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Status</label>
+                <input
+                  type="date"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.dataAlteracaoStatus}
+                  onChange={(e) => handleFilterChange('dataAlteracaoStatus', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}

@@ -90,8 +90,8 @@ export const Agenda: React.FC<AgendaProps> = ({ darkMode, processEvents = [] }) 
             <div
               key={index}
               className={`min-h-32 p-2 rounded-lg border ${day === null
-                  ? darkMode ? 'bg-dark-800 border-dark-700' : 'bg-gray-100 border-gray-200'
-                  : darkMode ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-200'
+                ? darkMode ? 'bg-dark-800 border-dark-700' : 'bg-gray-100 border-gray-200'
+                : darkMode ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-200'
                 }`}
             >
               {day && (
