@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Download, FileText, PencilIcon, Paperclip, ExternalLink, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sliders, X } from 'lucide-react'
+import { ProcessDetailView } from './ProcessDetailView'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
-import { Process } from '../types'
+import { Process, ProcessEvent } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
 import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
 // Dados mockados - eu consolidei isso tudo aqui pra não repetir código
@@ -13,10 +14,11 @@ interface ProcessTableProps {
   darkMode: boolean
   type: 'estadual' | 'federal'
   statusFilter?: string
+  onAddEvent?: (event: ProcessEvent) => void
 }
 
 // TODO: fazer virtualization pra melhorar performance com muitos registros
-export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter }) => {
+export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter, onAddEvent }) => {
   const board = usePastaStore((s) => s.board)
 
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -47,6 +49,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [editingProcess, setEditingProcess] = useState<Process | null>(null)
   const [editFormData, setEditFormData] = useState<Process | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showDetailView, setShowDetailView] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({
     numero: [],
     parceiro: [],
@@ -72,6 +76,14 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const itemsPerPage = 10
 
   // Mock data - 26,103 processes
+  const _telefones = ['(47) 9 9801-0012', '(47) 9 8823-0043', '(11) 9 7734-0003', '(41) 9 6645-0004', '(51) 9 5556-0075', '(21) 9 4467-0086']
+  const _naturezas = ['Acidente de Trabalho', 'Doença Ocupacional', 'Invalidez Permanente', 'Auxílio-Doença', 'Aposentadoria por Invalidez']
+  const _tipos = ['CAT', 'Benefício Previdenciário', 'Indenizatório', 'Revisional', 'Recursal']
+  const _orgaos = ['INSS', 'TRT 12ª Região', 'SEJU', 'MTE', 'TRT 4ª Região', 'TRT 9ª Região']
+  const _fases = ['Administrativo', 'Judicial 1ª Instância', 'Judicial 2ª Instância', 'Recursal', 'Execução']
+  const _setores = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
+  const _andamentos = ['Em análise', 'Aguardando documentação', 'Em julgamento', 'Recurso pendente', 'Aguardando perícia']
+  const _emails = ['cliente@email.com', 'contato@provedor.com.br', 'pessoal@gmail.com', 'trabalho@outlook.com']
   const mockProcesses: Process[] = Array.from({ length: 26103 }, (_, i) => {
     const process = generateMockProcess(i + 1, type)
     return {
@@ -86,7 +98,17 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       responsavel: mockUsers[i % (mockUsers.length - 1) + 1]?.name || 'Não atribuído',
       dataInicio: process.dataInicio,
       status: process.status,
-      ultimaAlteracao: new Date(2026, 3, Math.floor(Math.random() * 15) + 1, Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toLocaleString('pt-BR')
+      ultimaAlteracao: new Date(2026, 3, Math.floor(Math.random() * 15) + 1, Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toLocaleString('pt-BR'),
+      telefone: _telefones[i % _telefones.length],
+      email: _emails[i % _emails.length],
+      natureza: _naturezas[i % _naturezas.length],
+      tipo: _tipos[i % _tipos.length],
+      orgao: _orgaos[i % _orgaos.length],
+      endereco: `Rua ${['das Flores', 'Brasil', 'XV de Novembro', 'Independência'][i % 4]}, ${(i % 999) + 1} - ${process.comarca}`,
+      nProcesso: `${String(i + 1).padStart(7, '0')}-${(i % 99) + 1}.${2020 + (i % 6)}.5.12.${(i % 9999).toString().padStart(4, '0')}`,
+      fase: _fases[i % _fases.length],
+      setor: _setores[i % _setores.length],
+      andamento: _andamentos[i % _andamentos.length],
     }
   })
 
@@ -292,7 +314,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
 
   const handleProcessClick = (process: Process) => {
     setSelectedProcess(process)
-    setShowProcessDetailModal(true)
+    setShowDetailView(true)
   }
 
   const handleEditClick = (process: Process) => {
@@ -318,11 +340,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     if (index !== -1) {
       mockProcesses.splice(index, 1)
     }
-  }
-
-  const handleProcessClick_old = (process: Process) => {
-    setSelectedProcess(process)
-    setShowProcessDetailModal(true)
   }
 
   const handleSchedulingClick = () => {
@@ -373,6 +390,18 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
         card.linkedProcessId === selectedProcess.id.toString() &&
         card.linkedProcessType === type
       )
+  }
+
+  if (showDetailView && selectedProcess) {
+    return (
+      <ProcessDetailView
+        process={selectedProcess}
+        type={type}
+        darkMode={darkMode}
+        onBack={() => setShowDetailView(false)}
+        onAddEvent={onAddEvent}
+      />
+    )
   }
 
   const bgColor = darkMode ? 'bg-dark-900' : 'bg-gray-50'
@@ -618,7 +647,34 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 </td>
                 <td className="px-2 py-1"><input type="text" placeholder="Filtro" value={filters.responsavel} onChange={(e) => handleFilterChange('responsavel', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
                 <td className="px-2 py-1"><input type="text" placeholder="Filtro" value={filters.dataInicio} onChange={(e) => handleFilterChange('dataInicio', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
-                <td className="px-2 py-1"><input type="text" placeholder="Filtro" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
+                <td className="px-2 py-1 relative">
+                  <button
+                    onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                    className={`w-full px-1 py-0.5 text-xs border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span className="truncate">{filters.status || 'Filtro'}</span>
+                    <span className="opacity-50 ml-1">▼</span>
+                  </button>
+                  {showStatusDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-52 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={() => { handleFilterChange('status', ''); setShowStatusDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.status ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >
+                        Todos
+                      </button>
+                      {['Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado'].map(opt => (
+                        <button
+                          key={opt}
+                          onClick={() => { handleFilterChange('status', opt); setShowStatusDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.status === opt ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </td>
                 <td className="px-2 py-1 relative">
                   <button
                     onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -812,8 +868,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
         </div>
       )}
 
-      {/* Process Detail Modal */}
-      {showProcessDetailModal && selectedProcess && (
+      {/* Process Detail Modal - replaced by full-page ProcessDetailView above */}
+      {false && selectedProcess && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
             {/* Modal Header */}

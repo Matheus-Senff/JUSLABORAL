@@ -13,6 +13,17 @@ export interface Process {
   dataInicio: string
   status: string
   ultimaAlteracao: string
+  // campos extras de detalhe
+  telefone?: string
+  email?: string
+  natureza?: string
+  tipo?: string
+  orgao?: string
+  endereco?: string
+  nProcesso?: string
+  fase?: string
+  setor?: string
+  andamento?: string
 }
 
 export interface AgendaEvent {
@@ -28,4 +39,43 @@ export interface AgendaEvent {
   parceiro?: string
   observacao?: string
   status?: string
+  processId?: string
+  processType?: 'estadual' | 'federal'
+}
+
+export interface ProcessHistoryEntry {
+  id: string
+  processId: string
+  tipo: 'status' | 'setor' | 'auditoria' | 'comentario'
+  campo?: string
+  valorAnterior?: string
+  valorNovo?: string
+  texto?: string
+  autor: string
+  data: string
+}
+
+export interface ProcessEvent {
+  id: string
+  processId: string
+  tipoEvento: 'Perícia Adm.' | 'Perícia Jur.' | 'Audiência' | 'Reunião Cliente'
+  data: string
+  hora: string
+  endereco?: string
+  cliente: string
+  responsavel: string
+  parceiro: string
+  processType?: 'estadual' | 'federal'
+}
+
+export interface ProcessNote {
+  id: string
+  processId: string
+  titulo: string
+  numeroCat?: string
+  senhaInss?: string
+  rg?: string
+  observacao?: string
+  autor: string
+  data: string
 }

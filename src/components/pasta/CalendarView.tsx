@@ -108,15 +108,16 @@ export const CalendarView: React.FC<{
 
   const handleSaveCompromisso = async (compromisso: Compromisso) => {
     try {
-      // Optimistic update - atualizar estado local imediatamente
-      const existeNaLista = compromissos.some(c => c.id === compromisso.id)
-      if (existeNaLista) {
-        setCompromissos(compromissos.map(c => c.id === compromisso.id ? compromisso : c))
-      } else {
-        setCompromissos([...compromissos, compromisso])
-      }
+      // Functional update evita closure stale (importante para remarcar onde onSave é chamado 2x)
+      setCompromissos(prev => {
+        const existeNaLista = prev.some(c => c.id === compromisso.id)
+        if (existeNaLista) {
+          return prev.map(c => c.id === compromisso.id ? compromisso : c)
+        } else {
+          return [...prev, compromisso]
+        }
+      })
 
-      // Enviar para backend
       if (onSaveCompromisso) {
         await onSaveCompromisso(compromisso)
       }
