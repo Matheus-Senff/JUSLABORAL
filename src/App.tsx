@@ -24,6 +24,15 @@ function AppContent() {
   const handleAddProcessEvent = (event: ProcessEvent) => {
     setProcessEvents(prev => [...prev, event])
   }
+  // Para abrir processo vindo da Agenda
+  const [openProcessId, setOpenProcessId] = React.useState<string | null>(null)
+  const [openProcessType, setOpenProcessType] = React.useState<'estadual' | 'federal' | null>(null)
+
+  const handleOpenProcess = (processId: string, type: 'estadual' | 'federal') => {
+    setOpenProcessId(processId)
+    setOpenProcessType(type)
+    setActivePage(type)
+  }
   const [activePage, setActivePage] = React.useState<'agenda' | 'clientes' | 'estadual' | 'federal' | 'pasta' | 'canon' | 'calculo' | 'configuracoes' | 'estadual-status' | 'federal-status' | 'compromissos'>('compromissos')
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null)
 
@@ -67,10 +76,10 @@ function AppContent() {
 
   return (
     <Layout activePage={activePage} selectedStatus={selectedStatus} onPageChange={handlePageChange} darkMode={darkMode} onDarkModeToggle={toggleDarkMode}>
-      {activePage === 'agenda' && <Agenda darkMode={darkMode} processEvents={processEvents} />}
+      {activePage === 'agenda' && <Agenda darkMode={darkMode} processEvents={processEvents} onOpenProcess={handleOpenProcess} />}
       {activePage === 'clientes' && <ClientsTable darkMode={darkMode} />}
-      {activePage === 'estadual' && <ProcessTable darkMode={darkMode} type="estadual" onAddEvent={handleAddProcessEvent} />}
-      {activePage === 'federal' && <ProcessTable darkMode={darkMode} type="federal" onAddEvent={handleAddProcessEvent} />}
+      {activePage === 'estadual' && <ProcessTable darkMode={darkMode} type="estadual" onAddEvent={handleAddProcessEvent} initialProcessId={openProcessType === 'estadual' ? openProcessId ?? undefined : undefined} />}
+      {activePage === 'federal' && <ProcessTable darkMode={darkMode} type="federal" onAddEvent={handleAddProcessEvent} initialProcessId={openProcessType === 'federal' ? openProcessId ?? undefined : undefined} />}
       {(activePage === 'estadual-status' || activePage === 'federal-status') && selectedStatus && (
         <ProcessTable darkMode={darkMode} type={activePage === 'estadual-status' ? 'estadual' : 'federal'} statusFilter={selectedStatus} onAddEvent={handleAddProcessEvent} />
       )}

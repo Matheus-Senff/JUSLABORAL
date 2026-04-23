@@ -133,6 +133,9 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             responsavel: process.responsavel,
             parceiro: process.parceiro,
             processType: type,
+            cpf: process.cpf,
+            natureza: process.natureza,
+            status: 'Agendado',
         }
         setEvents(prev => [ev, ...prev])
         if (onAddEvent) onAddEvent(ev)
@@ -230,10 +233,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             key={t.id}
                             onClick={() => setActiveTab(t.id)}
                             className={`px-5 py-2 text-sm font-semibold rounded-lg transition ${activeTab === t.id
-                                    ? t.id === 'detalhes' ? 'bg-blue-600 text-white shadow'
-                                        : t.id === 'historico' ? 'bg-purple-600 text-white shadow'
-                                            : 'bg-green-700 text-white shadow'
-                                    : darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                ? t.id === 'detalhes' ? 'bg-blue-600 text-white shadow'
+                                    : t.id === 'historico' ? 'bg-purple-600 text-white shadow'
+                                        : 'bg-green-700 text-white shadow'
+                                : darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                                 }`}
                         >
                             {t.label}

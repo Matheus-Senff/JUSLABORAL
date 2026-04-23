@@ -15,10 +15,11 @@ interface ProcessTableProps {
   type: 'estadual' | 'federal'
   statusFilter?: string
   onAddEvent?: (event: ProcessEvent) => void
+  initialProcessId?: string
 }
 
 // TODO: fazer virtualization pra melhorar performance com muitos registros
-export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter, onAddEvent }) => {
+export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter, onAddEvent, initialProcessId }) => {
   const board = usePastaStore((s) => s.board)
 
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -128,6 +129,16 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       handleFilterChange('responsavel', selectedUserName)
     }
   }, [selectedUser])
+
+  // Auto-abrir processo quando initialProcessId é fornecido (ex: vindo da Agenda)
+  useEffect(() => {
+    if (!initialProcessId) return
+    const found = mockProcesses.find(p => p.id === initialProcessId)
+    if (found) {
+      setSelectedProcess(found)
+      setShowDetailView(true)
+    }
+  }, [initialProcessId])
 
   // Filter data
   const filteredProcesses = useMemo(() => {

@@ -66,6 +66,18 @@ export interface ProcessEvent {
   responsavel: string
   parceiro: string
   processType?: 'estadual' | 'federal'
+  cpf?: string
+  natureza?: string
+  status?: string
+}
+
+export interface EventHistoryEntry {
+  id: string
+  eventId: string
+  titulo: 'Status do Evento' | 'Auditoria' | 'Comentário'
+  descricao: string
+  autor: string
+  data: string
 }
 
 export interface ProcessNote {
