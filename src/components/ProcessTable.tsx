@@ -57,6 +57,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDetailView, setShowDetailView] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showSetorFilterDropdown, setShowSetorFilterDropdown] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({
     numero: [],
     parceiro: [],
@@ -531,13 +532,30 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
                 <label className={`block text-xs font-medium mb-1 ${textColor}`}>Setor</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Jurídico"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.setor}
-                  onChange={(e) => handleFilterChange('setor', e.target.value)}
-                />
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSetorFilterDropdown(!showSetorFilterDropdown)}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span>{filters.setor || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showSetorFilterDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={() => { handleFilterChange('setor', ''); setShowSetorFilterDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso'].map(s => (
+                        <button
+                          key={s}
+                          onClick={() => { handleFilterChange('setor', s); setShowSetorFilterDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.setor === s ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{s}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className={`block text-xs font-medium mb-1 ${textColor}`}>N° Processo</label>
@@ -815,17 +833,17 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   onClick={() => handleProcessClick(process)}
                   className={`border-b ${borderColor} hover:${darkMode ? 'bg-dark-600' : 'bg-gray-50'} transition cursor-pointer`}
                 >
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.numero}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.parceiro}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.cliente}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.cpf}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.processo}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.cidade}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.uf}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.responsavel}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.dataInicio}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.status}</td>
-                  <td className={`px-2 py-1 text-xs ${textColor}`}>{process.ultimaAlteracao}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.numero}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.parceiro}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.cliente}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.cpf}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.processo}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.cidade}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.uf}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.responsavel}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.dataInicio}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.status}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.ultimaAlteracao}</td>
                   <td className="px-2 py-1 text-right">
                     <div className="flex justify-end gap-2">
                       <button

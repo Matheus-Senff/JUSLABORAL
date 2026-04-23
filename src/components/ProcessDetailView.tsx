@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import {
     ChevronLeft, FileText, Paperclip, Calendar, StickyNote,
     Plus, X, Clock, MapPin, Save, History, MessageSquare
 } from 'lucide-react'
 import { Process, ProcessHistoryEntry, ProcessEvent, ProcessNote } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
+import { mockUsers } from '../data/mockData'
 
 interface ProcessDetailViewProps {
     process: Process
@@ -24,6 +25,8 @@ const STATUS_OPTIONS = [
 ]
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
+const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
+const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
 
 export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     process, type, darkMode, onBack, onAddEvent
@@ -80,6 +83,26 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         rg: '',
         observacao: '',
     })
+
+    // edição de campos do processo
+    const [editForm, setEditForm] = useState({
+        telefone: process.telefone || '',
+        email: process.email || '',
+        parceiro: process.parceiro || '',
+        natureza: process.natureza || '',
+        tipo: process.tipo || '',
+        nProcesso: process.nProcesso || '',
+        dataInicio: process.dataInicio || '',
+        orgao: process.orgao || '',
+        endereco: process.endereco || '',
+        fase: process.fase || '',
+        setor: process.setor || '',
+        responsavel: process.responsavel || '',
+        andamento: process.andamento || '',
+    })
+    const [showSetorDropdown, setShowSetorDropdown] = useState(false)
+    const [showResponsavelDropdown, setShowResponsavelDropdown] = useState(false)
+    const [saveConfirmed, setSaveConfirmed] = useState(false)
 
     const getLinkedDocuments = () =>
         board.columns
@@ -170,6 +193,51 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         setNotes(prev => prev.filter(n => n.id !== id))
     }
 
+    const handleSaveProcess = () => {
+        const initial: Record<string, string> = {
+            telefone: process.telefone || '',
+            email: process.email || '',
+            parceiro: process.parceiro || '',
+            natureza: process.natureza || '',
+            tipo: process.tipo || '',
+            nProcesso: process.nProcesso || '',
+            dataInicio: process.dataInicio || '',
+            orgao: process.orgao || '',
+            endereco: process.endereco || '',
+            fase: process.fase || '',
+            setor: process.setor || '',
+            responsavel: process.responsavel || '',
+            andamento: process.andamento || '',
+        }
+        const fieldLabels: Record<string, string> = {
+            telefone: 'Telefone', email: 'E-mail', parceiro: 'Parceiro',
+            natureza: 'Natureza', tipo: 'Tipo', nProcesso: 'N° Processo',
+            dataInicio: 'Data Início', orgao: 'Órgão', endereco: 'Endereço',
+            fase: 'Fase', setor: 'Setor', responsavel: 'Responsável', andamento: 'Andamento',
+        }
+        const current = editForm as Record<string, string>
+        const newEntries: ProcessHistoryEntry[] = []
+        Object.keys(current).forEach(key => {
+            if (current[key] !== initial[key]) {
+                newEntries.push({
+                    id: `${Date.now()}-${key}`,
+                    processId: process.id,
+                    tipo: key === 'setor' ? 'setor' : 'auditoria',
+                    campo: fieldLabels[key],
+                    valorAnterior: initial[key] || '—',
+                    valorNovo: current[key] || '—',
+                    autor: process.responsavel,
+                    data: new Date().toLocaleString('pt-BR'),
+                })
+            }
+        })
+        if (newEntries.length > 0) {
+            setHistory(prev => [...newEntries, ...prev])
+        }
+        setSaveConfirmed(true)
+        setTimeout(() => setSaveConfirmed(false), 2000)
+    }
+
     const historyTypeConfig: Record<ProcessHistoryEntry['tipo'], { label: string; color: string; icon: React.ReactNode }> = {
         status: { label: 'Status', color: 'bg-blue-600', icon: <Clock size={12} /> },
         setor: { label: 'Setor', color: 'bg-purple-600', icon: <History size={12} /> },
@@ -177,16 +245,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         comentario: { label: 'Comentário', color: 'bg-green-600', icon: <MessageSquare size={12} /> },
     }
 
-    const tabs = [
-        { id: 'detalhes', label: 'Detalhes' },
-        { id: 'historico', label: `Histórico (${history.length})` },
-        { id: 'documentos', label: `Documentos (${getLinkedDocuments().length})` },
-    ] as const
-
     return (
-        <div className={`${bg} min-h-screen`}>
+        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false) }}>
             {/* Header */}
-            <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between sticky top-0 z-10`}>
+            <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between sticky top-0 z-10`} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
@@ -199,237 +261,320 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                         <h1 className={`text-lg font-bold ${text}`}>#{process.numero} — {process.cliente}</h1>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowNoteModal(true)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-white text-sm font-bold transition shadow-md"
-                    >
-                        <StickyNote size={16} /> Anotação
-                    </button>
-                    <button
-                        onClick={() => setShowEventModal(true)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow-md"
-                    >
-                        <Calendar size={16} /> Eventos
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowEventModal(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow-md"
+                >
+                    <Calendar size={16} /> Eventos
+                </button>
             </div>
 
-            {/* Tabs */}
-            <div className={`${card} border-b ${border} px-6`}>
-                <div className="flex gap-2 py-2">
-                    {tabs.map(t => (
+            {/* Layout 3 colunas */}
+            <div className="p-4 grid grid-cols-1 xl:grid-cols-[280px_1fr_260px] gap-4 items-start">
+
+                {/* ===== ESQUERDA: HISTÓRICO ===== */}
+                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
+                    <div className={`flex items-center justify-between px-4 py-3 border-b ${border} shrink-0`}>
+                        <h2 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${muted}`}>
+                            <History size={13} /> Histórico ({history.length})
+                        </h2>
                         <button
-                            key={t.id}
-                            onClick={() => setActiveTab(t.id)}
-                            className={`px-5 py-2 text-sm font-semibold rounded-lg transition ${activeTab === t.id
-                                ? t.id === 'detalhes' ? 'bg-blue-600 text-white shadow'
-                                    : t.id === 'historico' ? 'bg-purple-600 text-white shadow'
-                                        : 'bg-green-700 text-white shadow'
-                                : darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                }`}
+                            onClick={() => setShowHistoryModal(true)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition"
                         >
-                            {t.label}
+                            <Plus size={12} /> Adicionar
                         </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="p-6 max-w-6xl mx-auto space-y-6">
-                {/* ===== TAB DETALHES ===== */}
-                {activeTab === 'detalhes' && (
-                    <>
-                        {/* Identificação */}
-                        <div className={`${card} rounded-xl border ${border} p-6`}>
-                            <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Identificação</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div><label className={labelCls}>Nome</label><p className={valueCls}>{process.cliente}</p></div>
-                                <div><label className={labelCls}>CPF</label><p className={valueCls}>{process.cpf}</p></div>
-                                <div><label className={labelCls}>Telefone</label><p className={valueCls}>{process.telefone || '—'}</p></div>
-                                <div><label className={labelCls}>E-mail</label><p className={valueCls}>{process.email || '—'}</p></div>
-                                <div><label className={labelCls}>Cidade</label><p className={valueCls}>{process.cidade}</p></div>
-                                <div><label className={labelCls}>UF</label><p className={valueCls}>{process.uf}</p></div>
-                            </div>
-                        </div>
-
-                        {/* Processo */}
-                        <div className={`${card} rounded-xl border ${border} p-6`}>
-                            <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Dados do Processo</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div><label className={labelCls}>Parceiro</label><p className={valueCls}>{process.parceiro}</p></div>
-                                <div><label className={labelCls}>Natureza</label><p className={valueCls}>{process.natureza || '—'}</p></div>
-                                <div><label className={labelCls}>Tipo</label><p className={valueCls}>{process.tipo || '—'}</p></div>
-                                <div><label className={labelCls}>N° Processo</label><p className={valueCls}>{process.nProcesso || process.processo}</p></div>
-                                <div><label className={labelCls}>Data Início</label><p className={valueCls}>{process.dataInicio}</p></div>
-                                <div><label className={labelCls}>Órgão</label><p className={valueCls}>{process.orgao || '—'}</p></div>
-                                <div className="col-span-2"><label className={labelCls}>Endereço</label><p className={valueCls}>{process.endereco || '—'}</p></div>
-                                <div><label className={labelCls}>Fase</label><p className={valueCls}>{process.fase || '—'}</p></div>
-                            </div>
-                        </div>
-
-                        {/* Andamento */}
-                        <div className={`${card} rounded-xl border ${border} p-6`}>
-                            <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Andamento</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div><label className={labelCls}>Setor</label><p className={valueCls}>{process.setor || '—'}</p></div>
-                                <div><label className={labelCls}>Responsável</label><p className={valueCls}>{process.responsavel}</p></div>
-                                <div className="relative">
-                                    <label className={labelCls}>Status</label>
-                                    <button
-                                        onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-500 text-white hover:border-blue-500' : 'bg-blue-50 border-blue-200 text-blue-800 hover:border-blue-400'}`}
-                                    >
-                                        {currentStatus}
-                                        <span className="text-xs opacity-60">▼</span>
-                                    </button>
-                                    {showStatusDropdown && (
-                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-20 border ${border} ${card} overflow-hidden`}>
-                                            {STATUS_OPTIONS.map(opt => (
-                                                <button
-                                                    key={opt}
-                                                    onClick={() => handleStatusChange(opt)}
-                                                    className={`w-full text-left px-3 py-2 text-sm transition border-b ${border} ${opt === currentStatus ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                                >
-                                                    {opt}
-                                                </button>
-                                            ))}
-                                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+                        {history.map(entry => {
+                            const cfg = historyTypeConfig[entry.tipo]
+                            const showFieldChange = entry.campo !== undefined && entry.valorAnterior !== undefined
+                            return (
+                                <div key={entry.id} className={`p-3 rounded-lg border ${border}`}>
+                                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-white text-xs font-semibold ${cfg.color} shrink-0`}>
+                                            {cfg.icon} {cfg.label}
+                                        </span>
+                                        <span className={`text-xs ${muted}`}>{entry.data}</span>
+                                    </div>
+                                    {showFieldChange ? (
+                                        <p className={`text-xs ${text}`}>
+                                            <span className="font-medium">{entry.campo}</span>:{' '}
+                                            <span className="line-through opacity-50">{entry.valorAnterior}</span>
+                                            {' → '}
+                                            <span className="font-semibold">{entry.valorNovo}</span>
+                                        </p>
+                                    ) : (
+                                        <p className={`text-xs ${text}`}>{entry.texto}</p>
                                     )}
                                 </div>
-                                <div><label className={labelCls}>Andamento</label><p className={valueCls}>{process.andamento || '—'}</p></div>
-                                <div><label className={labelCls}>Última Alteração</label><p className={valueCls}>{process.ultimaAlteracao}</p></div>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* ===== CENTRO: CAMPOS EDITÁVEIS ===== */}
+                <div className="space-y-4" onClick={e => e.stopPropagation()}>
+                    {/* Identificação */}
+                    <div className={`${card} rounded-xl border ${border} p-5`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Identificação</h2>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div><label className={labelCls}>Nome</label><p className={valueCls}>{process.cliente}</p></div>
+                            <div><label className={labelCls}>CPF</label><p className={valueCls}>{process.cpf}</p></div>
+                            <div>
+                                <label className={labelCls}>Telefone</label>
+                                <input type="text" value={editForm.telefone} onChange={e => setEditForm(f => ({ ...f, telefone: e.target.value }))} className={inputCls} placeholder="—" />
                             </div>
-                        </div>
-
-                        {/* Eventos */}
-                        {events.length > 0 && (
-                            <div className={`${card} rounded-xl border ${border} p-6`}>
-                                <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Eventos Marcados</h2>
-                                <div className="space-y-2">
-                                    {events.map(ev => (
-                                        <div key={ev.id} className={`flex items-center gap-4 p-3 rounded-lg border ${border}`}>
-                                            <span className="px-2 py-1 rounded bg-blue-600 text-white text-xs font-semibold">{ev.tipoEvento}</span>
-                                            <span className={`text-sm ${text}`}>{ev.data}</span>
-                                            <span className={`text-sm font-semibold ${text}`}>{ev.hora}</span>
-                                            {ev.endereco && <span className={`text-xs ${muted} flex items-center gap-1`}><MapPin size={12} /> {ev.endereco}</span>}
-                                        </div>
-                                    ))}
-                                </div>
+                            <div>
+                                <label className={labelCls}>E-mail</label>
+                                <input type="text" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="—" />
                             </div>
-                        )}
-
-                        {/* Anotações */}
-                        {notes.length > 0 && (
-                            <div className={`${card} rounded-xl border ${border} p-6`}>
-                                <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Anotações</h2>
-                                <div className="space-y-3">
-                                    {notes.map(note => (
-                                        <div key={note.id} className={`p-4 rounded-lg border ${border}`}>
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div>
-                                                    {note.titulo && <p className={`font-semibold text-sm ${text}`}>{note.titulo}</p>}
-                                                    <span className={`text-xs ${muted}`}>{note.data}</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleDeleteNote(note.id)}
-                                                    className="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition ml-2 shrink-0"
-                                                    title="Excluir anotação"
-                                                >
-                                                    <X size={13} />
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                                {note.numeroCat && <span className={muted}>CAT: {note.numeroCat}</span>}
-                                                {note.senhaInss && <span className={muted}>INSS: {note.senhaInss}</span>}
-                                                {note.rg && <span className={muted}>RG: {note.rg}</span>}
-                                                {note.observacao && <p className={`col-span-2 ${muted}`}>{note.observacao}</p>}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* ===== TAB HISTÓRICO ===== */}
-                {activeTab === 'historico' && (
-                    <div className={`${card} rounded-xl border ${border} p-6`}>
-                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Histórico & Auditoria</h2>
-
-                        {/* Botão Adicionar ao histórico */}
-                        <div className="flex justify-end mb-6">
-                            <button
-                                onClick={() => setShowHistoryModal(true)}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow"
-                            >
-                                <Plus size={15} /> Adicionar
-                            </button>
-                        </div>
-
-                        {/* Lista de histórico */}
-                        <div className="space-y-3">
-                            {history.map(entry => {
-                                const cfg = historyTypeConfig[entry.tipo]
-                                return (
-                                    <div key={entry.id} className={`flex gap-3 p-4 rounded-lg border ${border}`}>
-                                        <div className={`${cfg.color} text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5`}>
-                                            {cfg.icon}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded ${cfg.color} text-white`}>{cfg.label}</span>
-                                                <span className={`text-xs ${muted}`}>{entry.autor} · {entry.data}</span>
-                                            </div>
-                                            {entry.tipo === 'status' || entry.tipo === 'setor' ? (
-                                                <p className={`text-sm ${text}`}>
-                                                    <span className="font-medium">{entry.campo}</span>: {' '}
-                                                    <span className="line-through opacity-50">{entry.valorAnterior}</span>
-                                                    {' → '}
-                                                    <span className="font-semibold">{entry.valorNovo}</span>
-                                                </p>
-                                            ) : (
-                                                <p className={`text-sm ${text}`}>{entry.texto}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                            <div><label className={labelCls}>Cidade</label><p className={valueCls}>{process.cidade}</p></div>
+                            <div><label className={labelCls}>UF</label><p className={valueCls}>{process.uf}</p></div>
                         </div>
                     </div>
-                )}
 
-                {/* ===== TAB DOCUMENTOS ===== */}
-                {activeTab === 'documentos' && (
-                    <div className={`${card} rounded-xl border ${border} p-6`}>
-                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Documentos Vinculados</h2>
+                    {/* Dados do Processo */}
+                    <div className={`${card} rounded-xl border ${border} p-5`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Dados do Processo</h2>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className={labelCls}>Parceiro</label>
+                                <input type="text" value={editForm.parceiro} onChange={e => setEditForm(f => ({ ...f, parceiro: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Natureza</label>
+                                <input type="text" value={editForm.natureza} onChange={e => setEditForm(f => ({ ...f, natureza: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Tipo</label>
+                                <input type="text" value={editForm.tipo} onChange={e => setEditForm(f => ({ ...f, tipo: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>N° Processo</label>
+                                <input type="text" value={editForm.nProcesso} onChange={e => setEditForm(f => ({ ...f, nProcesso: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Data Início</label>
+                                <input type="text" value={editForm.dataInicio} onChange={e => setEditForm(f => ({ ...f, dataInicio: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Órgão</label>
+                                <input type="text" value={editForm.orgao} onChange={e => setEditForm(f => ({ ...f, orgao: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div className="col-span-2">
+                                <label className={labelCls}>Endereço</label>
+                                <input type="text" value={editForm.endereco} onChange={e => setEditForm(f => ({ ...f, endereco: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Fase</label>
+                                <input type="text" value={editForm.fase} onChange={e => setEditForm(f => ({ ...f, fase: e.target.value }))} className={inputCls} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Andamento */}
+                    <div className={`${card} rounded-xl border ${border} p-5`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Andamento</h2>
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Setor dropdown */}
+                            <div className="relative">
+                                <label className={labelCls}>Setor</label>
+                                <button
+                                    onClick={() => { setShowSetorDropdown(!showSetorDropdown); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                >
+                                    <span className="truncate">{editForm.setor || '— Selecionar —'}</span>
+                                    <span className="text-xs opacity-50 ml-2">▼</span>
+                                </button>
+                                {showSetorDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                        {SETORES_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => { setEditForm(f => ({ ...f, setor: opt })); setShowSetorDropdown(false) }}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Responsável dropdown */}
+                            <div className="relative">
+                                <label className={labelCls}>Responsável</label>
+                                <button
+                                    onClick={() => { setShowResponsavelDropdown(!showResponsavelDropdown); setShowSetorDropdown(false); setShowStatusDropdown(false) }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                >
+                                    <span className="truncate">{editForm.responsavel || '— Selecionar —'}</span>
+                                    <span className="text-xs opacity-50 ml-2">▼</span>
+                                </button>
+                                {showResponsavelDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                        {RESPONSAVEIS_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => { setEditForm(f => ({ ...f, responsavel: opt })); setShowResponsavelDropdown(false) }}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.responsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Status dropdown */}
+                            <div className="relative">
+                                <label className={labelCls}>Status</label>
+                                <button
+                                    onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false) }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-500 text-white hover:border-blue-500' : 'bg-blue-50 border-blue-200 text-blue-800 hover:border-blue-400'}`}
+                                >
+                                    {currentStatus}
+                                    <span className="text-xs opacity-60">▼</span>
+                                </button>
+                                {showStatusDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                        {STATUS_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => handleStatusChange(opt)}
+                                                className={`w-full text-left px-3 py-2 text-sm transition border-b ${border} ${opt === currentStatus ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <label className={labelCls}>Andamento</label>
+                                <input type="text" value={editForm.andamento} onChange={e => setEditForm(f => ({ ...f, andamento: e.target.value }))} className={inputCls} />
+                            </div>
+                            <div><label className={labelCls}>Última Alteração</label><p className={valueCls}>{process.ultimaAlteracao}</p></div>
+                        </div>
+                    </div>
+
+                    {/* Botão Salvar */}
+                    <button
+                        onClick={handleSaveProcess}
+                        className={`w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition shadow-md ${saveConfirmed ? 'bg-green-600 hover:bg-green-500' : 'bg-blue-600 hover:bg-blue-500'} text-white`}
+                    >
+                        <Save size={16} /> {saveConfirmed ? '✓ Alterações Salvas!' : 'Salvar Alterações'}
+                    </button>
+
+                    {/* Eventos marcados */}
+                    {events.length > 0 && (
+                        <div className={`${card} rounded-xl border ${border} p-5`}>
+                            <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Eventos Marcados</h2>
+                            <div className="space-y-2">
+                                {events.map(ev => (
+                                    <div key={ev.id} className={`flex items-center gap-4 p-3 rounded-lg border ${border}`}>
+                                        <span className="px-2 py-1 rounded bg-blue-600 text-white text-xs font-semibold">{ev.tipoEvento}</span>
+                                        <span className={`text-sm ${text}`}>{ev.data}</span>
+                                        <span className={`text-sm font-semibold ${text}`}>{ev.hora}</span>
+                                        {ev.endereco && <span className={`text-xs ${muted} flex items-center gap-1`}><MapPin size={12} /> {ev.endereco}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Documentos */}
+                    <div className={`${card} rounded-xl border ${border} p-5`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>
+                            <FileText size={14} className="inline mr-1.5" />Documentos Vinculados
+                        </h2>
                         {getLinkedDocuments().length === 0 ? (
-                            <div className={`text-center py-12 ${muted}`}>
-                                <FileText size={40} className="mx-auto mb-3 opacity-30" />
-                                <p className="text-sm">Nenhum documento vinculado a este processo</p>
+                            <div className={`text-center py-8 ${muted}`}>
+                                <FileText size={32} className="mx-auto mb-2 opacity-30" />
+                                <p className="text-xs">Nenhum documento vinculado</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {getLinkedDocuments().map(doc => (
-                                    <div key={doc.id} className={`p-4 rounded-lg border ${border} flex items-start gap-3 hover:border-blue-400 transition cursor-pointer`}>
-                                        <FileText size={18} className={muted} />
+                                    <div key={doc.id} className={`p-3 rounded-lg border ${border} flex items-start gap-3 hover:border-blue-400 transition cursor-pointer`}>
+                                        <FileText size={16} className={muted} />
                                         <div className="flex-1 min-w-0">
                                             <p className={`font-medium text-sm ${text}`}>{doc.title}</p>
                                             {doc.description && <p className={`text-xs mt-1 ${muted}`}>{doc.description}</p>}
-                                            <div className="flex gap-2 mt-2">
-                                                {doc.attachments.length > 0 && (
-                                                    <span className={`text-xs px-2 py-0.5 rounded ${darkMode ? 'bg-dark-600' : 'bg-gray-200'} ${text}`}>
-                                                        <Paperclip size={10} className="inline mr-1" />{doc.attachments.length}
-                                                    </span>
-                                                )}
-                                            </div>
+                                            {doc.attachments.length > 0 && (
+                                                <span className={`mt-1 inline-flex text-xs px-2 py-0.5 rounded ${darkMode ? 'bg-dark-600' : 'bg-gray-200'} ${text}`}>
+                                                    <Paperclip size={10} className="inline mr-1" />{doc.attachments.length}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-                )}
+                </div>
+
+                {/* ===== DIREITA: ANOTAÇÕES ===== */}
+                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
+                    <div className={`px-4 py-3 border-b ${border} shrink-0`}>
+                        <h2 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${muted}`}>
+                            <StickyNote size={13} /> Anotações ({notes.length})
+                        </h2>
+                    </div>
+                    {/* Notas salvas */}
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+                        {notes.length === 0 && (
+                            <p className={`text-xs italic text-center py-4 ${muted}`}>Nenhuma anotação.</p>
+                        )}
+                        {notes.map(note => (
+                            <div key={note.id} className={`rounded-lg border ${border} p-3`}>
+                                <div className="flex items-start justify-between mb-1">
+                                    <div>
+                                        {note.titulo && <p className={`font-semibold text-xs ${text}`}>{note.titulo}</p>}
+                                        <span className={`text-xs ${muted}`}>{note.data}</span>
+                                    </div>
+                                    <button onClick={() => handleDeleteNote(note.id)} className="p-1 rounded bg-red-600 hover:bg-red-700 text-white shrink-0 ml-1">
+                                        <X size={10} />
+                                    </button>
+                                </div>
+                                <div className="space-y-1 text-xs">
+                                    {note.numeroCat && <div className={`rounded p-1.5 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}><span className={`font-semibold ${muted}`}>CAT: </span><span className={text}>{note.numeroCat}</span></div>}
+                                    {note.senhaInss && <div className={`rounded p-1.5 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}><span className={`font-semibold ${muted}`}>INSS: </span><span className={text}>{note.senhaInss}</span></div>}
+                                    {note.rg && <div className={`rounded p-1.5 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}><span className={`font-semibold ${muted}`}>RG: </span><span className={text}>{note.rg}</span></div>}
+                                    {note.observacao && <div className={`rounded p-1.5 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}><span className={`font-semibold ${muted}`}>Obs: </span><span className={`${text} whitespace-pre-wrap`}>{note.observacao}</span></div>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Form nova anotação */}
+                    <div className={`p-3 border-t ${border} space-y-2 shrink-0`}>
+                        <p className={`text-xs font-bold uppercase tracking-wider ${muted}`}>Nova Anotação</p>
+                        <input
+                            type="text"
+                            placeholder="Título (opcional)"
+                            value={noteForm.titulo}
+                            onChange={e => setNoteForm(f => ({ ...f, titulo: e.target.value }))}
+                            className={`${inputCls} text-xs py-1.5`}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                            <input type="text" placeholder="Nº CAT" value={noteForm.numeroCat} onChange={e => setNoteForm(f => ({ ...f, numeroCat: e.target.value }))} className={`${inputCls} text-xs py-1.5`} />
+                            <input type="text" placeholder="Senha INSS" value={noteForm.senhaInss} onChange={e => setNoteForm(f => ({ ...f, senhaInss: e.target.value }))} className={`${inputCls} text-xs py-1.5`} />
+                            <input type="text" placeholder="RG" value={noteForm.rg} onChange={e => setNoteForm(f => ({ ...f, rg: e.target.value }))} className={`${inputCls} text-xs py-1.5 col-span-2`} />
+                        </div>
+                        <textarea
+                            rows={2}
+                            placeholder="Observação..."
+                            value={noteForm.observacao}
+                            onChange={e => setNoteForm(f => ({ ...f, observacao: e.target.value }))}
+                            className={`${inputCls} resize-none text-xs py-1.5`}
+                        />
+                        <button
+                            onClick={handleSaveNote}
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-white text-xs font-bold transition shadow"
+                        >
+                            <Save size={13} /> Salvar Anotação
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* ===== MODAL HISTÓRICO ===== */}
@@ -491,10 +636,9 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-md`}>
                         <div className={`flex items-center justify-between p-5 border-b ${border}`}>
                             <h3 className={`text-base font-bold ${text}`}>Marcar Evento</h3>
-                            <button onClick={() => setShowEventModal(false)} className={`p-1 rounded hover:bg-gray-200 ${muted}`}><X size={20} /></button>
+                            <button onClick={() => setShowEventModal(false)} className={`p-1 rounded hover:opacity-70 ${muted}`}><X size={20} /></button>
                         </div>
                         <div className="p-5 space-y-4">
-                            {/* Tipo de Evento */}
                             <div>
                                 <label className={labelCls}>Tipo de Evento</label>
                                 <div className="relative">
@@ -519,7 +663,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     )}
                                 </div>
                             </div>
-                            {/* Data e hora */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className={labelCls}>Data</label>
@@ -530,7 +673,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     <input type="time" value={eventForm.hora} onChange={e => setEventForm(f => ({ ...f, hora: e.target.value }))} className={inputCls} />
                                 </div>
                             </div>
-                            {/* Endereço opcional */}
                             <div>
                                 <label className={labelCls}>Endereço <span className={`normal-case font-normal ${muted}`}>(opcional)</span></label>
                                 <input
@@ -557,126 +699,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     </div>
                 </div>
             )}
-
-            {/* ===== MODAL ANOTAÇÃO ===== */}
-            {showNoteModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-md max-h-[90vh] flex flex-col`}>
-                        <div className={`flex items-center justify-between p-5 border-b ${border} shrink-0`}>
-                            <h3 className={`text-base font-bold ${text}`}>Anotações do Processo</h3>
-                            <button onClick={() => setShowNoteModal(false)} className={`p-1 rounded hover:opacity-70 ${muted}`}><X size={20} /></button>
-                        </div>
-
-                        <div className="overflow-y-auto flex-1 p-5 space-y-5">
-                            {/* Notas salvas */}
-                            {notes.length > 0 && (
-                                <div className="space-y-3">
-                                    <p className={`text-xs font-bold uppercase tracking-wider ${muted}`}>Salvas</p>
-                                    {notes.map(note => (
-                                        <div key={note.id} className={`rounded-lg border ${border} p-3`}>
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div>
-                                                    {note.titulo && <p className={`font-semibold text-sm ${text}`}>{note.titulo}</p>}
-                                                    <span className={`text-xs ${muted}`}>{note.data}</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleDeleteNote(note.id)}
-                                                    className="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition ml-2 shrink-0"
-                                                    title="Excluir anotação"
-                                                >
-                                                    <X size={12} />
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-1.5 text-xs">
-                                                {note.numeroCat && (
-                                                    <div className={`rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>Nº CAT</span>
-                                                        <span className={text}>{note.numeroCat}</span>
-                                                    </div>
-                                                )}
-                                                {note.senhaInss && (
-                                                    <div className={`rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>Senha INSS</span>
-                                                        <span className={text}>{note.senhaInss}</span>
-                                                    </div>
-                                                )}
-                                                {note.rg && (
-                                                    <div className={`rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>RG</span>
-                                                        <span className={text}>{note.rg}</span>
-                                                    </div>
-                                                )}
-                                                {note.observacao && (
-                                                    <div className={`col-span-2 rounded p-2 ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-                                                        <span className={`block font-semibold uppercase text-xs ${muted}`}>Observação</span>
-                                                        <span className={`${text} whitespace-pre-wrap`}>{note.observacao}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Formulário nova anotação */}
-                            <div className={notes.length > 0 ? `pt-4 border-t ${border}` : ''}>
-                                <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${muted}`}>Nova Anotação</p>
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className={labelCls}>Título <span className="normal-case font-normal opacity-60 text-xs">(opcional)</span></label>
-                                        <input
-                                            type="text"
-                                            value={noteForm.titulo}
-                                            onChange={e => setNoteForm(f => ({ ...f, titulo: e.target.value }))}
-                                            placeholder="Título da anotação"
-                                            className={inputCls}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className={labelCls}>Número CAT</label>
-                                            <input type="text" value={noteForm.numeroCat} onChange={e => setNoteForm(f => ({ ...f, numeroCat: e.target.value }))} placeholder="0000000000" className={inputCls} />
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>Senha INSS</label>
-                                            <input type="text" value={noteForm.senhaInss} onChange={e => setNoteForm(f => ({ ...f, senhaInss: e.target.value }))} placeholder="••••••••" className={inputCls} />
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>RG</label>
-                                            <input type="text" value={noteForm.rg} onChange={e => setNoteForm(f => ({ ...f, rg: e.target.value }))} placeholder="00.000.000-0" className={inputCls} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className={labelCls}>Observação</label>
-                                        <textarea
-                                            value={noteForm.observacao}
-                                            onChange={e => setNoteForm(f => ({ ...f, observacao: e.target.value }))}
-                                            rows={3}
-                                            placeholder="Observações..."
-                                            className={`${inputCls} resize-none`}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleSaveNote}
-                                        className="w-full px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-white text-sm font-bold transition flex items-center justify-center gap-1.5 shadow"
-                                    >
-                                        <Save size={14} /> Salvar Anotação
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={`p-4 border-t ${border} shrink-0`}>
-                            <button
-                                onClick={() => setShowNoteModal(false)}
-                                className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                            >
-                                Fechar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
-}
+}
