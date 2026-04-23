@@ -630,7 +630,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Data Início</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Status</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Última Alteração</div></th>
-                <th className="px-2 py-2 text-right font-semibold text-xs"><div>Ações</div></th>
               </tr>
 
               {/* Filter Row */}
@@ -821,7 +820,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     </div>
                   )}
                 </td>
-                <td className="px-3 py-2"></td>
               </tr>
             </thead>
 
@@ -844,22 +842,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.dataInicio}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.status}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.ultimaAlteracao}</td>
-                  <td className="px-2 py-1 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEditClick(process) }}
-                        className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(process.id) }}
-                        className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>

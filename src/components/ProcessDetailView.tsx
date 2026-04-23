@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { Process, ProcessHistoryEntry, ProcessEvent, ProcessNote } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
-import { mockUsers } from '../data/mockData'
+import { mockUsers, mockParceiros } from '../data/mockData'
 
 interface ProcessDetailViewProps {
     process: Process
@@ -102,6 +102,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     })
     const [showSetorDropdown, setShowSetorDropdown] = useState(false)
     const [showResponsavelDropdown, setShowResponsavelDropdown] = useState(false)
+    const [showParceiroDropdown, setShowParceiroDropdown] = useState(false)
     const [saveConfirmed, setSaveConfirmed] = useState(false)
 
     const getLinkedDocuments = () =>
@@ -246,7 +247,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     }
 
     return (
-        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false) }}>
+        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false) }}>
             {/* Header */}
             <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between sticky top-0 z-10`} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
@@ -338,9 +339,28 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     <div className={`${card} rounded-xl border ${border} p-5`}>
                         <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Dados do Processo</h2>
                         <div className="grid grid-cols-2 gap-3">
-                            <div>
+                            <div className="relative">
                                 <label className={labelCls}>Parceiro</label>
-                                <input type="text" value={editForm.parceiro} onChange={e => setEditForm(f => ({ ...f, parceiro: e.target.value }))} className={inputCls} />
+                                <button
+                                    onClick={() => { setShowParceiroDropdown(!showParceiroDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                >
+                                    <span className="truncate">{editForm.parceiro || '— Selecionar —'}</span>
+                                    <span className="text-xs opacity-50 ml-2">▼</span>
+                                </button>
+                                {showParceiroDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
+                                        {mockParceiros.map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => { setEditForm(f => ({ ...f, parceiro: opt })); setShowParceiroDropdown(false) }}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.parceiro === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className={labelCls}>Natureza</label>
@@ -701,4 +721,4 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             )}
         </div>
     )
-}
+}

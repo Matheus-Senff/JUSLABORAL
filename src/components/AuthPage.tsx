@@ -5,8 +5,8 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
 export const AuthPage: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
     const [isSignUp, setIsSignUp] = useState(false)
     const [email, setEmail] = useState('contatomatheussenff@gmail.com')
-    const [password, setPassword] = useState('123456')
-    const [confirmPassword, setConfirmPassword] = useState('123456')
+    const [password, setPassword] = useState('LUCIANOGAY')
+    const [confirmPassword, setConfirmPassword] = useState('LUCIANOGAY')
     const [submitting, setSubmitting] = useState(false)
     const { error, signUp, signIn } = useSupabaseAuth()
 

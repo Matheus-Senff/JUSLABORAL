@@ -14,7 +14,7 @@ create table compromissos (
 
 -- Create index for faster queries
 create index compromissos_user_id_data_idx on compromissos(user_id, data);
-
+ 
 -- Enable RLS (Row Level Security)
 alter table compromissos enable row level security;
 
