@@ -25,6 +25,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [filters, setFilters] = useState<Record<string, string>>({
     dataInicio: '',
     dataFinal: '',
+    dataInicioIntervalo: '',
+    dataFinalIntervalo: '',
     numero: '',
     parceiro: '',
     cliente: '',
@@ -39,6 +41,10 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     dataAlteracaoSetor: '',
     dataAlteracaoResponsavel: '',
     dataAlteracaoStatus: '',
+    telefone: '',
+    email: '',
+    natureza: '',
+    tipo: '',
   })
 
   // paginação - FIXME: colocar isso em um component separado depois
@@ -58,6 +64,10 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [showDetailView, setShowDetailView] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showSetorFilterDropdown, setShowSetorFilterDropdown] = useState(false)
+  const [showNaturezaDropdown, setShowNaturezaDropdown] = useState(false)
+  const [showTipoDropdown, setShowTipoDropdown] = useState(false)
+  const [showTelefoneDropdown, setShowTelefoneDropdown] = useState(false)
+  const [showEmailDropdown, setShowEmailDropdown] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({
     numero: [],
     parceiro: [],
@@ -86,13 +96,37 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
 
   // Mock data - 26,103 processes
   const _telefones = ['(47) 9 9801-0012', '(47) 9 8823-0043', '(11) 9 7734-0003', '(41) 9 6645-0004', '(51) 9 5556-0075', '(21) 9 4467-0086']
-  const _naturezas = ['Acidente de Trabalho', 'Doença Ocupacional', 'Invalidez Permanente', 'Auxílio-Doença', 'Aposentadoria por Invalidez']
-  const _tipos = ['CAT', 'Benefício Previdenciário', 'Indenizatório', 'Revisional', 'Recursal']
+  const _naturezas = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
+  const _emails = ['cliente@email.com', 'contato@provedor.com.br', 'pessoal@gmail.com', 'trabalho@outlook.com']
+
+  // Tipos dependem da Natureza
+  const tiposByNatureza: Record<string, string[]> = {
+    'CIVIL': ['AÇÕES CIVIS'],
+    'TRABALHISTA': ['TRABALHISTA', 'AÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
+    'PREVIDENCIÁRIA': [
+      'AUXÍLIO-ACIDENTE',
+      'AUXÍLIO-DOENÇA',
+      'LOAS DEFICIENTE',
+      'BENEFÍCIO ASSISTENCIAL',
+      'APOSENTADORIA POR TEMPO DE CONTRIBUIÇÃO',
+      'APOSENTADORIA POR IDADE RURAL',
+      'APOSENTADORIA HÍBRIDA',
+      'PENSÃO POR MORTE',
+      'SALÁRIO MATERNIDADE',
+      'APOSENTADORIA POR INVALIDEZ',
+      'REVISÃO DE BENEFÍCIO PREVIDENCIÁRIO',
+      'APOSENTADORIA POR IDADE URBANA',
+      'AUXÍLIO RECLUSÃO',
+      'APOSENTADORIA ESPECIAL',
+      'LOAS IDOSO',
+      'LOAS ADMINISTRATIVO'
+    ]
+  }
+
   const _orgaos = ['INSS', 'TRT 12ª Região', 'SEJU', 'MTE', 'TRT 4ª Região', 'TRT 9ª Região']
   const _fases = ['Administrativo', 'Judicial 1ª Instância', 'Judicial 2ª Instância', 'Recursal', 'Execução']
   const _setores = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
   const _andamentos = ['Em análise', 'Aguardando documentação', 'Em julgamento', 'Recurso pendente', 'Aguardando perícia']
-  const _emails = ['cliente@email.com', 'contato@provedor.com.br', 'pessoal@gmail.com', 'trabalho@outlook.com']
   const mockProcesses: Process[] = Array.from({ length: 26103 }, (_, i) => {
     const process = generateMockProcess(i + 1, type)
     return {
@@ -111,11 +145,14 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       telefone: _telefones[i % _telefones.length],
       email: _emails[i % _emails.length],
       natureza: _naturezas[i % _naturezas.length],
-      tipo: _tipos[i % _tipos.length],
+      tipo: (() => {
+        const natureza = _naturezas[i % _naturezas.length]
+        const tiposDisp = tiposByNatureza[natureza] || []
+        return tiposDisp[i % tiposDisp.length] || ''
+      })(),
       orgao: _orgaos[i % _orgaos.length],
       endereco: `Rua ${['das Flores', 'Brasil', 'XV de Novembro', 'Independência'][i % 4]}, ${(i % 999) + 1} - ${process.comarca}`,
       nProcesso: `${String(i + 1).padStart(7, '0')}-${(i % 99) + 1}.${2020 + (i % 6)}.5.12.${(i % 9999).toString().padStart(4, '0')}`,
-      fase: _fases[i % _fases.length],
       setor: _setores[i % _setores.length],
       andamento: _andamentos[i % _andamentos.length],
     }
@@ -252,6 +289,38 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       // N Processo
       if (filters.nProcesso && matches) {
         matches = matches && (process.nProcesso || '').toLowerCase().includes(filters.nProcesso.toLowerCase())
+      }
+
+      // Data Intervalo
+      if (filters.dataInicioIntervalo && matches) {
+        const processDate = new Date(process.dataInicio)
+        const filterDate = new Date(filters.dataInicioIntervalo)
+        matches = matches && processDate >= filterDate
+      }
+      if (filters.dataFinalIntervalo && matches) {
+        const processDate = new Date(process.dataInicio)
+        const filterDate = new Date(filters.dataFinalIntervalo)
+        matches = matches && processDate <= filterDate
+      }
+
+      // Telefone
+      if (filters.telefone && matches) {
+        matches = matches && (process.telefone || '').includes(filters.telefone)
+      }
+
+      // Email
+      if (filters.email && matches) {
+        matches = matches && (process.email || '').toLowerCase().includes(filters.email.toLowerCase())
+      }
+
+      // Natureza
+      if (filters.natureza && matches) {
+        matches = matches && (process.natureza || '').toUpperCase() === filters.natureza.toUpperCase()
+      }
+
+      // Tipo
+      if (filters.tipo && matches) {
+        matches = matches && (process.tipo || '').toUpperCase() === filters.tipo.toUpperCase()
       }
 
       return matches
@@ -647,6 +716,143 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   value={filters.dataAlteracaoStatus}
                   onChange={(e) => handleFilterChange('dataAlteracaoStatus', e.target.value)}
                 />
+              </div>
+
+              {/* Data Intervalo */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Início (Intervalo)</label>
+                <input
+                  type="date"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.dataInicioIntervalo}
+                  onChange={(e) => handleFilterChange('dataInicioIntervalo', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Fim (Intervalo)</label>
+                <input
+                  type="date"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.dataFinalIntervalo}
+                  onChange={(e) => handleFilterChange('dataFinalIntervalo', e.target.value)}
+                />
+              </div>
+
+              {/* Telefone Dropdown */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Telefone</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowTelefoneDropdown(!showTelefoneDropdown)}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span>{filters.telefone || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showTelefoneDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={() => { handleFilterChange('telefone', ''); setShowTelefoneDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.telefone ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {Array.from(new Set(mockProcesses.map(p => p.telefone))).map(tel => (
+                        <button
+                          key={tel}
+                          onClick={() => { handleFilterChange('telefone', tel); setShowTelefoneDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.telefone === tel ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{tel}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Email Dropdown */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Email</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowEmailDropdown(!showEmailDropdown)}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span>{filters.email || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showEmailDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={() => { handleFilterChange('email', ''); setShowEmailDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.email ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {Array.from(new Set(mockProcesses.map(p => p.email))).map(email => (
+                        <button
+                          key={email}
+                          onClick={() => { handleFilterChange('email', email); setShowEmailDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.email === email ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{email}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Natureza Dropdown */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Natureza</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowNaturezaDropdown(!showNaturezaDropdown)}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span>{filters.natureza || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showNaturezaDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={() => { handleFilterChange('natureza', ''); handleFilterChange('tipo', ''); setShowNaturezaDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.natureza ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {_naturezas.map(nat => (
+                        <button
+                          key={nat}
+                          onClick={() => { handleFilterChange('natureza', nat); handleFilterChange('tipo', ''); setShowNaturezaDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{nat}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tipo Dropdown (dependent on Natureza) */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Tipo</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowTipoDropdown(!showTipoDropdown)}
+                    disabled={!filters.natureza}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder} ${!filters.natureza ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span>{filters.tipo || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showTipoDropdown && filters.natureza && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
+                      <button
+                        onClick={() => { handleFilterChange('tipo', ''); setShowTipoDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {(tiposByNatureza[filters.natureza] || []).map(tipo => (
+                        <button
+                          key={tipo}
+                          onClick={() => { handleFilterChange('tipo', tipo); setShowTipoDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{tipo}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
