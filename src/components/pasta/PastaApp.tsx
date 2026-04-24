@@ -7,7 +7,6 @@ import { usePastaStore } from './pastaStore'
 // ============================================================
 
 type TaskStatus = 'urgente' | 'em_andamento' | 'planejado'
-type TaskPriority = 'alta' | 'média'
 type TaskCategory = 'tarefas' | 'administrativo'
 
 interface Task {
@@ -15,7 +14,7 @@ interface Task {
   title: string
   category: TaskCategory
   status: TaskStatus
-  priority: TaskPriority
+  priority: 'alta' | 'média'
   dueDate: string
   assignee: string
   documentCount: number
@@ -127,11 +126,6 @@ const STATUS_COLORS: Record<TaskStatus, { bg: string; border: string; text: stri
   },
 }
 
-const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  alta: 'text-red-600 dark:text-red-400 font-bold',
-  média: 'text-amber-600 dark:text-amber-400',
-}
-
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
@@ -143,8 +137,10 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   // LOCAL STATE
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'todos'>('todos')
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'todos'>('todos')
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('')
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false)
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null)
 
   // CALCULATE ACTIVE FILTERS
@@ -154,22 +150,33 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
     (filterState.hasChecklist ? 1 : 0) +
     (filterState.hasAttachment ? 1 : 0)
 
+  // GET ASSIGNEES BY CATEGORY
+  const getAssigneesByCategory = useMemo(() => {
+    if (categoryFilter === 'todos') return []
+    return Array.from(new Set(
+      mockTasks
+        .filter((t) => t.category === categoryFilter)
+        .map((t) => t.assignee)
+    )).sort()
+  }, [categoryFilter])
+
   // FILTER TASKS
   const filteredTasks = useMemo(() => {
     return mockTasks.filter((task) => {
       if (categoryFilter !== 'todos' && task.category !== categoryFilter) return false
       if (statusFilter !== 'todos' && task.status !== statusFilter) return false
+      if (assigneeFilter && task.assignee !== assigneeFilter) return false
       return true
     })
-  }, [categoryFilter, statusFilter])
+  }, [categoryFilter, statusFilter, assigneeFilter])
 
-  // CALCULATE STATS
+  // CALCULATE STATS (based on filtered tasks)
   const stats = useMemo(() => {
-    const total = mockTasks.length
-    const urgentes = mockTasks.filter((t) => t.status === 'urgente').length
-    const emAndamento = mockTasks.filter((t) => t.status === 'em_andamento').length
+    const total = filteredTasks.length
+    const urgentes = filteredTasks.filter((t) => t.status === 'urgente').length
+    const emAndamento = filteredTasks.filter((t) => t.status === 'em_andamento').length
     return { total, urgentes, emAndamento }
-  }, [])
+  }, [filteredTasks])
 
   // HELPER FUNCTIONS
   const formatDate = (dateStr: string) => {
@@ -235,6 +242,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                 <button
                   onClick={() => {
                     setCategoryFilter('todos')
+                    setAssigneeFilter('')
                     setShowCategoryDropdown(false)
                   }}
                   className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${categoryFilter === 'todos' ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -244,6 +252,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                 <button
                   onClick={() => {
                     setCategoryFilter('tarefas')
+                    setAssigneeFilter('')
                     setShowCategoryDropdown(false)
                   }}
                   className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${categoryFilter === 'tarefas' ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -253,6 +262,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                 <button
                   onClick={() => {
                     setCategoryFilter('administrativo')
+                    setAssigneeFilter('')
                     setShowCategoryDropdown(false)
                   }}
                   className={`w-full text-left px-4 py-2.5 text-sm transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'} ${categoryFilter === 'administrativo' ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -321,6 +331,60 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
           </div>
         </div>
       </div>
+
+      {/* ============================================================ */}
+      {/* ASSIGNEE FILTER (appears when category is selected) */}
+      {/* ============================================================ */}
+      {categoryFilter !== 'todos' && getAssigneesByCategory.length > 0 && (
+        <div className="px-6 py-3 border-b" style={{ borderColor: darkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.1)' }}>
+          <div className="relative inline-block">
+            <button
+              onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition border ${
+                assigneeFilter
+                  ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+                  : darkMode
+                    ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <User size={16} />
+              {assigneeFilter ? assigneeFilter : 'Responsável'}
+              <ChevronDown size={16} />
+            </button>
+
+            {showAssigneeDropdown && (
+              <div className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-20 border max-h-64 overflow-y-auto ${darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'}`}>
+                <button
+                  onClick={() => {
+                    setAssigneeFilter('')
+                    setShowAssigneeDropdown(false)
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${
+                    darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'
+                  } ${!assigneeFilter ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                >
+                  Todos
+                </button>
+                {getAssigneesByCategory.map((assignee) => (
+                  <button
+                    key={assignee}
+                    onClick={() => {
+                      setAssigneeFilter(assignee)
+                      setShowAssigneeDropdown(false)
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition ${
+                      darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'
+                    } ${assigneeFilter === assignee ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                  >
+                    {assignee}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/* DASHBOARD COM ESTATÍSTICAS */}
