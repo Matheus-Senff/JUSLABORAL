@@ -347,7 +347,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     }
 
     return filtered
-  }, [filters, sortOrder])
+  }, [filters, sortOrder, mockProcesses])
 
   const totalPages = Math.ceil(filteredProcesses.length / itemsPerPage)
   const paginatedData = filteredProcesses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
