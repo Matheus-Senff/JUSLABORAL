@@ -42,7 +42,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
 
   // Mock users for filtering
   const mockUsers = [
-    { id: 'geral', name: 'Geral', email: 'Visualizar todos os documentos' },
+    { id: 'geral', name: 'Filtro Responsável', email: 'Visualizar todos os documentos' },
     { id: '1', name: 'Ana Silva', email: 'ana.silva@juslaboral.com' },
     { id: '2', name: 'Carlos Santos', email: 'carlos.santos@juslaboral.com' },
     { id: '3', name: 'Mariana Costa', email: 'mariana.costa@juslaboral.com' },

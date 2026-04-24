@@ -7,11 +7,9 @@ import { CanonIndex } from './components/CanonIndex'
 import { Settings } from './components/Settings'
 import Calculo from './components/Calculo'
 import { PastaIndex } from './components/PastaIndex'
-import { CalendarView } from './components/pasta/CalendarView'
 import { AuthPage } from './components/AuthPage'
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { useSupabaseAuth } from './hooks/useSupabaseAuth'
-import { useSupabaseCompromissos } from './hooks/useSupabaseCompromissos'
 import { ProcessEvent } from './types'
 
 // Eu montei o layout principal aqui
@@ -19,7 +17,6 @@ function AppContent() {
   const { darkMode, toggleDarkMode } = useTheme()
   const { user, isAuthenticated, loading: authLoading } = useSupabaseAuth()
   // TODO: refatorar isso depois pra ficar mais limpo
-  const { compromissos, saveCompromisso, deleteCompromisso, loading: compromissosLoading } = useSupabaseCompromissos(user?.id)
   const [processEvents, setProcessEvents] = React.useState<ProcessEvent[]>([])
   const handleAddProcessEvent = (event: ProcessEvent) => {
     setProcessEvents(prev => [...prev, event])
@@ -33,7 +30,7 @@ function AppContent() {
     setOpenProcessType(type)
     setActivePage(type)
   }
-  const [activePage, setActivePage] = React.useState<'agenda' | 'clientes' | 'estadual' | 'federal' | 'pasta' | 'canon' | 'calculo' | 'configuracoes' | 'estadual-status' | 'federal-status' | 'compromissos'>('compromissos')
+  const [activePage, setActivePage] = React.useState<'agenda' | 'clientes' | 'estadual' | 'federal' | 'pasta' | 'canon' | 'calculo' | 'configuracoes' | 'estadual-status' | 'federal-status'>('pasta')
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null)
 
   const handlePageChange = (page: string, status?: string) => {
@@ -47,8 +44,7 @@ function AppContent() {
       page === 'calculo' ||
       page === 'configuracoes' ||
       page === 'estadual-status' ||
-      page === 'federal-status' ||
-      page === 'compromissos'
+      page === 'federal-status'
     ) {
       setActivePage(page as any)
       if (status) {
@@ -84,7 +80,6 @@ function AppContent() {
         <ProcessTable darkMode={darkMode} type={activePage === 'estadual-status' ? 'estadual' : 'federal'} statusFilter={selectedStatus} onAddEvent={handleAddProcessEvent} />
       )}
       {activePage === 'pasta' && <PastaIndex darkMode={darkMode} />}
-      {activePage === 'compromissos' && <CalendarView darkMode={darkMode} compromissos={compromissos} onSaveCompromisso={saveCompromisso} onDeleteCompromisso={deleteCompromisso} />}
       {activePage === 'canon' && <CanonIndex darkMode={darkMode} />}
       {activePage === 'calculo' && <Calculo />}
       {activePage === 'configuracoes' && <Settings darkMode={darkMode} />}

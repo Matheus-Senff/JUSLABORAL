@@ -52,23 +52,21 @@ export const Layout: React.FC<LayoutProps> = ({
               ? 'Agenda'
               : activePage === 'clientes'
                 ? 'Clientes'
-                : activePage === 'compromissos'
-                  ? 'Compromissos'
-                  : activePage === 'estadual'
-                    ? 'Processo Estadual'
-                    : activePage === 'federal'
-                      ? 'Processo Federal'
-                      : activePage === 'estadual-status'
-                        ? `Processo Estadual - ${selectedStatus}`
-                        : activePage === 'federal-status'
-                          ? `Processo Federal - ${selectedStatus}`
-                          : activePage === 'configuracoes'
-                            ? 'Configurações'
-                            : activePage === 'canon'
-                              ? 'Canon'
-                              : activePage === 'pasta'
-                                ? 'Documentos'
-                                : 'Cálculo'
+                : activePage === 'estadual'
+                  ? 'Processo Estadual'
+                  : activePage === 'federal'
+                    ? 'Processo Federal'
+                    : activePage === 'estadual-status'
+                      ? `Processo Estadual - ${selectedStatus}`
+                      : activePage === 'federal-status'
+                        ? `Processo Federal - ${selectedStatus}`
+                        : activePage === 'configuracoes'
+                          ? 'Configurações'
+                          : activePage === 'canon'
+                            ? 'Canon'
+                            : activePage === 'pasta'
+                              ? 'Tarefas'
+                              : 'Cálculo'
           }
         />
         <main className="flex-1 overflow-auto h-full">
@@ -143,21 +141,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, selectedStatus, onPageCha
         {/* Primary Navigation */}
         <div className="space-y-2">
           <button
-            onClick={() => onPageChange('compromissos')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${darkMode
-              ? (activePage === 'compromissos'
-                ? 'bg-blue-700 text-white'
-                : 'bg-blue-600 text-white hover:bg-blue-700')
-              : (activePage === 'compromissos'
-                ? 'bg-blue-700 text-white'
-                : 'bg-blue-600 text-white hover:bg-blue-700')
-              }`}
-          >
-            <Calendar size={20} />
-            <span>Compromissos</span>
-          </button>
-
-          <button
             onClick={() => onPageChange('pasta')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${darkMode
               ? (activePage === 'pasta'
@@ -169,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, selectedStatus, onPageCha
               }`}
           >
             <Folder size={20} />
-            <span>Documentos</span>
+            <span>Tarefas</span>
           </button>
 
           <button
