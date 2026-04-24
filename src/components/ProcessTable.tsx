@@ -606,35 +606,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
           </button>
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Inicial</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="dd/mm/aaaa"
-                className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                value={filters.dataInicio}
-                onChange={(e) => handleFilterChange('dataInicio', e.target.value)}
-              />
-              <CalendarIcon className="absolute right-3 top-2.5" size={16} />
-            </div>
-          </div>
 
-          <div className="flex-1">
-            <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Final</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="dd/mm/aaaa"
-                className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                value={filters.dataFinal}
-                onChange={(e) => handleFilterChange('dataFinal', e.target.value)}
-              />
-              <CalendarIcon className="absolute right-3 top-2.5" size={16} />
-            </div>
-          </div>
-        </div>
 
         {/* Filtro Detalhado expandido */}
         {showDetailedFilter && (
@@ -677,19 +649,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   onChange={(e) => handleFilterChange('nProcesso', e.target.value)}
                 />
               </div>
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Status</label>
-                <select
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {['Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado'].map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
+
               <div>
                 <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Setor</label>
                 <input
@@ -738,62 +698,28 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 />
               </div>
 
-              {/* Telefone Dropdown */}
+              {/* Telefone Input */}
               <div>
                 <label className={`block text-xs font-medium mb-1 ${textColor}`}>Telefone</label>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowTelefoneDropdown(!showTelefoneDropdown)}
-                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
-                  >
-                    <span>{filters.telefone || 'Todos'}</span>
-                    <span className="opacity-50 text-xs">&#9660;</span>
-                  </button>
-                  {showTelefoneDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
-                      <button
-                        onClick={() => { handleFilterChange('telefone', ''); setShowTelefoneDropdown(false) }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.telefone ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                      >Todos</button>
-                      {Array.from(new Set(mockProcesses.map(p => p.telefone))).map(tel => (
-                        <button
-                          key={tel}
-                          onClick={() => { handleFilterChange('telefone', tel); setShowTelefoneDropdown(false) }}
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.telefone === tel ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >{tel}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  placeholder="Ex: (47) 9 9801-0012"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.telefone}
+                  onChange={(e) => handleFilterChange('telefone', e.target.value)}
+                />
               </div>
 
-              {/* Email Dropdown */}
+              {/* Email Input */}
               <div>
                 <label className={`block text-xs font-medium mb-1 ${textColor}`}>Email</label>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowEmailDropdown(!showEmailDropdown)}
-                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
-                  >
-                    <span>{filters.email || 'Todos'}</span>
-                    <span className="opacity-50 text-xs">&#9660;</span>
-                  </button>
-                  {showEmailDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
-                      <button
-                        onClick={() => { handleFilterChange('email', ''); setShowEmailDropdown(false) }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.email ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                      >Todos</button>
-                      {Array.from(new Set(mockProcesses.map(p => p.email))).map(email => (
-                        <button
-                          key={email}
-                          onClick={() => { handleFilterChange('email', email); setShowEmailDropdown(false) }}
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.email === email ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >{email}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  placeholder="Ex: cliente@email.com"
+                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                  value={filters.email}
+                  onChange={(e) => handleFilterChange('email', e.target.value)}
+                />
               </div>
 
               {/* Natureza Dropdown */}
