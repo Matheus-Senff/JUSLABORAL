@@ -80,6 +80,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     status: [],
     setor: [],
     nProcesso: [],
+    natureza: [],
+    tipo: [],
   })
   const [formData, setFormData] = useState({
     atividade: '',
@@ -180,6 +182,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     setFilters({
       dataInicio: '',
       dataFinal: '',
+      dataInicioIntervalo: '',
+      dataFinalIntervalo: '',
       numero: '',
       parceiro: '',
       cliente: '',
@@ -194,6 +198,10 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       dataAlteracaoSetor: '',
       dataAlteracaoResponsavel: '',
       dataAlteracaoStatus: '',
+      telefone: '',
+      email: '',
+      natureza: '',
+      tipo: '',
     })
     setSelectedUser('geral')
     setCurrentPage(1)
@@ -802,6 +810,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Responsável</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Data Início</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Status</div></th>
+                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Natureza</div></th>
+                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Tipo</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Última Alteração</div></th>
               </tr>
 
@@ -963,6 +973,12 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     </div>
                   )}
                 </td>
+                <td className="px-2 py-1">
+                  <input type="text" placeholder="Filtro" value={filters.natureza} onChange={(e) => handleFilterChange('natureza', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
+                </td>
+                <td className="px-2 py-1">
+                  <input type="text" placeholder="Filtro" value={filters.tipo} onChange={(e) => handleFilterChange('tipo', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
+                </td>
                 <td className="px-2 py-1 relative">
                   <button
                     onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -1014,6 +1030,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.responsavel}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.dataInicio}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.status}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.natureza || '-'}</td>
+                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.tipo || '-'}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.ultimaAlteracao}</td>
                 </tr>
               ))}
