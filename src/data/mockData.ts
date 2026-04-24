@@ -5,7 +5,7 @@
 
 // Usuários genéricos para demonstração
 export const mockUsers = [
-    { id: 'geral', name: 'Geral', email: 'visualizar@sistema.com' },
+    { id: 'geral', name: 'Filtro Responsável', email: 'visualizar@sistema.com' },
     { id: '1', name: 'Usuário 1', email: 'usuario1@sistema.com' },
     { id: '2', name: 'Usuário 2', email: 'usuario2@sistema.com' },
     { id: '3', name: 'Usuário 3', email: 'usuario3@sistema.com' },
