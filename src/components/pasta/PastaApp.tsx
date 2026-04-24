@@ -47,50 +47,152 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
       {/* ============================================================ */}
       {/* MAIN HEADER - TWO BUTTONS (TAREFAS / ADMINISTRATIVO) */}
       {/* ============================================================ */}
-      <div className={`flex items-start gap-4 px-6 py-4 flex-shrink-0 border-b ${bgColors.header}`}>
-        {/* LEFT SIDE: Category Buttons */}
+      <div className={`flex items-center gap-6 px-6 py-4 flex-shrink-0 border-b ${bgColors.header}`}>
+        {/* LEFT SIDE: Category Buttons with Dynamic Responsável Filter */}
         <div className="flex flex-col gap-2">
-          {/* Tarefas Button */}
-          <button
-            onClick={() => {
-              setCategoryFilter('tarefas')
-              setAssigneeFilter('')
-              setShowAssigneeDropdown(false)
-            }}
-            className={`px-6 py-2.5 rounded-lg font-semibold transition border text-sm ${
-              categoryFilter === 'tarefas'
-                ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                : darkMode
-                  ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Tarefas
-          </button>
+          {/* Tarefas Button Row */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setCategoryFilter('tarefas')
+                setAssigneeFilter('')
+                setShowAssigneeDropdown(false)
+              }}
+              className={`px-6 py-2.5 rounded-lg font-semibold transition border text-sm ${categoryFilter === 'tarefas'
+                  ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+                  : darkMode
+                    ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+            >
+              Tarefas
+            </button>
 
-          {/* Administrativo Button */}
-          <button
-            onClick={() => {
-              setCategoryFilter('administrativo')
-              setAssigneeFilter('')
-              setShowAssigneeDropdown(false)
-            }}
-            className={`px-6 py-2.5 rounded-lg font-semibold transition border text-sm ${
-              categoryFilter === 'administrativo'
-                ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                : darkMode
-                  ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            Administrativo
-          </button>
+            {/* Responsável Dropdown - Shows when Tarefas is active */}
+            {categoryFilter === 'tarefas' && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition border text-sm ${assigneeFilter
+                      ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+                      : darkMode
+                        ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                >
+                  <User size={16} />
+                  {assigneeFilter ? assigneeFilter : 'Responsável'}
+                  <ChevronDown size={16} />
+                </button>
+
+                {showAssigneeDropdown && (
+                  <div
+                    className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-20 border max-h-64 overflow-y-auto ${darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'
+                      }`}
+                  >
+                    <button
+                      onClick={() => {
+                        setAssigneeFilter('')
+                        setShowAssigneeDropdown(false)
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'
+                        } ${!assigneeFilter ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {assigneesByCategory['tarefas'].map((assignee) => (
+                      <button
+                        key={assignee}
+                        onClick={() => {
+                          setAssigneeFilter(assignee)
+                          setShowAssigneeDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'
+                          } ${assigneeFilter === assignee ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                      >
+                        {assignee}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Administrativo Button Row */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setCategoryFilter('administrativo')
+                setAssigneeFilter('')
+                setShowAssigneeDropdown(false)
+              }}
+              className={`px-6 py-2.5 rounded-lg font-semibold transition border text-sm ${categoryFilter === 'administrativo'
+                  ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+                  : darkMode
+                    ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+            >
+              Administrativo
+            </button>
+
+            {/* Responsável Dropdown - Shows when Administrativo is active */}
+            {categoryFilter === 'administrativo' && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition border text-sm ${assigneeFilter
+                      ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+                      : darkMode
+                        ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                >
+                  <User size={16} />
+                  {assigneeFilter ? assigneeFilter : 'Responsável'}
+                  <ChevronDown size={16} />
+                </button>
+
+                {showAssigneeDropdown && (
+                  <div
+                    className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-20 border max-h-64 overflow-y-auto ${darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'
+                      }`}
+                  >
+                    <button
+                      onClick={() => {
+                        setAssigneeFilter('')
+                        setShowAssigneeDropdown(false)
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'
+                        } ${!assigneeFilter ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {assigneesByCategory['administrativo'].map((assignee) => (
+                      <button
+                        key={assignee}
+                        onClick={() => {
+                          setAssigneeFilter(assignee)
+                          setShowAssigneeDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'
+                          } ${assigneeFilter === assignee ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                      >
+                        {assignee}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* SPACER */}
         <div className="flex-1" />
 
-        {/* RIGHT SIDE: Clear Filter & Responsável Dropdown */}
+        {/* RIGHT SIDE: Clear Filter Button */}
         <div className="flex items-center gap-3">
           {/* Clear Filter Button */}
           {activeFilterCount > 0 && (
@@ -103,58 +205,6 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
               Limpar Filtro
             </button>
           )}
-
-          {/* Responsável Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition border ${
-                assigneeFilter
-                  ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                  : darkMode
-                    ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <User size={16} />
-              {assigneeFilter ? assigneeFilter : 'Responsável'}
-              <ChevronDown size={16} />
-            </button>
-
-            {showAssigneeDropdown && (
-              <div
-                className={`absolute top-full right-0 mt-2 w-56 rounded-lg shadow-lg z-20 border max-h-64 overflow-y-auto ${
-                  darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    setAssigneeFilter('')
-                    setShowAssigneeDropdown(false)
-                  }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${
-                    darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'
-                  } ${!assigneeFilter ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                >
-                  Todos
-                </button>
-                {assigneesByCategory[categoryFilter].map((assignee) => (
-                  <button
-                    key={assignee}
-                    onClick={() => {
-                      setAssigneeFilter(assignee)
-                      setShowAssigneeDropdown(false)
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition ${
-                      darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'
-                    } ${assigneeFilter === assignee ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                  >
-                    {assignee}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
