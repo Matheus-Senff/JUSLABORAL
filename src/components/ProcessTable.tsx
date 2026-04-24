@@ -636,13 +636,27 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   {showSetorFilterDropdown && (
                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                       <button
-                        onClick={() => { handleFilterChange('setor', ''); setShowSetorFilterDropdown(false) }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFilterChange('setor', '');
+                          setShowSetorFilterDropdown(false)
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        type="button"
                         className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                       >Todos</button>
                       {['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso'].map(s => (
                         <button
                           key={s}
-                          onClick={() => { handleFilterChange('setor', s); setShowSetorFilterDropdown(false) }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('setor', s);
+                            setShowSetorFilterDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
                           className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.setor === s ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >{s}</button>
                       ))}
@@ -747,13 +761,30 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   {showNaturezaDropdown && (
                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                       <button
-                        onClick={() => { handleFilterChange('natureza', ''); handleFilterChange('tipo', ''); setShowNaturezaDropdown(false) }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFilterChange('natureza', '');
+                          handleFilterChange('tipo', '');
+                          setShowNaturezaDropdown(false)
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        type="button"
                         className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.natureza ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                       >Todos</button>
                       {_naturezas.map(nat => (
                         <button
                           key={nat}
-                          onClick={() => { handleFilterChange('natureza', nat); handleFilterChange('tipo', ''); setShowNaturezaDropdown(false) }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log(`✅ Clicou em Natureza: ${nat}`);
+                            handleFilterChange('natureza', nat);
+                            handleFilterChange('tipo', '');
+                            setShowNaturezaDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
                           className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >{nat}</button>
                       ))}
@@ -777,13 +808,27 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   {showTipoDropdown && filters.natureza && (
                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
                       <button
-                        onClick={() => { handleFilterChange('tipo', ''); setShowTipoDropdown(false) }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFilterChange('tipo', '');
+                          setShowTipoDropdown(false)
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        type="button"
                         className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                       >Todos</button>
                       {(tiposByNatureza[filters.natureza] || []).map(tipo => (
                         <button
                           key={tipo}
-                          onClick={() => { handleFilterChange('tipo', tipo); setShowTipoDropdown(false) }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('tipo', tipo);
+                            setShowTipoDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
                           className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >{tipo}</button>
                       ))}
@@ -989,13 +1034,27 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     {showSetorTableDropdown && (
                       <div className={`absolute top-full left-0 mt-1 w-40 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                         <button
-                          onClick={() => { handleFilterChange('setor', ''); setShowSetorTableDropdown(false) }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('setor', '');
+                            setShowSetorTableDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
                           className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >Todos</button>
                         {['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso'].map(s => (
                           <button
                             key={s}
-                            onClick={() => { handleFilterChange('setor', s); setShowSetorTableDropdown(false) }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFilterChange('setor', s);
+                              setShowSetorTableDropdown(false)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
                             className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.setor === s ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                           >{s}</button>
                         ))}
@@ -1015,13 +1074,29 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     {showNaturezaTableDropdown && (
                       <div className={`absolute top-full left-0 mt-1 w-40 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                         <button
-                          onClick={() => { handleFilterChange('natureza', ''); handleFilterChange('tipo', ''); setShowNaturezaTableDropdown(false) }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('natureza', '');
+                            handleFilterChange('tipo', '');
+                            setShowNaturezaTableDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
                           className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.natureza ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >Todos</button>
                         {_naturezas.map(nat => (
                           <button
                             key={nat}
-                            onClick={() => { handleFilterChange('natureza', nat); handleFilterChange('tipo', ''); setShowNaturezaTableDropdown(false) }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFilterChange('natureza', nat);
+                              handleFilterChange('tipo', '');
+                              setShowNaturezaTableDropdown(false)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
                             className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                           >{nat}</button>
                         ))}
@@ -1042,13 +1117,27 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     {showTipoTableDropdown && filters.natureza && (
                       <div className={`absolute top-full left-0 mt-1 w-40 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
                         <button
-                          onClick={() => { handleFilterChange('tipo', ''); setShowTipoTableDropdown(false) }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('tipo', '');
+                            setShowTipoTableDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
                           className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >Todos</button>
                         {(tiposByNatureza[filters.natureza] || []).map(tipo => (
                           <button
                             key={tipo}
-                            onClick={() => { handleFilterChange('tipo', tipo); setShowTipoTableDropdown(false) }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFilterChange('tipo', tipo);
+                              setShowTipoTableDropdown(false)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
                             className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                           >{tipo}</button>
                         ))}
