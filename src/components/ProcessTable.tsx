@@ -803,25 +803,25 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
             {/* Header with filters */}
             <thead>
               <tr className={`border-b ${borderColor} ${headerBg}`}>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>N°</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Parceiro</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Cliente</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>CPF</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>CAT/Nº Processo</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Cidade/Comarca</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>UF</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Responsável</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Data Início</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Status</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Setor</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Natureza</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Tipo</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Última Alteração</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>N°</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Parceiro</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Cliente</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>CPF</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>CAT</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Cidade</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>UF</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Resp.</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Data</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Status</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Setor</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Natureza</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Tipo</div></th>
+                <th className="px-1 py-1 text-left font-semibold text-xs whitespace-nowrap"><div>Ult. Alt.</div></th>
               </tr>
 
               {/* Filter Row */}
               <tr className={`border-b ${borderColor} ${darkMode ? 'bg-dark-600' : 'bg-gray-50'}`}>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.numero} onFocus={() => setActiveSuggestionField('numero')} onChange={(e) => handleFilterChange('numero', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'numero' && suggestions.numero && suggestions.numero.length > 0 && (
@@ -839,7 +839,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.parceiro} onFocus={() => setActiveSuggestionField('parceiro')} onChange={(e) => handleFilterChange('parceiro', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'parceiro' && suggestions.parceiro && suggestions.parceiro.length > 0 && (
@@ -857,7 +857,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.cliente} onFocus={() => setActiveSuggestionField('cliente')} onChange={(e) => handleFilterChange('cliente', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'cliente' && suggestions.cliente && suggestions.cliente.length > 0 && (
@@ -875,7 +875,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.cpf} onFocus={() => setActiveSuggestionField('cpf')} onChange={(e) => handleFilterChange('cpf', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'cpf' && suggestions.cpf && suggestions.cpf.length > 0 && (
@@ -893,7 +893,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.processo} onFocus={() => setActiveSuggestionField('processo')} onChange={(e) => handleFilterChange('processo', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'processo' && suggestions.processo && suggestions.processo.length > 0 && (
@@ -911,7 +911,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.cidade} onFocus={() => setActiveSuggestionField('cidade')} onChange={(e) => handleFilterChange('cidade', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'cidade' && suggestions.cidade && suggestions.cidade.length > 0 && (
@@ -929,7 +929,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1 relative">
+                <td className="px-1 py-0.5 relative">
                   <div>
                     <input type="text" placeholder="Filtro" value={filters.uf} onFocus={() => setActiveSuggestionField('uf')} onChange={(e) => handleFilterChange('uf', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
                     {activeSuggestionField === 'uf' && suggestions.uf && suggestions.uf.length > 0 && (
@@ -947,8 +947,8 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-1"><input type="text" placeholder="Filtro" value={filters.responsavel} onChange={(e) => handleFilterChange('responsavel', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
-                <td className="px-2 py-1"><input type="text" placeholder="Filtro" value={filters.dataInicio} onChange={(e) => handleFilterChange('dataInicio', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
+                <td className="px-1 py-0.5"><input type="text" placeholder="Filtro" value={filters.responsavel} onChange={(e) => handleFilterChange('responsavel', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
+                <td className="px-1 py-0.5"><input type="text" placeholder="Filtro" value={filters.dataInicio} onChange={(e) => handleFilterChange('dataInicio', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} /></td>
                 <td className="px-2 py-1 relative">
                   <button
                     onClick={() => setShowStatusDropdown(!showStatusDropdown)}
@@ -1097,20 +1097,20 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   onClick={() => handleProcessClick(process)}
                   className={`border-b ${borderColor} hover:${darkMode ? 'bg-dark-600' : 'bg-gray-50'} transition cursor-pointer`}
                 >
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.numero}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.parceiro}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.cliente}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.cpf}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.processo}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.cidade}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.uf}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.responsavel}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.dataInicio}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.status}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.setor || '-'}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.natureza || '-'}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.tipo || '-'}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.ultimaAlteracao}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-12`}>{process.numero}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-24`}>{process.parceiro}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-24`}>{process.cliente}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-20`}>{process.cpf}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-20`}>{process.processo}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-20`}>{process.cidade}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-10`}>{process.uf}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-20`}>{process.responsavel}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-18`}>{process.dataInicio}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-24`}>{process.status}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-20`}>{process.setor || '-'}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-20`}>{process.natureza || '-'}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-24`}>{process.tipo || '-'}</td>
+                  <td className={`px-1 py-1 text-xs ${textColor} truncate max-w-28`}>{process.ultimaAlteracao}</td>
                 </tr>
               ))}
             </tbody>
