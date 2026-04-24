@@ -131,6 +131,38 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     }
   }, [selectedUser])
 
+  // Initialize status filter from prop
+  useEffect(() => {
+    if (statusFilter && filters.status !== statusFilter) {
+      setFilters(prev => ({ ...prev, status: statusFilter }))
+    }
+  }, [statusFilter])
+
+  // Function to clear all filters
+  const handleClearFilters = () => {
+    setFilters({
+      dataInicio: '',
+      dataFinal: '',
+      numero: '',
+      parceiro: '',
+      cliente: '',
+      cpf: '',
+      processo: '',
+      cidade: '',
+      uf: '',
+      responsavel: '',
+      status: '',
+      setor: '',
+      nProcesso: '',
+      dataAlteracaoSetor: '',
+      dataAlteracaoResponsavel: '',
+      dataAlteracaoStatus: '',
+    })
+    setSelectedUser('geral')
+    setCurrentPage(1)
+    setShowDetailedFilter(false)
+  }
+
   // Auto-abrir processo quando initialProcessId é fornecido (ex: vindo da Agenda)
   useEffect(() => {
     if (!initialProcessId) return
@@ -493,6 +525,15 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
           >
             <Sliders size={16} />
             Filtro Detalhado
+          </button>
+
+          <button
+            onClick={handleClearFilters}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-semibold border rounded transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-600"
+            title="Limpar todos os filtros"
+          >
+            <X size={16} />
+            Limpar Filtro
           </button>
         </div>
 
