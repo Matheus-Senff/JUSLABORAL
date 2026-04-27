@@ -120,32 +120,28 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   return (
     <div className={`flex flex-col h-full min-h-0 ${bgColors.main}`}>
       {/* ============================================================ */}
-      {/* MAIN HEADER - TASKS VIEW */}
-      {/* ============================================================ */}
-      <div className={`px-6 py-4 flex-shrink-0 border-b ${bgColors.header}`}>
-        <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Tarefas do Sistema
-        </p>
-      </div>
-
-      {/* ============================================================ */}
       {/* CONTENT AREA - TASKS VIEW */}
       {/* ============================================================ */}
       <>
+        {/* FILTER BUTTONS - TOP LEFT */}
+        <div className="flex items-center gap-3 p-6 pb-0">
+          <button
+            onClick={() => setShowTaskFilters(!showTaskFilters)}
+            className="flex items-center gap-2 px-5 py-3 rounded-lg font-bold text-sm transition shadow-md bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Filter size={18} /> Filtros
+          </button>
+          <button
+            onClick={handleClearTaskFilters}
+            className="flex items-center gap-2 px-5 py-3 rounded-lg font-bold text-sm transition shadow-md bg-yellow-300 hover:bg-yellow-400 text-gray-900"
+          >
+            <RotateCcw size={18} /> Limpar
+          </button>
+        </div>
+
         {/* TASK FILTERS */}
         {showTaskFilters && (
           <div className={`border-b ${darkMode ? 'border-dark-600 bg-dark-800/50' : 'border-gray-200 bg-gray-50'} p-4 space-y-3`}>
-            <div>
-              <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Título</label>
-              <input
-                type="text"
-                value={taskFilters.titulo}
-                onChange={e => setTaskFilters(f => ({ ...f, titulo: e.target.value }))}
-                placeholder="Buscar por título..."
-                className={`w-full px-3 py-2 border rounded-lg text-sm ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-3">
               {/* Responsável dropdown */}
               <div className="relative">
@@ -315,20 +311,6 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
             <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Mostrando <span className="font-bold">{filteredTasks.length}</span> de <span className="font-bold">{tasks.length}</span> tarefas
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowTaskFilters(!showTaskFilters)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${showTaskFilters ? 'bg-blue-600 text-white' : darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                <Filter size={14} /> Filtros
-              </button>
-              <button
-                onClick={handleClearTaskFilters}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                <RotateCcw size={14} /> Limpar
-              </button>
-            </div>
           </div>
 
           {filteredTasks.length === 0 ? (

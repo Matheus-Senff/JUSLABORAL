@@ -387,12 +387,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     >
                         <Calendar size={16} /> Eventos
                     </button>
-                    <button
-                        onClick={() => { setEditingTaskId(null); setTaskForm({ titulo: '', descricao: '', responsavel: '', setor: '', observacao: '', tipoAcao: 'Pedir Documentação', showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }); setShowTaskModal(true) }}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition shadow-md"
-                    >
-                        <AlertCircle size={16} /> Tarefas
-                    </button>
                 </div>
             </div>
 
