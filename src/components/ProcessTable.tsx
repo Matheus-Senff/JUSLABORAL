@@ -68,7 +68,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [showNaturezaDropdown, setShowNaturezaDropdown] = useState(false)
   const [showNaturezaTableDropdown, setShowNaturezaTableDropdown] = useState(false)
   const [showTipoDropdown, setShowTipoDropdown] = useState(false)
-  const [showTipoTableDropdown, setShowTipoTableDropdown] = useState(false)
   const [showTelefoneDropdown, setShowTelefoneDropdown] = useState(false)
   const [showEmailDropdown, setShowEmailDropdown] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({
@@ -1115,47 +1114,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                             type="button"
                             className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                           >{nat}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-2 py-1 relative">
-                  <div>
-                    <button
-                      onClick={() => setShowTipoTableDropdown(!showTipoTableDropdown)}
-                      disabled={!filters.natureza}
-                      className={`w-full px-1 py-0.5 text-xs border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder} ${!filters.natureza ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <span className="truncate">{filters.tipo || 'Filtro'}</span>
-                      <span className="opacity-50 ml-1">▼</span>
-                    </button>
-                    {showTipoTableDropdown && filters.natureza && (
-                      <div className={`absolute top-full left-0 mt-1 w-40 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleFilterChange('tipo', '');
-                            setShowTipoTableDropdown(false)
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                          type="button"
-                          className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >Todos</button>
-                        {(tiposByNatureza[filters.natureza] || []).map(tipo => (
-                          <button
-                            key={tipo}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleFilterChange('tipo', tipo);
-                              setShowTipoTableDropdown(false)
-                            }}
-                            onMouseDown={(e) => e.preventDefault()}
-                            type="button"
-                            className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                          >{tipo}</button>
                         ))}
                       </div>
                     )}
