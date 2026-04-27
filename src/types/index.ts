@@ -105,4 +105,10 @@ export interface ProcessTask {
   dataCriacao: string
   dataConclusao?: string
   autor: string
+  // Campos do novo formulário
+  tipo?: 'Documento' | 'Evento' | 'Anotação'
+  acao?: string
+  tarefa?: string
+  prazo?: string
+  tipoResponsavel?: 'Setor' | 'Usuário' | 'Equipe'
 }
