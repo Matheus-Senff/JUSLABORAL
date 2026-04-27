@@ -39,6 +39,22 @@ const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reun
 const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
 const ANDAMENTO_OPTIONS = ['Parado', 'Em Análise', 'Pendência', 'Aguardando', 'Resolvido']
 
+const TAREFA_TIPOS_OPTIONS = ['Documento', 'Evento', 'Anotação'] as const
+const TAREFA_ACOES_POR_TIPO: Record<string, string[]> = {
+    'Documento': ['Retificar', 'Enviar'],
+    'Evento': ['Agendar', 'Informar', 'Reagendar'],
+    'Anotação': ['Adicionar', 'Corrigir'],
+}
+const TAREFA_DOCUMENTOS_OPTIONS = [
+    'EXTRATO DE PAGAMENTO', 'LOCAL DA PERÍCIA', 'REQUERIMENTO PROCESSO ADM',
+    'REQUERIMENTO INSS', 'CAT', 'PROCURAÇÃO ADM INSS', 'CARTA DE CONCESSÃO',
+    'CNIS', 'EXTRATO DE INFORMAÇÃO DE BENEFÍCIOS', 'ATESTADO MÉDICO',
+    'COMPROVANTE DE RESIDENCIA', 'JUSTIÇA GRATUITA', 'PROCURAÇÃO',
+    'FOTO', 'DOCUMENTO PESSOA', 'CTPS',
+]
+const TAREFA_EQUIPES_OPTIONS = ['Equipe Jurídica', 'Equipe Administrativa', 'Equipe Previdenciária', 'Equipe Contenciosa']
+const TAREFA_TIPO_RESPONSAVEL_OPTIONS = ['Setor', 'Usuário', 'Equipe'] as const
+
 export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     process, type, darkMode, onBack, onAddEvent
 }) => {
@@ -103,15 +119,18 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     const [showTaskModal, setShowTaskModal] = useState(false)
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
     const [taskForm, setTaskForm] = useState({
-        titulo: '',
-        descricao: '',
-        responsavel: '',
-        setor: '',
+        tipo: '' as 'Documento' | 'Evento' | 'Anotação' | '',
+        acao: '',
+        tarefa: '',
         observacao: '',
-        tipoAcao: 'Pedir Documentação' as typeof TIPO_ACAO_OPTIONS[number],
+        prazo: '',
+        tipoResponsavel: '' as 'Setor' | 'Usuário' | 'Equipe' | '',
+        responsavel: '',
+        showTipoDropdown: false,
+        showAcaoDropdown: false,
+        showTarefaDropdown: false,
+        showTipoResponsavelDropdown: false,
         showResponsavelDropdown: false,
-        showSetorDropdown: false,
-        showTipoAcaoDropdown: false,
     })
 
     // edição de campos do processo
@@ -225,47 +244,38 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     }
 
     const handleSaveTask = () => {
-        if (!taskForm.titulo.trim() || !taskForm.responsavel || !taskForm.setor) return
-        
-        if (editingTaskId) {
-            // Editar tarefa existente
-            setTasks(prev => prev.map(t => 
-                t.id === editingTaskId 
-                    ? { ...t, ...taskForm, showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }
-                    : t
-            ))
-            setEditingTaskId(null)
-        } else {
-            // Adicionar nova tarefa
-            const newTask: ProcessTask = {
-                id: Date.now().toString(),
-                processId: process.id,
-                titulo: taskForm.titulo,
-                descricao: taskForm.descricao,
-                responsavel: taskForm.responsavel,
-                setor: taskForm.setor,
-                observacao: taskForm.observacao,
-                tipoAcao: taskForm.tipoAcao,
-                status: 'Aberto',
-                dataCriacao: new Date().toLocaleString('pt-BR'),
-                autor: process.responsavel,
-            }
-            setTasks(prev => [newTask, ...prev])
-            // Adicionar ao contexto global
-            addGlobalTask(newTask)
+        if (!taskForm.tipo || !taskForm.acao || !taskForm.tipoResponsavel || !taskForm.responsavel) return
+
+        const TIPO_ACAO_MAP: Record<string, typeof TIPO_ACAO_OPTIONS[number]> = {
+            'Documento': 'Pedir Documentação',
+            'Evento': 'Evento',
+            'Anotação': 'Anotação',
         }
-        
-        setTaskForm({
-            titulo: '',
-            descricao: '',
-            responsavel: '',
-            setor: '',
-            observacao: '',
-            tipoAcao: 'Pedir Documentação',
-            showResponsavelDropdown: false,
-            showSetorDropdown: false,
-            showTipoAcaoDropdown: false,
-        })
+        const titulo = taskForm.tipo === 'Documento'
+            ? `${taskForm.acao} - ${taskForm.tarefa || 'Documento'}`
+            : `${taskForm.tipo} - ${taskForm.acao}`
+
+        const newTask: ProcessTask = {
+            id: Date.now().toString(),
+            processId: process.id,
+            titulo,
+            responsavel: taskForm.responsavel,
+            setor: taskForm.tipoResponsavel === 'Setor' ? taskForm.responsavel : 'Administrativo',
+            observacao: taskForm.observacao,
+            tipoAcao: TIPO_ACAO_MAP[taskForm.tipo] ?? 'Outro',
+            tipo: taskForm.tipo as 'Documento' | 'Evento' | 'Anotação',
+            acao: taskForm.acao,
+            tarefa: taskForm.tarefa || undefined,
+            prazo: taskForm.prazo || undefined,
+            tipoResponsavel: taskForm.tipoResponsavel as 'Setor' | 'Usuário' | 'Equipe',
+            status: 'Aberto',
+            dataCriacao: new Date().toLocaleString('pt-BR'),
+            autor: process.responsavel,
+        }
+        setTasks(prev => [newTask, ...prev])
+        addGlobalTask(newTask)
+
+        setTaskForm({ tipo: '', acao: '', tarefa: '', observacao: '', prazo: '', tipoResponsavel: '', responsavel: '', showTipoDropdown: false, showAcaoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false })
         setShowTaskModal(false)
     }
 
@@ -279,38 +289,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 ? { ...t, status: t.status === 'Concluído' ? 'Aberto' : 'Concluído', dataConclusao: t.status === 'Concluído' ? undefined : new Date().toLocaleString('pt-BR') }
                 : t
         ))
-    }
-
-    const handleEditTask = (task: ProcessTask) => {
-        setEditingTaskId(task.id)
-        setTaskForm({
-            titulo: task.titulo,
-            descricao: task.descricao || '',
-            responsavel: task.responsavel,
-            setor: task.setor,
-            observacao: task.observacao,
-            tipoAcao: task.tipoAcao,
-            showResponsavelDropdown: false,
-            showSetorDropdown: false,
-            showTipoAcaoDropdown: false,
-        })
-        setShowTaskModal(true)
-    }
-
-    const handleCancelTaskEdit = () => {
-        setEditingTaskId(null)
-        setTaskForm({
-            titulo: '',
-            descricao: '',
-            responsavel: '',
-            setor: '',
-            observacao: '',
-            tipoAcao: 'Pedir Documentação',
-            showResponsavelDropdown: false,
-            showSetorDropdown: false,
-            showTipoAcaoDropdown: false,
-        })
-        setShowTaskModal(false)
     }
 
     const handleSaveProcess = () => {
@@ -441,7 +419,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             <AlertCircle size={13} /> Tarefas ({tasks.length})
                         </h2>
                         <button
-                            onClick={() => { setEditingTaskId(null); setTaskForm({ titulo: '', descricao: '', responsavel: '', setor: '', observacao: '', tipoAcao: 'Pedir Documentação', showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }); setShowTaskModal(true) }}
+                            onClick={() => { setEditingTaskId(null); setTaskForm({ tipo: '', acao: '', tarefa: '', observacao: '', prazo: '', tipoResponsavel: '', responsavel: '', showTipoDropdown: false, showAcaoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false }); setShowTaskModal(true) }}
                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition"
                         >
                             <Plus size={12} /> Adicionar
@@ -468,9 +446,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     </span>
                                 </div>
                                 <div className="space-y-1">
+                                    <div className={`text-xs ${muted}`}><span className="font-semibold">Tipo:</span> {task.tipo ? `${task.tipo} / ${task.acao}` : task.tipoAcao}</div>
+                                    {task.tarefa && <div className={`text-xs ${muted}`}><span className="font-semibold">Tarefa:</span> {task.tarefa}</div>}
+                                    {task.prazo && <div className={`text-xs ${muted}`}><span className="font-semibold">Prazo:</span> {task.prazo}</div>}
                                     <div className={`text-xs ${muted}`}><span className="font-semibold">Responsável:</span> {task.responsavel}</div>
-                                    <div className={`text-xs ${muted}`}><span className="font-semibold">Setor:</span> {task.setor}</div>
-                                    <div className={`text-xs ${muted}`}><span className="font-semibold">Tipo:</span> {task.tipoAcao}</div>
                                     {task.observacao && <div className={`text-xs ${muted} line-clamp-2`}><span className="font-semibold">Obs:</span> {task.observacao}</div>}
                                 </div>
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-opacity-20">
@@ -483,12 +462,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                         }`}
                                     >
                                         <CheckCircle2 size={12} /> Concluir
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditTask(task)}
-                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold transition"
-                                    >
-                                        <Edit2 size={12} /> Editar
                                     </button>
                                     <button
                                         onClick={() => handleDeleteTask(task.id)}
@@ -973,101 +946,25 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
                         <div className={`flex items-center justify-between p-5 border-b ${border} sticky top-0 ${card}`}>
                             <h3 className={`text-base font-bold ${text}`}>{editingTaskId ? 'Editar Tarefa' : 'Adicionar Tarefa'}</h3>
-                            <button onClick={handleCancelTaskEdit} className={`p-1 rounded ${muted} hover:opacity-70`}><X size={20} /></button>
+                            <button onClick={() => setShowTaskModal(false)} className={`p-1 rounded ${muted} hover:opacity-70`}><X size={20} /></button>
                         </div>
                         <div className="p-5 space-y-4">
-                            <div>
-                                <label className={labelCls}>Título *</label>
-                                <input
-                                    type="text"
-                                    value={taskForm.titulo}
-                                    onChange={e => setTaskForm(f => ({ ...f, titulo: e.target.value }))}
-                                    placeholder="Título da tarefa..."
-                                    className={inputCls}
-                                />
-                            </div>
 
-                            <div>
-                                <label className={labelCls}>Descrição</label>
-                                <textarea
-                                    rows={2}
-                                    value={taskForm.descricao}
-                                    onChange={e => setTaskForm(f => ({ ...f, descricao: e.target.value }))}
-                                    placeholder="Descrição detalhada da tarefa..."
-                                    className={`${inputCls} resize-none`}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* Responsável dropdown */}
-                                <div className="relative">
-                                    <label className={labelCls}>Responsável *</label>
-                                    <button
-                                        onClick={() => { setTaskForm(f => ({ ...f, showResponsavelDropdown: !f.showResponsavelDropdown, showSetorDropdown: false, showTipoAcaoDropdown: false })) }}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                    >
-                                        <span className="truncate">{taskForm.responsavel || '— Selecionar —'}</span>
-                                        <span className="text-xs opacity-50 ml-2">▼</span>
-                                    </button>
-                                    {taskForm.showResponsavelDropdown && (
-                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
-                                            {RESPONSAVEIS_OPTIONS.map(opt => (
-                                                <button
-                                                    key={opt}
-                                                    onClick={() => { setTaskForm(f => ({ ...f, responsavel: opt, showResponsavelDropdown: false })) }}
-                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.responsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                                >
-                                                    {opt}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Setor dropdown */}
-                                <div className="relative">
-                                    <label className={labelCls}>Setor *</label>
-                                    <button
-                                        onClick={() => { setTaskForm(f => ({ ...f, showSetorDropdown: !f.showSetorDropdown, showResponsavelDropdown: false, showTipoAcaoDropdown: false })) }}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                    >
-                                        <span className="truncate">{taskForm.setor || '— Selecionar —'}</span>
-                                        <span className="text-xs opacity-50 ml-2">▼</span>
-                                    </button>
-                                    {taskForm.showSetorDropdown && (
-                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                            {SETORES_OPTIONS.map(opt => (
-                                                <button
-                                                    key={opt}
-                                                    onClick={() => { setTaskForm(f => ({ ...f, setor: opt, showSetorDropdown: false })) }}
-                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                                >
-                                                    {opt}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Tipo de Ação dropdown */}
+                            {/* Tipo */}
                             <div className="relative">
-                                <label className={labelCls}>Tipo de Ação</label>
+                                <label className={labelCls}>Tipo *</label>
                                 <button
-                                    onClick={() => { setTaskForm(f => ({ ...f, showTipoAcaoDropdown: !f.showTipoAcaoDropdown, showResponsavelDropdown: false, showSetorDropdown: false })) }}
+                                    onClick={() => setTaskForm(f => ({ ...f, showTipoDropdown: !f.showTipoDropdown, showAcaoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false }))}
                                     className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
                                 >
-                                    <span className="truncate">{taskForm.tipoAcao || '— Selecionar —'}</span>
+                                    <span className="truncate">{taskForm.tipo || '— Selecionar —'}</span>
                                     <span className="text-xs opacity-50 ml-2">▼</span>
                                 </button>
-                                {taskForm.showTipoAcaoDropdown && (
+                                {taskForm.showTipoDropdown && (
                                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                        {TIPO_ACAO_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt}
-                                                onClick={() => { setTaskForm(f => ({ ...f, tipoAcao: opt, showTipoAcaoDropdown: false })) }}
-                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.tipoAcao === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                            >
+                                        {TAREFA_TIPOS_OPTIONS.map(opt => (
+                                            <button key={opt} onClick={() => setTaskForm(f => ({ ...f, tipo: opt, acao: '', tarefa: '', showTipoDropdown: false }))}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.tipo === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}>
                                                 {opt}
                                             </button>
                                         ))}
@@ -1075,27 +972,134 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                 )}
                             </div>
 
+                            {/* Ação */}
+                            {taskForm.tipo && (
+                                <div className="relative">
+                                    <label className={labelCls}>Ação *</label>
+                                    <button
+                                        onClick={() => setTaskForm(f => ({ ...f, showAcaoDropdown: !f.showAcaoDropdown, showTipoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false }))}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{taskForm.acao || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {taskForm.showAcaoDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                            {(TAREFA_ACOES_POR_TIPO[taskForm.tipo] || []).map(opt => (
+                                                <button key={opt} onClick={() => setTaskForm(f => ({ ...f, acao: opt, tarefa: '', showAcaoDropdown: false }))}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.acao === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}>
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Tarefa (só para Documento) */}
+                            {taskForm.tipo === 'Documento' && taskForm.acao && (
+                                <div className="relative">
+                                    <label className={labelCls}>Tarefa</label>
+                                    <button
+                                        onClick={() => setTaskForm(f => ({ ...f, showTarefaDropdown: !f.showTarefaDropdown, showTipoDropdown: false, showAcaoDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false }))}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{taskForm.tarefa || '— Selecione o documento —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {taskForm.showTarefaDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-52 overflow-y-auto`}>
+                                            {TAREFA_DOCUMENTOS_OPTIONS.map(opt => (
+                                                <button key={opt} onClick={() => setTaskForm(f => ({ ...f, tarefa: opt, showTarefaDropdown: false }))}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.tarefa === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}>
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Observação */}
                             <div>
                                 <label className={labelCls}>Observação</label>
                                 <textarea
                                     rows={3}
                                     value={taskForm.observacao}
                                     onChange={e => setTaskForm(f => ({ ...f, observacao: e.target.value }))}
-                                    placeholder="Anotações e observações sobre a tarefa..."
+                                    placeholder="Observações sobre a tarefa..."
                                     className={`${inputCls} resize-none`}
                                 />
                             </div>
+
+                            {/* Prazo */}
+                            <div>
+                                <label className={labelCls}>Prazo</label>
+                                <input
+                                    type="date"
+                                    value={taskForm.prazo}
+                                    onChange={e => setTaskForm(f => ({ ...f, prazo: e.target.value }))}
+                                    className={inputCls}
+                                />
+                            </div>
+
+                            {/* Tipo Responsável */}
+                            <div className="relative">
+                                <label className={labelCls}>Tipo Responsável *</label>
+                                <button
+                                    onClick={() => setTaskForm(f => ({ ...f, showTipoResponsavelDropdown: !f.showTipoResponsavelDropdown, showTipoDropdown: false, showAcaoDropdown: false, showTarefaDropdown: false, showResponsavelDropdown: false }))}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                >
+                                    <span className="truncate">{taskForm.tipoResponsavel || '— Selecionar —'}</span>
+                                    <span className="text-xs opacity-50 ml-2">▼</span>
+                                </button>
+                                {taskForm.showTipoResponsavelDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                        {TAREFA_TIPO_RESPONSAVEL_OPTIONS.map(opt => (
+                                            <button key={opt} onClick={() => setTaskForm(f => ({ ...f, tipoResponsavel: opt, responsavel: '', showTipoResponsavelDropdown: false }))}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.tipoResponsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}>
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Responsável */}
+                            {taskForm.tipoResponsavel && (
+                                <div className="relative">
+                                    <label className={labelCls}>Responsável *</label>
+                                    <button
+                                        onClick={() => setTaskForm(f => ({ ...f, showResponsavelDropdown: !f.showResponsavelDropdown, showTipoDropdown: false, showAcaoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false }))}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{taskForm.responsavel || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {taskForm.showResponsavelDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
+                                            {(taskForm.tipoResponsavel === 'Setor' ? SETORES_OPTIONS : taskForm.tipoResponsavel === 'Usuário' ? RESPONSAVEIS_OPTIONS : TAREFA_EQUIPES_OPTIONS).map(opt => (
+                                                <button key={opt} onClick={() => setTaskForm(f => ({ ...f, responsavel: opt, showResponsavelDropdown: false }))}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.responsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}>
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                         </div>
                         <div className={`flex gap-2 p-5 border-t ${border} sticky bottom-0 ${card}`}>
-                            <button onClick={handleCancelTaskEdit} className={`flex-1 px-4 py-2 rounded-lg text-sm transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600' : 'bg-gray-200 hover:bg-gray-300'} ${text}`}>
+                            <button onClick={() => { setShowTaskModal(false); setTaskForm({ tipo: '', acao: '', tarefa: '', observacao: '', prazo: '', tipoResponsavel: '', responsavel: '', showTipoDropdown: false, showAcaoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false }) }} className={`flex-1 px-4 py-2 rounded-lg text-sm transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600' : 'bg-gray-200 hover:bg-gray-300'} ${text}`}>
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSaveTask}
-                                disabled={!taskForm.titulo.trim() || !taskForm.responsavel || !taskForm.setor}
+                                disabled={!taskForm.tipo || !taskForm.acao || !taskForm.tipoResponsavel || !taskForm.responsavel}
                                 className="flex-1 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition disabled:opacity-40 flex items-center justify-center gap-1.5"
                             >
-                                <Save size={14} /> {editingTaskId ? 'Atualizar' : 'Criar'} Tarefa
+                                <Save size={14} /> Criar Tarefa
                             </button>
                         </div>
                     </div>
