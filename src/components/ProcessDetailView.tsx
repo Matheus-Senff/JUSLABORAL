@@ -397,7 +397,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             </div>
 
             {/* Layout 4 colunas */}
-            <div className="p-4 grid grid-cols-1 xl:grid-cols-[200px_220px_1fr_260px] gap-4 items-start">
+            <div className="p-4 grid grid-cols-1 xl:grid-cols-[280px_320px_1fr_300px] gap-5 items-start">
 
                 {/* ===== ESQUERDA: HISTÓRICO ===== */}
                 <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
@@ -412,7 +412,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             <Plus size={12} /> Adicionar
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
                         {history.map(entry => {
                             const cfg = historyTypeConfig[entry.tipo]
                             const showFieldChange = entry.campo !== undefined && entry.valorAnterior !== undefined
@@ -453,7 +453,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             <Plus size={12} /> Adicionar
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
                         {tasks.length === 0 && (
                             <p className={`text-xs italic text-center py-4 ${muted}`}>Nenhuma tarefa.</p>
                         )}
@@ -511,8 +511,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 {/* ===== CENTRO: CAMPOS EDITÁVEIS ===== */}
                 <div className="space-y-4" onClick={e => e.stopPropagation()}>
                     {/* Identificação */}
-                    <div className={`${card} rounded-xl border ${border} p-5`}>
-                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Identificação</h2>
+                    <div className={`${card} rounded-xl border ${border} p-3`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Identificação</h2>
                         <div className="grid grid-cols-2 gap-3">
                             <div><label className={labelCls}>Nome</label><p className={valueCls}>{process.cliente}</p></div>
                             <div><label className={labelCls}>CPF</label><p className={valueCls}>{process.cpf}</p></div>
@@ -530,8 +530,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     </div>
 
                     {/* Dados do Processo */}
-                    <div className={`${card} rounded-xl border ${border} p-5`}>
-                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Dados do Processo</h2>
+                    <div className={`${card} rounded-xl border ${border} p-3`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Dados do Processo</h2>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="relative">
                                 <label className={labelCls}>Parceiro</label>
@@ -626,8 +626,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     </div>
 
                     {/* Andamento */}
-                    <div className={`${card} rounded-xl border ${border} p-5`}>
-                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Andamento</h2>
+                    <div className={`${card} rounded-xl border ${border} p-3`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Andamento</h2>
                         <div className="grid grid-cols-2 gap-3">
                             {/* Setor dropdown */}
                             <div className="relative">
@@ -740,7 +740,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
 
                     {/* Eventos marcados */}
                     {events.length > 0 && (
-                        <div className={`${card} rounded-xl border ${border} p-5`}>
+                        <div className={`${card} rounded-xl border ${border} p-3`}>
                             <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Eventos Marcados</h2>
                             <div className="space-y-2">
                                 {events.map(ev => (
@@ -794,7 +794,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                         </h2>
                     </div>
                     {/* Notas salvas */}
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
                         {notes.length === 0 && (
                             <p className={`text-xs italic text-center py-4 ${muted}`}>Nenhuma anotação.</p>
                         )}
