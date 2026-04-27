@@ -37,6 +37,7 @@ const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Cont
 const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro'] as const
 const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
+const ANDAMENTO_OPTIONS = ['Parado', 'Em Análise', 'Pendência', 'Aguardando', 'Resolvido']
 
 export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     process, type, darkMode, onBack, onAddEvent
@@ -131,6 +132,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     const [showSetorDropdown, setShowSetorDropdown] = useState(false)
     const [showResponsavelDropdown, setShowResponsavelDropdown] = useState(false)
     const [showParceiroDropdown, setShowParceiroDropdown] = useState(false)
+    const [showAndamentoDropdown, setShowAndamentoDropdown] = useState(false)
     const [saveConfirmed, setSaveConfirmed] = useState(false)
 
     const getLinkedDocuments = () =>
@@ -363,7 +365,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     }
 
     return (
-        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false) }}>
+        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowAndamentoDropdown(false) }}>
             {/* Header */}
             <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between sticky top-0 z-10`} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
@@ -378,18 +380,20 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                         <h1 className={`text-lg font-bold ${text}`}>#{process.numero} — {process.cliente}</h1>
                     </div>
                 </div>
-                <button
-                    onClick={() => setShowEventModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow-md"
-                >
-                    <Calendar size={16} /> Eventos
-                </button>
-                <button
-                    onClick={() => { setEditingTaskId(null); setTaskForm({ titulo: '', descricao: '', responsavel: '', setor: '', observacao: '', tipoAcao: 'Pedir Documentação', showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }); setShowTaskModal(true) }}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition shadow-md"
-                >
-                    <AlertCircle size={16} /> Tarefas
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowEventModal(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow-md"
+                    >
+                        <Calendar size={16} /> Eventos
+                    </button>
+                    <button
+                        onClick={() => { setEditingTaskId(null); setTaskForm({ titulo: '', descricao: '', responsavel: '', setor: '', observacao: '', tipoAcao: 'Pedir Documentação', showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }); setShowTaskModal(true) }}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition shadow-md"
+                    >
+                        <AlertCircle size={16} /> Tarefas
+                    </button>
+                </div>
             </div>
 
             {/* Layout 4 colunas */}
@@ -699,7 +703,28 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             </div>
                             <div>
                                 <label className={labelCls}>Andamento</label>
-                                <input type="text" value={editForm.andamento} onChange={e => setEditForm(f => ({ ...f, andamento: e.target.value }))} className={inputCls} />
+                                <div className="relative">
+                                    <button
+                                        onClick={() => { setShowAndamentoDropdown(!showAndamentoDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{editForm.andamento || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {showAndamentoDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                            {ANDAMENTO_OPTIONS.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setEditForm(f => ({ ...f, andamento: opt })); setShowAndamentoDropdown(false) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.andamento === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <div><label className={labelCls}>Última Alteração</label><p className={valueCls}>{process.ultimaAlteracao}</p></div>
                         </div>

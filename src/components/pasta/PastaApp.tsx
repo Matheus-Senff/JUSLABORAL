@@ -120,464 +120,293 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   return (
     <div className={`flex flex-col h-full min-h-0 ${bgColors.main}`}>
       {/* ============================================================ */}
-      {/* MAIN HEADER - TWO BUTTONS (TAREFAS / ADMINISTRATIVO) */}
+      {/* MAIN HEADER - TASKS VIEW */}
       {/* ============================================================ */}
-      <div className={`flex items-center gap-6 px-6 py-4 flex-shrink-0 border-b ${bgColors.header}`}>
-        {/* LEFT SIDE: Category Buttons with Dynamic Responsável Filter */}
-        <div className="flex flex-col gap-2">
-          {/* Tarefas Button Row */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setCategoryFilter('tarefas')
-                setAssigneeFilter('')
-                setShowAssigneeDropdown(false)
-              }}
-              className={`px-6 py-2.5 rounded-lg font-semibold transition border text-sm ${categoryFilter === 'tarefas'
-                  ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                  : darkMode
-                    ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-            >
-              Tarefas
-            </button>
-
-            {/* Responsável Dropdown - Shows when Tarefas is active */}
-            {categoryFilter === 'tarefas' && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition border text-sm ${assigneeFilter
-                      ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                      : darkMode
-                        ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                >
-                  <User size={16} />
-                  {assigneeFilter ? assigneeFilter : 'Responsável'}
-                  <ChevronDown size={16} />
-                </button>
-
-                {showAssigneeDropdown && (
-                  <div
-                    className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-20 border max-h-64 overflow-y-auto ${darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'
-                      }`}
-                  >
-                    <button
-                      onClick={() => {
-                        setAssigneeFilter('')
-                        setShowAssigneeDropdown(false)
-                      }}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'
-                        } ${!assigneeFilter ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                    >
-                      Todos
-                    </button>
-                    {assigneesByCategory['tarefas'].map((assignee) => (
-                      <button
-                        key={assignee}
-                        onClick={() => {
-                          setAssigneeFilter(assignee)
-                          setShowAssigneeDropdown(false)
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'
-                          } ${assigneeFilter === assignee ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                      >
-                        {assignee}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Administrativo Button Row */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setCategoryFilter('administrativo')
-                setAssigneeFilter('')
-                setShowAssigneeDropdown(false)
-              }}
-              className={`px-6 py-2.5 rounded-lg font-semibold transition border text-sm ${categoryFilter === 'administrativo'
-                  ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                  : darkMode
-                    ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-            >
-              Administrativo
-            </button>
-
-            {/* Responsável Dropdown - Shows when Administrativo is active */}
-            {categoryFilter === 'administrativo' && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition border text-sm ${assigneeFilter
-                      ? 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
-                      : darkMode
-                        ? 'bg-dark-700 text-gray-300 border-dark-600 hover:bg-dark-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                >
-                  <User size={16} />
-                  {assigneeFilter ? assigneeFilter : 'Responsável'}
-                  <ChevronDown size={16} />
-                </button>
-
-                {showAssigneeDropdown && (
-                  <div
-                    className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-20 border max-h-64 overflow-y-auto ${darkMode ? 'bg-dark-700 border-dark-600' : 'bg-white border-gray-200'
-                      }`}
-                  >
-                    <button
-                      onClick={() => {
-                        setAssigneeFilter('')
-                        setShowAssigneeDropdown(false)
-                      }}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'
-                        } ${!assigneeFilter ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                    >
-                      Todos
-                    </button>
-                    {assigneesByCategory['administrativo'].map((assignee) => (
-                      <button
-                        key={assignee}
-                        onClick={() => {
-                          setAssigneeFilter(assignee)
-                          setShowAssigneeDropdown(false)
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'
-                          } ${assigneeFilter === assignee ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                      >
-                        {assignee}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* SPACER */}
-        <div className="flex-1" />
-
-        {/* RIGHT SIDE: Clear Filter Button */}
-        <div className="flex items-center gap-3">
-          {/* Clear Filter Button */}
-          {activeFilterCount > 0 && (
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-2 px-3 py-2 rounded text-sm font-semibold transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-yellow-600"
-              title="Limpar todos os filtros"
-            >
-              <X size={14} />
-              Limpar Filtro
-            </button>
-          )}
-        </div>
+      <div className={`px-6 py-4 flex-shrink-0 border-b ${bgColors.header}`}>
+        <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Tarefas do Sistema
+        </p>
       </div>
 
       {/* ============================================================ */}
-      {/* CONTENT AREA - TASKS OR EMPTY STATE */}
+      {/* CONTENT AREA - TASKS VIEW */}
       {/* ============================================================ */}
-      {categoryFilter === 'tarefas' ? (
-        <>
-          {/* TASK FILTERS */}
-          {showTaskFilters && (
-            <div className={`border-b ${darkMode ? 'border-dark-600 bg-dark-800/50' : 'border-gray-200 bg-gray-50'} p-4 space-y-3`}>
-              <div>
-                <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Título</label>
-                <input
-                  type="text"
-                  value={taskFilters.titulo}
-                  onChange={e => setTaskFilters(f => ({ ...f, titulo: e.target.value }))}
-                  placeholder="Buscar por título..."
-                  className={`w-full px-3 py-2 border rounded-lg text-sm ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                />
-              </div>
+      <>
+        {/* TASK FILTERS */}
+        {showTaskFilters && (
+          <div className={`border-b ${darkMode ? 'border-dark-600 bg-dark-800/50' : 'border-gray-200 bg-gray-50'} p-4 space-y-3`}>
+            <div>
+              <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Título</label>
+              <input
+                type="text"
+                value={taskFilters.titulo}
+                onChange={e => setTaskFilters(f => ({ ...f, titulo: e.target.value }))}
+                placeholder="Buscar por título..."
+                className={`w-full px-3 py-2 border rounded-lg text-sm ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {/* Responsável dropdown */}
-                <div className="relative">
-                  <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Responsável</label>
-                  <button
-                    onClick={() => {
-                      setShowResponsavelDropdown(!showResponsavelDropdown)
-                      setShowSetorDropdown(false)
-                      setShowStatusDropdown(false)
-                      setShowTipoAcaoDropdown(false)
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  >
-                    <span className="truncate">{taskFilters.responsavel || '— Todos —'}</span>
-                    <span className="text-xs opacity-50 ml-2">▼</span>
-                  </button>
-                  {showResponsavelDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden max-h-48 overflow-y-auto`}>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Responsável dropdown */}
+              <div className="relative">
+                <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Responsável</label>
+                <button
+                  onClick={() => {
+                    setShowResponsavelDropdown(!showResponsavelDropdown)
+                    setShowSetorDropdown(false)
+                    setShowStatusDropdown(false)
+                    setShowTipoAcaoDropdown(false)
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                >
+                  <span className="truncate">{taskFilters.responsavel || '— Todos —'}</span>
+                  <span className="text-xs opacity-50 ml-2">▼</span>
+                </button>
+                {showResponsavelDropdown && (
+                  <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden max-h-48 overflow-y-auto`}>
+                    <button
+                      onClick={() => {
+                        setTaskFilters(f => ({ ...f, responsavel: '' }))
+                        setShowResponsavelDropdown(false)
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.responsavel ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {RESPONSAVEIS_OPTIONS.map(opt => (
                       <button
+                        key={opt}
                         onClick={() => {
-                          setTaskFilters(f => ({ ...f, responsavel: '' }))
+                          setTaskFilters(f => ({ ...f, responsavel: opt }))
                           setShowResponsavelDropdown(false)
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.responsavel ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.responsavel === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
                       >
-                        Todos
+                        {opt}
                       </button>
-                      {RESPONSAVEIS_OPTIONS.map(opt => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setTaskFilters(f => ({ ...f, responsavel: opt }))
-                            setShowResponsavelDropdown(false)
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.responsavel === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                {/* Setor dropdown */}
-                <div className="relative">
-                  <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Setor</label>
-                  <button
-                    onClick={() => {
-                      setShowSetorDropdown(!showSetorDropdown)
-                      setShowResponsavelDropdown(false)
-                      setShowStatusDropdown(false)
-                      setShowTipoAcaoDropdown(false)
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  >
-                    <span className="truncate">{taskFilters.setor || '— Todos —'}</span>
-                    <span className="text-xs opacity-50 ml-2">▼</span>
-                  </button>
-                  {showSetorDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
-                      {SETORES_OPTIONS.map(opt => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setTaskFilters(f => ({ ...f, setor: opt }))
-                            setShowSetorDropdown(false)
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.setor === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Status dropdown */}
-                <div className="relative">
-                  <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Status</label>
-                  <button
-                    onClick={() => {
-                      setShowStatusDropdown(!showStatusDropdown)
-                      setShowResponsavelDropdown(false)
-                      setShowSetorDropdown(false)
-                      setShowTipoAcaoDropdown(false)
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  >
-                    <span className="truncate">{taskFilters.status || '— Todos —'}</span>
-                    <span className="text-xs opacity-50 ml-2">▼</span>
-                  </button>
-                  {showStatusDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
+              {/* Setor dropdown */}
+              <div className="relative">
+                <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Setor</label>
+                <button
+                  onClick={() => {
+                    setShowSetorDropdown(!showSetorDropdown)
+                    setShowResponsavelDropdown(false)
+                    setShowStatusDropdown(false)
+                    setShowTipoAcaoDropdown(false)
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                >
+                  <span className="truncate">{taskFilters.setor || '— Todos —'}</span>
+                  <span className="text-xs opacity-50 ml-2">▼</span>
+                </button>
+                {showSetorDropdown && (
+                  <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
+                    {SETORES_OPTIONS.map(opt => (
                       <button
+                        key={opt}
                         onClick={() => {
-                          setTaskFilters(f => ({ ...f, status: '' }))
+                          setTaskFilters(f => ({ ...f, setor: opt }))
+                          setShowSetorDropdown(false)
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.setor === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Status dropdown */}
+              <div className="relative">
+                <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Status</label>
+                <button
+                  onClick={() => {
+                    setShowStatusDropdown(!showStatusDropdown)
+                    setShowResponsavelDropdown(false)
+                    setShowSetorDropdown(false)
+                    setShowTipoAcaoDropdown(false)
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                >
+                  <span className="truncate">{taskFilters.status || '— Todos —'}</span>
+                  <span className="text-xs opacity-50 ml-2">▼</span>
+                </button>
+                {showStatusDropdown && (
+                  <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
+                    <button
+                      onClick={() => {
+                        setTaskFilters(f => ({ ...f, status: '' }))
+                        setShowStatusDropdown(false)
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.status ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {STATUS_OPTIONS.map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => {
+                          setTaskFilters(f => ({ ...f, status: opt }))
                           setShowStatusDropdown(false)
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.status ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.status === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
                       >
-                        Todos
+                        {opt}
                       </button>
-                      {STATUS_OPTIONS.map(opt => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setTaskFilters(f => ({ ...f, status: opt }))
-                            setShowStatusDropdown(false)
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.status === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                {/* Tipo de Ação dropdown */}
-                <div className="relative">
-                  <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tipo de Ação</label>
-                  <button
-                    onClick={() => {
-                      setShowTipoAcaoDropdown(!showTipoAcaoDropdown)
-                      setShowResponsavelDropdown(false)
-                      setShowSetorDropdown(false)
-                      setShowStatusDropdown(false)
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  >
-                    <span className="truncate">{taskFilters.tipoAcao || '— Todos —'}</span>
-                    <span className="text-xs opacity-50 ml-2">▼</span>
-                  </button>
-                  {showTipoAcaoDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden max-h-48 overflow-y-auto`}>
+              {/* Tipo de Ação dropdown */}
+              <div className="relative">
+                <label className={`block text-xs font-semibold mb-1 uppercase tracking-wide ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tipo de Ação</label>
+                <button
+                  onClick={() => {
+                    setShowTipoAcaoDropdown(!showTipoAcaoDropdown)
+                    setShowResponsavelDropdown(false)
+                    setShowSetorDropdown(false)
+                    setShowStatusDropdown(false)
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                >
+                  <span className="truncate">{taskFilters.tipoAcao || '— Todos —'}</span>
+                  <span className="text-xs opacity-50 ml-2">▼</span>
+                </button>
+                {showTipoAcaoDropdown && (
+                  <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden max-h-48 overflow-y-auto`}>
+                    <button
+                      onClick={() => {
+                        setTaskFilters(f => ({ ...f, tipoAcao: '' }))
+                        setShowTipoAcaoDropdown(false)
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.tipoAcao ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {TIPO_ACAO_OPTIONS.map(opt => (
                       <button
+                        key={opt}
                         onClick={() => {
-                          setTaskFilters(f => ({ ...f, tipoAcao: '' }))
+                          setTaskFilters(f => ({ ...f, tipoAcao: opt }))
                           setShowTipoAcaoDropdown(false)
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.tipoAcao ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.tipoAcao === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
                       >
-                        Todos
+                        {opt}
                       </button>
-                      {TIPO_ACAO_OPTIONS.map(opt => (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            setTaskFilters(f => ({ ...f, tipoAcao: opt }))
-                            setShowTipoAcaoDropdown(false)
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.tipoAcao === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* TASKS GRID */}
-          <div className="flex-1 overflow-auto p-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Mostrando <span className="font-bold">{filteredTasks.length}</span> de <span className="font-bold">{tasks.length}</span> tarefas
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowTaskFilters(!showTaskFilters)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${showTaskFilters ? 'bg-blue-600 text-white' : darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                >
-                  <Filter size={14} /> Filtros
-                </button>
-                <button
-                  onClick={handleClearTaskFilters}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                >
-                  <RotateCcw size={14} /> Limpar
-                </button>
-              </div>
+        {/* TASKS GRID */}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Mostrando <span className="font-bold">{filteredTasks.length}</span> de <span className="font-bold">{tasks.length}</span> tarefas
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowTaskFilters(!showTaskFilters)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${showTaskFilters ? 'bg-blue-600 text-white' : darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                <Filter size={14} /> Filtros
+              </button>
+              <button
+                onClick={handleClearTaskFilters}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${darkMode ? 'bg-dark-700 text-gray-300 hover:bg-dark-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                <RotateCcw size={14} /> Limpar
+              </button>
             </div>
+          </div>
 
-            {filteredTasks.length === 0 ? (
-              <div className={`rounded-xl border ${bgColors.card} p-12 text-center`}>
-                <AlertCircle size={32} className={`mx-auto mb-3 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                <p className={`text-base font-semibold ${bgColors.text}`}>Nenhuma tarefa encontrada</p>
-                <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>Tente ajustar seus filtros</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredTasks.map(task => (
-                  <div key={task.id} className={`${bgColors.card} rounded-xl border p-4 flex flex-col`}>
-                    {/* Card Header */}
-                    <div className="flex items-start justify-between mb-3 pb-3 border-b border-opacity-20">
-                      <div className="flex-1">
-                        <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'} mb-1`}>{task.titulo}</h3>
-                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{task.descricao || '—'}</p>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-white text-xs font-semibold shrink-0 ml-2 ${getStatusColor(task.status)}`}>
-                        {task.status === 'Concluído' && <CheckCircle2 size={11} />}
-                        {task.status}
-                      </span>
+          {filteredTasks.length === 0 ? (
+            <div className={`rounded-xl border ${bgColors.card} p-12 text-center`}>
+              <AlertCircle size={32} className={`mx-auto mb-3 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+              <p className={`text-base font-semibold ${bgColors.text}`}>Nenhuma tarefa encontrada</p>
+              <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>Tente ajustar seus filtros</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredTasks.map(task => (
+                <div key={task.id} className={`${bgColors.card} rounded-xl border p-4 flex flex-col`}>
+                  {/* Card Header */}
+                  <div className="flex items-start justify-between mb-3 pb-3 border-b border-opacity-20">
+                    <div className="flex-1">
+                      <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'} mb-1`}>{task.titulo}</h3>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{task.descricao || '—'}</p>
                     </div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-white text-xs font-semibold shrink-0 ml-2 ${getStatusColor(task.status)}`}>
+                      {task.status === 'Concluído' && <CheckCircle2 size={11} />}
+                      {task.status}
+                    </span>
+                  </div>
 
-                    {/* Details */}
-                    <div className="space-y-2 mb-4 text-xs">
-                      <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <span>Responsável:</span>
-                        <span className="font-semibold">{task.responsavel}</span>
-                      </div>
-                      <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <span>Setor:</span>
-                        <span className="font-semibold">{task.setor}</span>
-                      </div>
-                      <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <span>Tipo:</span>
-                        <span className="font-semibold">{getTipoAcaoIcon(task.tipoAcao)} {task.tipoAcao}</span>
-                      </div>
-                      {task.observacao && (
-                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-2 p-2 rounded ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-                          <span className="font-semibold block mb-1">Obs:</span>
-                          <span>{task.observacao}</span>
-                        </div>
-                      )}
+                  {/* Details */}
+                  <div className="space-y-2 mb-4 text-xs">
+                    <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span>Responsável:</span>
+                      <span className="font-semibold">{task.responsavel}</span>
                     </div>
-
-                    {/* Date */}
-                    <div className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mb-3 pt-2 border-t border-opacity-20`}>
-                      {task.dataCriacao}
-                      {task.dataConclusao && <div>Concluída: {task.dataConclusao}</div>}
+                    <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span>Setor:</span>
+                      <span className="font-semibold">{task.setor}</span>
                     </div>
+                    <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span>Tipo:</span>
+                      <span className="font-semibold">{getTipoAcaoIcon(task.tipoAcao)} {task.tipoAcao}</span>
+                    </div>
+                    {task.observacao && (
+                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-2 p-2 rounded ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+                        <span className="font-semibold block mb-1">Obs:</span>
+                        <span>{task.observacao}</span>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-2 mt-auto pt-3 border-t border-opacity-20">
-                      <button
-                        onClick={() => completeTask(task.id)}
-                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${
-                          task.status === 'Concluído'
-                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                            : darkMode
+                  {/* Date */}
+                  <div className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mb-3 pt-2 border-t border-opacity-20`}>
+                    {task.dataCriacao}
+                    {task.dataConclusao && <div>Concluída: {task.dataConclusao}</div>}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-auto pt-3 border-t border-opacity-20">
+                    <button
+                      onClick={() => completeTask(task.id)}
+                      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Concluído'
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : darkMode
                             ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
                             : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                         }`}
-                      >
-                        <CheckCircle2 size={11} /> Concluir
-                      </button>
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        <Trash2 size={11} /> Deletar
-                      </button>
-                    </div>
+                    >
+                      <CheckCircle2 size={11} /> Concluir
+                    </button>
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <Trash2 size={11} /> Deletar
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        // EMPTY STATE FOR ADMINISTRATIVO
-        <div className="flex-1 flex items-center justify-center">
-          <div className={`text-center p-8 rounded-lg ${bgColors.card} border`}>
-            <FileText size={40} className="mx-auto mb-3" style={{ color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }} />
-            <p className={`text-lg font-semibold mb-1 ${bgColors.text}`}>
-              Administrativo
-            </p>
-            <p className="text-sm" style={{ color: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
-              {assigneeFilter ? `Filtrando por: ${assigneeFilter}` : 'Selecione um responsável'}
-            </p>
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </>
     </div>
   )
 }
