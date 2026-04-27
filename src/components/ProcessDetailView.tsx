@@ -24,6 +24,13 @@ const STATUS_OPTIONS = [
     'Arquivado',
 ]
 
+const NATUREZA_OPTIONS = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
+const TIPO_OPTIONS: Record<string, string[]> = {
+  'CIVIL': ['ÇÕES CIVIS'],
+  'TRABALHISTA': ['TRABALHISTA', 'ÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
+  'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOEÇA', 'AUXÍLIO-REC-PROFISSIONAL', 'AUXÍLIO-TRAb-ACIDENTE', 'AVENT-RÁPIDA-FĀMLIA', 'BENEFÍCIO-ASSISTENCIAL-IDOSO', 'BENÉFİCIO-ASSISTENCIAL-PESSOA-DEFICIENTE', 'BENÉFİCIO-PRESTADOR-INFORMACAO', 'BENÉFİCIO-REQUERENTE-INFORMACAO', 'BENÉFİCIO-SOLICITACAO-COPIA-DOCUMENTO', 'BENÉFİCIO-VALIDADE-DOCUMENTO', 'BUSC-ATIVO-INFORMACAO', 'CERTIDAO-AUXILIO-ACIDENTE', 'CERTIDAO-AUXILIO-DOENCA', 'CERTIDAO-AUXILIO-REC-PROFISSIONAL']
+}
+
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
 const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
 const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
@@ -46,6 +53,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     const [showEventModal, setShowEventModal] = useState(false)
     const [showNoteModal, setShowNoteModal] = useState(false)
     const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+    const [showNaturezaDropdown, setShowNaturezaDropdown] = useState(false)
+    const [showTipoDropdown, setShowTipoDropdown] = useState(false)
 
     // histórico local
     const [history, setHistory] = useState<ProcessHistoryEntry[]>([
@@ -362,14 +371,56 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     </div>
                                 )}
                             </div>
-                            <div>
+                            {/* Natureza dropdown */}
+                            <div className="relative">
                                 <label className={labelCls}>Natureza</label>
-                                <input type="text" value={editForm.natureza} onChange={e => setEditForm(f => ({ ...f, natureza: e.target.value }))} className={inputCls} />
+                                <button
+                                    onClick={() => { setShowNaturezaDropdown(!showNaturezaDropdown); setShowTipoDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowStatusDropdown(false) }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                >
+                                    <span className="truncate">{editForm.natureza || '— Selecionar —'}</span>
+                                    <span className="text-xs opacity-50 ml-2">▼</span>
+                                </button>
+                                {showNaturezaDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                        {NATUREZA_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => { setEditForm(f => ({ ...f, natureza: opt, tipo: '' })); setShowNaturezaDropdown(false); setShowTipoDropdown(false) }}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.natureza === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <label className={labelCls}>Tipo</label>
-                                <input type="text" value={editForm.tipo} onChange={e => setEditForm(f => ({ ...f, tipo: e.target.value }))} className={inputCls} />
-                            </div>
+                            {/* Tipo dropdown - só aparece quando Natureza está selecionada */}
+                            {editForm.natureza && (
+                                <div className="relative">
+                                    <label className={labelCls}>Tipo</label>
+                                    <button
+                                        onClick={() => { setShowTipoDropdown(!showTipoDropdown); setShowNaturezaDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowStatusDropdown(false) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{editForm.tipo || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {showTipoDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
+                                            {TIPO_OPTIONS[editForm.natureza]?.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setEditForm(f => ({ ...f, tipo: opt })); setShowTipoDropdown(false) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.tipo === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            )) || null}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <div>
                                 <label className={labelCls}>N° Processo</label>
                                 <input type="text" value={editForm.nProcesso} onChange={e => setEditForm(f => ({ ...f, nProcesso: e.target.value }))} className={inputCls} />
