@@ -155,7 +155,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   }}
                   className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
-                  <span className="truncate">{taskFilters.responsavel || 'â€” Todos â€”'}</span>
+                  <span className="truncate">{taskFilters.responsavel || '— Todos —'}</span>
                   <span className="text-xs opacity-50 ml-2">▼</span>
                 </button>
                 {showResponsavelDropdown && (
@@ -197,7 +197,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   }}
                   className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
-                  <span className="truncate">{taskFilters.setor || 'â€” Todos â€”'}</span>
+                  <span className="truncate">{taskFilters.setor || '— Todos —'}</span>
                   <span className="text-xs opacity-50 ml-2">▼</span>
                 </button>
                 {showSetorDropdown && (
@@ -230,7 +230,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   }}
                   className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
-                  <span className="truncate">{taskFilters.status || 'â€” Todos â€”'}</span>
+                  <span className="truncate">{taskFilters.status || '— Todos —'}</span>
                   <span className="text-xs opacity-50 ml-2">▼</span>
                 </button>
                 {showStatusDropdown && (
@@ -272,7 +272,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   }}
                   className={`w-full text-left px-3 py-2 rounded-lg border text-sm flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
-                  <span className="truncate">{taskFilters.tipoAcao || 'â€” Todos â€”'}</span>
+                  <span className="truncate">{taskFilters.tipoAcao || '— Todos —'}</span>
                   <span className="text-xs opacity-50 ml-2">▼</span>
                 </button>
                 {showTipoAcaoDropdown && (
@@ -327,7 +327,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   <div className="flex items-start justify-between mb-3 pb-3 border-b border-opacity-20">
                     <div className="flex-1">
                       <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-900'} mb-1`}>{task.titulo}</h3>
-                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{task.descricao || 'â€”'}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{task.descricao || '—'}</p>
                     </div>
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-white text-xs font-semibold shrink-0 ml-2 ${getStatusColor(task.status)}`}>
                       {task.status === 'Concluído' && <CheckCircle2 size={11} />}
