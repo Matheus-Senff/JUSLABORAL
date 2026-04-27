@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calendar, Scale, Gavel, Cpu, Calculator, Folder, Moon, Sun, Users, Settings } from 'lucide-react'
+import { Calendar, Scale, Gavel, Cpu, Calculator, Folder, Moon, Sun, Users, Settings, CheckCircle2 } from 'lucide-react'
 
 // Interface do layout - eu refatorei isso do projeto antigo
 interface LayoutProps {
@@ -60,13 +60,15 @@ export const Layout: React.FC<LayoutProps> = ({
                       ? `Processo Estadual - ${selectedStatus}`
                       : activePage === 'federal-status'
                         ? `Processo Federal - ${selectedStatus}`
-                        : activePage === 'configuracoes'
-                          ? 'Configurações'
-                          : activePage === 'canon'
-                            ? 'Canon'
-                            : activePage === 'pasta'
-                              ? 'Tarefas'
-                              : 'Cálculo'
+                        : activePage === 'tarefas'
+                          ? 'Gerenciar Tarefas'
+                          : activePage === 'configuracoes'
+                            ? 'Configurações'
+                            : activePage === 'canon'
+                              ? 'Canon'
+                              : activePage === 'pasta'
+                                ? 'Tarefas'
+                                : 'Cálculo'
           }
         />
         <main className="flex-1 overflow-auto h-full">
@@ -153,6 +155,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, selectedStatus, onPageCha
           >
             <Folder size={20} />
             <span>Tarefas</span>
+          </button>
+
+          <button
+            onClick={() => onPageChange('tarefas')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${darkMode
+              ? (activePage === 'tarefas'
+                ? 'bg-blue-700 text-white'
+                : 'bg-blue-600 text-white hover:bg-blue-700')
+              : (activePage === 'tarefas'
+                ? 'bg-blue-700 text-white'
+                : 'bg-blue-600 text-white hover:bg-blue-700')
+              }`}
+          >
+            <CheckCircle2 size={20} />
+            <span>Gerenciar Tarefas</span>
           </button>
 
           <button

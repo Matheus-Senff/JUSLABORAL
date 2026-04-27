@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { Process, ProcessHistoryEntry, ProcessEvent, ProcessNote, ProcessTask } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
+import { useTasks } from '../contexts/TasksContext'
 import { mockUsers, mockParceiros } from '../data/mockData'
 
 interface ProcessDetailViewProps {
@@ -32,7 +33,7 @@ const TIPO_OPTIONS: Record<string, string[]> = {
 }
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
-const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
+const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
 const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro'] as const
 const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
@@ -41,6 +42,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     process, type, darkMode, onBack, onAddEvent
 }) => {
     const board = usePastaStore((s) => s.board)
+    const { addTask: addGlobalTask } = useTasks()
 
     const bg = darkMode ? 'bg-dark-900' : 'bg-gray-50'
     const card = darkMode ? 'bg-dark-800' : 'bg-white'
@@ -247,6 +249,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 autor: process.responsavel,
             }
             setTasks(prev => [newTask, ...prev])
+            // Adicionar ao contexto global
+            addGlobalTask(newTask)
         }
         
         setTaskForm({
