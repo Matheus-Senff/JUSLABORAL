@@ -5,7 +5,6 @@ import { ProcessTable } from './components/ProcessTable'
 import { ClientsTable } from './components/ClientsTable'
 import { CanonIndex } from './components/CanonIndex'
 import { Settings } from './components/Settings'
-import { TasksIndex } from './components/TasksIndex'
 import Calculo from './components/Calculo'
 import { PastaIndex } from './components/PastaIndex'
 import { AuthPage } from './components/AuthPage'
@@ -32,7 +31,7 @@ function AppContent() {
     setOpenProcessType(type)
     setActivePage(type)
   }
-  const [activePage, setActivePage] = React.useState<'agenda' | 'clientes' | 'estadual' | 'federal' | 'pasta' | 'canon' | 'calculo' | 'tarefas' | 'configuracoes' | 'estadual-status' | 'federal-status'>('pasta')
+  const [activePage, setActivePage] = React.useState<'agenda' | 'clientes' | 'estadual' | 'federal' | 'pasta' | 'canon' | 'calculo' | 'configuracoes' | 'estadual-status' | 'federal-status'>('pasta')
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null)
 
   const handlePageChange = (page: string, status?: string) => {
@@ -44,7 +43,6 @@ function AppContent() {
       page === 'pasta' ||
       page === 'canon' ||
       page === 'calculo' ||
-      page === 'tarefas' ||
       page === 'configuracoes' ||
       page === 'estadual-status' ||
       page === 'federal-status'
@@ -83,7 +81,6 @@ function AppContent() {
         <ProcessTable darkMode={darkMode} type={activePage === 'estadual-status' ? 'estadual' : 'federal'} statusFilter={selectedStatus} onAddEvent={handleAddProcessEvent} />
       )}
       {activePage === 'pasta' && <PastaIndex darkMode={darkMode} />}
-      {activePage === 'tarefas' && <TasksIndex darkMode={darkMode} />}
       {activePage === 'canon' && <CanonIndex darkMode={darkMode} />}
       {activePage === 'calculo' && <Calculo />}
       {activePage === 'configuracoes' && <Settings darkMode={darkMode} />}
