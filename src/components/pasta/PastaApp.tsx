@@ -3,7 +3,7 @@ import { X, FileText, User, ChevronDown, Filter, RotateCcw, CheckCircle2, Trash2
 import { usePastaStore } from './pastaStore'
 import { useTasks } from '../../contexts/TasksContext'
 import { ProcessTask } from '../../types'
-import { mockUsers } from '../../data/mockData'
+import { useSupabaseUsuarios } from '../../hooks/useSupabaseUsuarios'
 
 // ============================================================
 // TYPES & INTERFACES
@@ -39,8 +39,10 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showTipoAcaoDropdown, setShowTipoAcaoDropdown] = useState(false)
 
+  const { nomes: usuariosNomes } = useSupabaseUsuarios()
+
   const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
-  const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
+  const RESPONSAVEIS_OPTIONS = usuariosNomes
   const STATUS_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado']
   const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro']
 

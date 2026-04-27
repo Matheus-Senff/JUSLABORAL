@@ -6,8 +6,9 @@ import html2canvas from 'html2canvas'
 import { Process, ProcessEvent } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
 import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
-// Dados mockados - eu consolidei isso tudo aqui pra não repetir código
-import { mockUsers, mockUFs, mockCidades, generateMockProcess } from '../data/mockData'
+import { mockUFs, mockCidades } from '../data/mockData'
+import { useSupabaseProcessos } from '../hooks/useSupabaseProcessos'
+import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
 
 // Tabela de processos que eu construí desde o início
 interface ProcessTableProps {
@@ -21,6 +22,8 @@ interface ProcessTableProps {
 // TODO: fazer virtualization pra melhorar performance com muitos registros
 export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter, onAddEvent, initialProcessId }) => {
   const board = usePastaStore((s) => s.board)
+  const { processos: mockProcesses, loading: loadingProcessos } = useSupabaseProcessos(type)
+  const { nomes: usuariosNomes } = useSupabaseUsuarios()
 
   const [filters, setFilters] = useState<Record<string, string>>({
     dataInicio: '',
@@ -98,76 +101,12 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   })
   const itemsPerPage = 10
 
-  // Mock data - 26,103 processes
-  const _telefones = ['(47) 9 9801-0012', '(47) 9 8823-0043', '(11) 9 7734-0003', '(41) 9 6645-0004', '(51) 9 5556-0075', '(21) 9 4467-0086']
-  const _naturezas = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
-  const _emails = ['cliente@email.com', 'contato@provedor.com.br', 'pessoal@gmail.com', 'trabalho@outlook.com']
-
-  // Tipos dependem da Natureza
-  const tiposByNatureza: Record<string, string[]> = {
-    'CIVIL': ['AÇÕES CIVIS'],
-    'TRABALHISTA': ['TRABALHISTA', 'AÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
-    'PREVIDENCIÁRIA': [
-      'AUXÍLIO-ACIDENTE',
-      'AUXÍLIO-DOENÇA',
-      'LOAS DEFICIENTE',
-      'BENEFÍCIO ASSISTENCIAL',
-      'APOSENTADORIA POR TEMPO DE CONTRIBUIÇÃO',
-      'APOSENTADORIA POR IDADE RURAL',
-      'APOSENTADORIA HÍBRIDA',
-      'PENSÃO POR MORTE',
-      'SALÁRIO MATERNIDADE',
-      'APOSENTADORIA POR INVALIDEZ',
-      'REVISÃO DE BENEFÍCIO PREVIDENCIÁRIO',
-      'APOSENTADORIA POR IDADE URBANA',
-      'AUXÍLIO RECLUSÃO',
-      'APOSENTADORIA ESPECIAL',
-      'LOAS IDOSO',
-      'LOAS ADMINISTRATIVO'
-    ]
-  }
-
-  const _orgaos = ['INSS', 'TRT 12ª Região', 'SEJU', 'MTE', 'TRT 4ª Região', 'TRT 9ª Região']
-  const _fases = ['Administrativo', 'Judicial 1ª Instância', 'Judicial 2ª Instância', 'Recursal', 'Execução']
-  const _setores = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
-  const _andamentos = ['Em análise', 'Aguardando documentação', 'Em julgamento', 'Recurso pendente', 'Aguardando perícia']
-  const mockProcesses: Process[] = Array.from({ length: 26103 }, (_, i) => {
-    const process = generateMockProcess(i + 1, type)
-    return {
-      id: process.id,
-      numero: i + 1,
-      parceiro: process.parceiro,
-      cliente: process.cliente,
-      cpf: process.cpf,
-      processo: `CAT ${String(i + 1).padStart(8, '0')}`,
-      cidade: process.comarca,
-      uf: process.uf,
-      responsavel: mockUsers[i % (mockUsers.length - 1) + 1]?.name || 'Não atribuído',
-      dataInicio: process.dataInicio,
-      status: process.status,
-      ultimaAlteracao: new Date(2026, 3, Math.floor(Math.random() * 15) + 1, Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toLocaleString('pt-BR'),
-      telefone: _telefones[i % _telefones.length],
-      email: _emails[i % _emails.length],
-      natureza: _naturezas[i % _naturezas.length],
-      tipo: (() => {
-        const natureza = _naturezas[i % _naturezas.length]
-        const tiposDisp = tiposByNatureza[natureza] || []
-        return tiposDisp[i % tiposDisp.length] || ''
-      })(),
-      orgao: _orgaos[i % _orgaos.length],
-      endereco: `Rua ${['das Flores', 'Brasil', 'XV de Novembro', 'Independência'][i % 4]}, ${(i % 999) + 1} - ${process.comarca}`,
-      nProcesso: `${String(i + 1).padStart(7, '0')}-${(i % 99) + 1}.${2020 + (i % 6)}.5.12.${(i % 9999).toString().padStart(4, '0')}`,
-      setor: _setores[i % _setores.length],
-      andamento: _andamentos[i % _andamentos.length],
-    }
-  })
-
   // Update filter when selectedUser changes
   useEffect(() => {
     if (selectedUser === 'geral') {
       handleFilterChange('responsavel', '')
     } else {
-      const selectedUserName = mockUsers.find(u => u.id === selectedUser)?.name || ''
+      const selectedUserName = selectedUser || ''
       handleFilterChange('responsavel', selectedUserName)
     }
   }, [selectedUser])
@@ -578,283 +517,293 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const inputBorder = darkMode ? 'border-dark-600' : 'border-gray-300'
   const modalBg = darkMode ? 'bg-dark-800' : 'bg-white'
 
+  const _naturezas = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
+  const tiposByNatureza: Record<string, string[]> = {
+    'CIVIL': ['AÇÕES CIVIS'],
+    'TRABALHISTA': ['TRABALHISTA', 'SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
+    'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOENÇA', 'AUXÍLIO-RECLUSÃO', 'APOSENTADORIA POR INVALIDEZ', 'APOSENTADORIA POR TEMPO', 'PENSÃO POR MORTE', 'BPC-LOAS IDOSO', 'BPC-LOAS DEFICIENTE']
+  }
+
   return (
     <div className={`p-6 ${bgColor} min-h-screen`}>
       {/* Filter Header */}
-      <div className={`${tableBg} rounded-t-lg p-4 border ${borderColor}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-lg font-semibold ${textColor}`}>
-            Filtros
-          </h3>
-          <button
-            onClick={handleExport}
-            className={`flex items-center gap-2 px-3 py-1 rounded transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-          >
-            <Download size={18} />
-          </button>
-        </div>
-
-        <div className="mb-4 flex gap-3">
-          <div className="relative">
+        <div className={`${tableBg} rounded-t-lg p-4 border ${borderColor}`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-semibold ${textColor}`}>
+              Filtros
+            </h3>
             <button
-              onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
+              onClick={handleExport}
+              className={`flex items-center gap-2 px-3 py-1 rounded transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
             >
-              👤 {selectedUser ? mockUsers.find(u => u.id === selectedUser)?.name || 'Usuário Responsável' : 'Usuário Responsável'}
+              <Download size={18} />
             </button>
-            {showUserDropdown && (
-              <div className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-10 border ${borderColor} ${tableBg}`}>
-                {mockUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => {
-                      setSelectedUser(user.id)
-                      setShowUserDropdown(false)
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === user.id ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                  >
-                    <div className="font-medium">{user.name}</div>
-                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          <button
-            onClick={() => setShowDetailedFilter(!showDetailedFilter)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
-          >
-            <Sliders size={16} />
-            Filtro Detalhado
-          </button>
-
-          <button
-            onClick={handleClearFilters}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-semibold border rounded transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-600"
-            title="Limpar todos os filtros"
-          >
-            <X size={16} />
-            Limpar Filtro
-          </button>
-        </div>
-
-
-
-        {/* Filtro Detalhado expandido */}
-        {showDetailedFilter && (
-          <div className={`mt-4 pt-4 border-t ${borderColor}`}>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Setor</label>
-                <div className="relative">
+          <div className="mb-4 flex gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
+              >
+                👤 {selectedUser && selectedUser !== 'geral' ? selectedUser : 'Usuário Responsável'}
+              </button>
+              {showUserDropdown && (
+                <div className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-10 border ${borderColor} ${tableBg}`}>
                   <button
-                    onClick={() => setShowSetorFilterDropdown(!showSetorFilterDropdown)}
-                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                    key="geral"
+                    onClick={() => { setSelectedUser('geral'); setShowUserDropdown(false) }}
+                    className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === 'geral' ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                   >
-                    <span>{filters.setor || 'Todos'}</span>
-                    <span className="opacity-50 text-xs">&#9660;</span>
+                    <div className="font-medium">Todos</div>
                   </button>
-                  {showSetorFilterDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleFilterChange('setor', '');
-                          setShowSetorFilterDropdown(false)
-                        }}
-                        onMouseDown={(e) => e.preventDefault()}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                      >Todos</button>
-                      {['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso'].map(s => (
+                  {usuariosNomes.map((nome) => (
+                    <button
+                      key={nome}
+                      onClick={() => { setSelectedUser(nome); setShowUserDropdown(false) }}
+                      className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === nome ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                    >
+                      <div className="font-medium">{nome}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowDetailedFilter(!showDetailedFilter)}
+              className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
+            >
+              <Sliders size={16} />
+              Filtro Detalhado
+            </button>
+
+            <button
+              onClick={handleClearFilters}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold border rounded transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-600"
+              title="Limpar todos os filtros"
+            >
+              <X size={16} />
+              Limpar Filtro
+            </button>
+          </div>
+
+
+
+          {/* Filtro Detalhado expandido */}
+          {showDetailedFilter && (
+            <div className={`mt-4 pt-4 border-t ${borderColor}`}>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Setor</label>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowSetorFilterDropdown(!showSetorFilterDropdown)}
+                      className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                    >
+                      <span>{filters.setor || 'Todos'}</span>
+                      <span className="opacity-50 text-xs">&#9660;</span>
+                    </button>
+                    {showSetorFilterDropdown && (
+                      <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                         <button
-                          key={s}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleFilterChange('setor', s);
+                            handleFilterChange('setor', '');
                             setShowSetorFilterDropdown(false)
                           }}
                           onMouseDown={(e) => e.preventDefault()}
                           type="button"
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.setor === s ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >{s}</button>
-                      ))}
-                    </div>
-                  )}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >Todos</button>
+                        {['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso'].map(s => (
+                          <button
+                            key={s}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFilterChange('setor', s);
+                              setShowSetorFilterDropdown(false)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.setor === s ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                          >{s}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>N° Processo</label>
-                <input
-                  type="text"
-                  placeholder="Ex: 0000001-01.2024..."
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.nProcesso}
-                  onChange={(e) => handleFilterChange('nProcesso', e.target.value)}
-                />
-              </div>
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>N° Processo</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 0000001-01.2024..."
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.nProcesso}
+                    onChange={(e) => handleFilterChange('nProcesso', e.target.value)}
+                  />
+                </div>
 
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Setor</label>
-                <input
-                  type="date"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.dataAlteracaoSetor}
-                  onChange={(e) => handleFilterChange('dataAlteracaoSetor', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Responsável</label>
-                <input
-                  type="date"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.dataAlteracaoResponsavel}
-                  onChange={(e) => handleFilterChange('dataAlteracaoResponsavel', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Status</label>
-                <input
-                  type="date"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.dataAlteracaoStatus}
-                  onChange={(e) => handleFilterChange('dataAlteracaoStatus', e.target.value)}
-                />
-              </div>
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Setor</label>
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.dataAlteracaoSetor}
+                    onChange={(e) => handleFilterChange('dataAlteracaoSetor', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Responsável</label>
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.dataAlteracaoResponsavel}
+                    onChange={(e) => handleFilterChange('dataAlteracaoResponsavel', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Alteração Status</label>
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.dataAlteracaoStatus}
+                    onChange={(e) => handleFilterChange('dataAlteracaoStatus', e.target.value)}
+                  />
+                </div>
 
-              {/* Data Intervalo */}
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Início (Intervalo)</label>
-                <input
-                  type="date"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.dataInicioIntervalo}
-                  onChange={(e) => handleFilterChange('dataInicioIntervalo', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Fim (Intervalo)</label>
-                <input
-                  type="date"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.dataFinalIntervalo}
-                  onChange={(e) => handleFilterChange('dataFinalIntervalo', e.target.value)}
-                />
-              </div>
+                {/* Data Intervalo */}
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Início (Intervalo)</label>
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.dataInicioIntervalo}
+                    onChange={(e) => handleFilterChange('dataInicioIntervalo', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Data Fim (Intervalo)</label>
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.dataFinalIntervalo}
+                    onChange={(e) => handleFilterChange('dataFinalIntervalo', e.target.value)}
+                  />
+                </div>
 
-              {/* Telefone Input */}
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Telefone</label>
-                <input
-                  type="text"
-                  placeholder="Ex: (47) 9 9801-0012"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.telefone}
-                  onChange={(e) => handleFilterChange('telefone', e.target.value)}
-                />
-              </div>
+                {/* Telefone Input */}
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Telefone</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: (47) 9 9801-0012"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.telefone}
+                    onChange={(e) => handleFilterChange('telefone', e.target.value)}
+                  />
+                </div>
 
-              {/* Email Input */}
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Email</label>
-                <input
-                  type="text"
-                  placeholder="Ex: cliente@email.com"
-                  className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
-                  value={filters.email}
-                  onChange={(e) => handleFilterChange('email', e.target.value)}
-                />
-              </div>
+                {/* Email Input */}
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Email</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: cliente@email.com"
+                    className={`w-full px-3 py-2 text-sm border rounded ${inputBg} ${inputBorder}`}
+                    value={filters.email}
+                    onChange={(e) => handleFilterChange('email', e.target.value)}
+                  />
+                </div>
 
-              {/* Natureza Dropdown */}
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Natureza</label>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowNaturezaDropdown(!showNaturezaDropdown)}
-                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
-                  >
-                    <span>{filters.natureza || 'Todos'}</span>
-                    <span className="opacity-50 text-xs">&#9660;</span>
-                  </button>
-                  {showNaturezaDropdown && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectNatureza('')
-                        }}
-                        onMouseDown={(e) => e.preventDefault()}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.natureza ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                      >Todos</button>
-                      {_naturezas.map(nat => (
+                {/* Natureza Dropdown */}
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Natureza</label>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowNaturezaDropdown(!showNaturezaDropdown)}
+                      className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                    >
+                      <span>{filters.natureza || 'Todos'}</span>
+                      <span className="opacity-50 text-xs">&#9660;</span>
+                    </button>
+                    {showNaturezaDropdown && (
+                      <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                         <button
-                          key={nat}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleSelectNatureza(nat)
+                            handleSelectNatureza('')
                           }}
                           onMouseDown={(e) => e.preventDefault()}
                           type="button"
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >{nat}</button>
-                      ))}
-                    </div>
-                  )}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.natureza ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >Todos</button>
+                        {_naturezas.map(nat => (
+                          <button
+                            key={nat}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSelectNatureza(nat)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                          >{nat}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Tipo Dropdown (dependent on Natureza) */}
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Tipo</label>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowTipoDropdown(!showTipoDropdown)}
-                    disabled={!filters.natureza}
-                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder} ${!filters.natureza ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <span>{filters.tipo || 'Todos'}</span>
-                    <span className="opacity-50 text-xs">&#9660;</span>
-                  </button>
-                  {showTipoDropdown && filters.natureza && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectTipo('')
-                        }}
-                        onMouseDown={(e) => e.preventDefault()}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                      >Todos</button>
-                      {(tiposByNatureza[filters.natureza] || []).map(tipo => (
+                {/* Tipo Dropdown (dependent on Natureza) */}
+                <div>
+                  <label className={`block text-xs font-medium mb-1 ${textColor}`}>Tipo</label>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowTipoDropdown(!showTipoDropdown)}
+                      disabled={!filters.natureza}
+                      className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder} ${!filters.natureza ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <span>{filters.tipo || 'Todos'}</span>
+                      <span className="opacity-50 text-xs">&#9660;</span>
+                    </button>
+                    {showTipoDropdown && filters.natureza && (
+                      <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
                         <button
-                          key={tipo}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleSelectTipo(tipo)
+                            handleSelectTipo('')
                           }}
                           onMouseDown={(e) => e.preventDefault()}
                           type="button"
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >{tipo}</button>
-                      ))}
-                    </div>
-                  )}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >Todos</button>
+                        {(tiposByNatureza[filters.natureza] || []).map(tipo => (
+                          <button
+                            key={tipo}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSelectTipo(tipo)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                          >{tipo}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
       {/* Table */}
       <div className={`${tableBg} border-x ${borderColor}`}>

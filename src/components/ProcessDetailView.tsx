@@ -6,7 +6,8 @@ import {
 import { Process, ProcessHistoryEntry, ProcessEvent, ProcessNote, ProcessTask } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
 import { useTasks } from '../contexts/TasksContext'
-import { mockUsers, mockParceiros } from '../data/mockData'
+import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
+import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
 
 interface ProcessDetailViewProps {
     process: Process
@@ -34,7 +35,6 @@ const TIPO_OPTIONS: Record<string, string[]> = {
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
 const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
-const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro'] as const
 const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
 const ANDAMENTO_OPTIONS = ['Parado', 'Em Análise', 'Pendência', 'Aguardando', 'Resolvido']
@@ -60,6 +60,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
 }) => {
     const board = usePastaStore((s) => s.board)
     const { addTask: addGlobalTask } = useTasks()
+    const { nomes: RESPONSAVEIS_OPTIONS } = useSupabaseUsuarios()
+    const { nomes: parceiroNomes } = useSupabaseParceiros()
 
     const bg = darkMode ? 'bg-dark-900' : 'bg-gray-50'
     const card = darkMode ? 'bg-dark-800' : 'bg-white'
@@ -511,7 +513,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                 </button>
                                 {showParceiroDropdown && (
                                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
-                                        {mockParceiros.map(opt => (
+                                        {parceiroNomes.map(opt => (
                                             <button
                                                 key={opt}
                                                 onClick={() => { setEditForm(f => ({ ...f, parceiro: opt })); setShowParceiroDropdown(false) }}

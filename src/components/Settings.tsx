@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { Users, Users2, Building2, Briefcase, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, Plus } from 'lucide-react'
 import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
+import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
+import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
 
 interface SettingsProps {
     darkMode: boolean
@@ -44,72 +46,14 @@ interface Parceiro {
     qtdProcessos: number
 }
 
-const generateMockUsuarios = (): Usuario[] => {
-    const nomes = ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Paula', 'Carlos Roberto', 'Fernanda Magalhães', 'Lucas Felipe', 'Juliana Xavier']
-    const niveis = ['Administrador', 'Gerente', 'Analista', 'Associado']
-    const equipes = ['Jurídico', 'Administrativo', 'Financeiro', 'Operacional']
-    const setores = ['Trabalhista', 'Cível', 'Criminal', 'Administrativo']
-    const parceiros = ['UHLMANN & SANTOS', 'SILVA ADVOCACIA', 'COSTA & CIA', 'MARTINS LEGAL']
-
-    return Array.from({ length: 50 }, (_, i) => ({
-        id: `usr-${i + 1}`,
-        numero: i + 1,
-        nome: nomes[i % nomes.length] + (i > nomes.length ? ` ${Math.floor(i / nomes.length)}` : ''),
-        email: `usuario${i + 1}@juslab.com`,
-        nivel: niveis[i % niveis.length],
-        equipe: equipes[i % equipes.length],
-        setor: setores[i % setores.length],
-        parceiro: parceiros[i % parceiros.length],
-        qtdProcessos: Math.floor(Math.random() * 150) + 10
-    }))
-}
-
-const generateMockEquipes = (): Equipe[] => {
-    const nomes = ['Jurídico', 'Administrativo', 'Financeiro', 'Operacional', 'RH', 'TI', 'Compliance']
-    const setores = ['Trabalhista', 'Cível', 'Criminal', 'Administrativo', 'Tributário']
-
-    return Array.from({ length: 30 }, (_, i) => ({
-        id: `eq-${i + 1}`,
-        numero: i + 1,
-        nome: nomes[i % nomes.length],
-        setor: setores[i % setores.length]
-    }))
-}
-
-const generateMockSetores = (): Setor[] => {
-    const nomes = ['Jurídico', 'Administrativo', 'Financeiro', 'Operacional', 'Tributário', 'Compliance', 'RH']
-    const gestores = ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Paula', 'Carlos Roberto']
-    const parceiros = ['UHLMANN & SANTOS', 'SILVA ADVOCACIA', 'COSTA & CIA', 'MARTINS LEGAL']
-
-    return Array.from({ length: 25 }, (_, i) => ({
-        id: `set-${i + 1}`,
-        numero: i + 1,
-        nome: nomes[i % nomes.length],
-        gestores: gestores[i % gestores.length],
-        parceiro: parceiros[i % parceiros.length],
-        qtdProcessos: Math.floor(Math.random() * 200) + 20
-    }))
-}
-
-const generateMockParceiros = (): Parceiro[] => {
-    const nomes = ['UHLMANN & SANTOS', 'SILVA ADVOCACIA', 'COSTA & CIA', 'MARTINS LEGAL', 'FERREIRA CONSULTORIA', 'PEREIRA & FILHOS', 'SANTOS JUNIOR ADV', 'TORRES LEGAL GROUP']
-
-    return Array.from({ length: 20 }, (_, i) => ({
-        id: `par-${i + 1}`,
-        numero: i + 1,
-        nome: nomes[i % nomes.length],
-        cnpj: `${Math.floor(Math.random() * 99999999999999).toString().padStart(14, '0')}`,
-        qtdProcessos: Math.floor(Math.random() * 300) + 50
-    }))
-}
-
 export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
+    const { usuarios, addUsuario, updateUsuario, deleteUsuario } = useSupabaseUsuarios()
+    const { parceiros, addParceiro, updateParceiro, deleteParceiro } = useSupabaseParceiros()
+    const [equipes, setEquipes] = useState<Equipe[]>([])
+    const [setores, setSetores] = useState<Setor[]>([])
+
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('usuarios')
     const [currentPage, setCurrentPage] = useState(1)
-    const [usuarios, setUsuarios] = useState(generateMockUsuarios())
-    const [equipes, setEquipes] = useState(generateMockEquipes())
-    const [setores, setSetores] = useState(generateMockSetores())
-    const [parceiros, setParceiros] = useState(generateMockParceiros())
 
     const itemsPerPage = 15
 
@@ -144,13 +88,13 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const filteredUsuarios = useMemo(() => {
         return usuarios.filter(u => {
             return (
-                (usuariosFilters.numero ? u.numero.toString().includes(usuariosFilters.numero) : true) &&
+                (usuariosFilters.numero ? (u as any).numero?.toString().includes(usuariosFilters.numero) : true) &&
                 (usuariosFilters.nome ? u.nome.toLowerCase().includes(usuariosFilters.nome.toLowerCase()) : true) &&
-                (usuariosFilters.email ? u.email.toLowerCase().includes(usuariosFilters.email.toLowerCase()) : true) &&
-                (usuariosFilters.nivel ? u.nivel.toLowerCase().includes(usuariosFilters.nivel.toLowerCase()) : true) &&
-                (usuariosFilters.equipe ? u.equipe.toLowerCase().includes(usuariosFilters.equipe.toLowerCase()) : true) &&
-                (usuariosFilters.setor ? u.setor.toLowerCase().includes(usuariosFilters.setor.toLowerCase()) : true) &&
-                (usuariosFilters.parceiro ? u.parceiro.toLowerCase().includes(usuariosFilters.parceiro.toLowerCase()) : true)
+                (usuariosFilters.email ? (u.email || '').toLowerCase().includes(usuariosFilters.email.toLowerCase()) : true) &&
+                (usuariosFilters.nivel ? (u.nivel || '').toLowerCase().includes(usuariosFilters.nivel.toLowerCase()) : true) &&
+                (usuariosFilters.equipe ? (u.equipe || '').toLowerCase().includes(usuariosFilters.equipe.toLowerCase()) : true) &&
+                (usuariosFilters.setor ? (u.setor || '').toLowerCase().includes(usuariosFilters.setor.toLowerCase()) : true) &&
+                (usuariosFilters.parceiro ? ((u as any).parceiro || '').toLowerCase().includes(usuariosFilters.parceiro.toLowerCase()) : true)
             )
         })
     }, [usuarios, usuariosFilters])
@@ -181,9 +125,9 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const filteredParceiros = useMemo(() => {
         return parceiros.filter(p => {
             return (
-                (parceirosFilters.numero ? p.numero.toString().includes(parceirosFilters.numero) : true) &&
+                (parceirosFilters.numero ? (p as any).numero?.toString().includes(parceirosFilters.numero) : true) &&
                 (parceirosFilters.nome ? p.nome.toLowerCase().includes(parceirosFilters.nome.toLowerCase()) : true) &&
-                (parceirosFilters.cnpj ? p.cnpj.includes(parceirosFilters.cnpj) : true)
+                (parceirosFilters.cnpj ? (p.cnpj || '').includes(parceirosFilters.cnpj) : true)
             )
         })
     }, [parceiros, parceirosFilters])
@@ -195,19 +139,19 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
             if (value.trim()) {
                 let suggestions: string[] = []
                 if (key === 'numero') {
-                    suggestions = autocompleteSearch(value, usuarios.map(u => u.numero.toString()), x => x, 5)
+                    suggestions = autocompleteSearch(value, usuarios.map(u => (u as any).numero?.toString() || ''), x => x, 5)
                 } else if (key === 'nome') {
                     suggestions = autocompleteSearch(value, usuarios.map(u => u.nome), x => x, 5)
                 } else if (key === 'email') {
-                    suggestions = autocompleteSearch(value, usuarios.map(u => u.email), x => x, 5)
+                    suggestions = autocompleteSearch(value, usuarios.map(u => u.email || ''), x => x, 5)
                 } else if (key === 'nivel') {
-                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.nivel))], x => x, 5)
+                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.nivel || ''))], x => x, 5)
                 } else if (key === 'equipe') {
-                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.equipe))], x => x, 5)
+                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.equipe || ''))], x => x, 5)
                 } else if (key === 'setor') {
-                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.setor))], x => x, 5)
+                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.setor || ''))], x => x, 5)
                 } else if (key === 'parceiro') {
-                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => u.parceiro))], x => x, 5)
+                    suggestions = autocompleteSearch(value, [...new Set(usuarios.map(u => (u as any).parceiro || ''))], x => x, 5)
                 }
                 setUsuariosSuggestions({ ...usuariosSuggestions, [key]: suggestions })
             }
@@ -245,11 +189,11 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
             if (value.trim()) {
                 let suggestions: string[] = []
                 if (key === 'numero') {
-                    suggestions = autocompleteSearch(value, parceiros.map(p => p.numero.toString()), x => x, 5)
+                    suggestions = autocompleteSearch(value, parceiros.map(p => (p as any).numero?.toString() || ''), x => x, 5)
                 } else if (key === 'nome') {
                     suggestions = autocompleteSearch(value, parceiros.map(p => p.nome), x => x, 5)
                 } else if (key === 'cnpj') {
-                    suggestions = autocompleteSearch(value, parceiros.map(p => p.cnpj), x => x, 5)
+                    suggestions = autocompleteSearch(value, parceiros.map(p => p.cnpj || ''), x => x, 5)
                 }
                 setParceirosSuggestions({ ...parceirosSuggestions, [key]: suggestions })
             }
@@ -262,17 +206,17 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
         setShowEditModal(true)
     }
 
-    const handleSaveEdit = () => {
+    const handleSaveEdit = async () => {
         if (!editingItem || !editFormData) return
 
         if (activeSubTab === 'usuarios') {
-            setUsuarios(usuarios.map(u => u.id === editingItem.id ? editFormData : u))
+            await updateUsuario(editingItem.id, editFormData)
         } else if (activeSubTab === 'equipes') {
             setEquipes(equipes.map(e => e.id === editingItem.id ? editFormData : e))
         } else if (activeSubTab === 'setores') {
             setSetores(setores.map(s => s.id === editingItem.id ? editFormData : s))
         } else if (activeSubTab === 'parceiros') {
-            setParceiros(parceiros.map(p => p.id === editingItem.id ? editFormData : p))
+            await updateParceiro(editingItem.id, editFormData)
         }
 
         setShowEditModal(false)
@@ -280,42 +224,42 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
         setEditFormData(null)
     }
 
-    const handleDeleteClick = (id: string) => {
+    const handleDeleteClick = async (id: string) => {
         if (activeSubTab === 'usuarios') {
-            setUsuarios(usuarios.filter(u => u.id !== id))
+            await deleteUsuario(id)
         } else if (activeSubTab === 'equipes') {
             setEquipes(equipes.filter(e => e.id !== id))
         } else if (activeSubTab === 'setores') {
             setSetores(setores.filter(s => s.id !== id))
         } else if (activeSubTab === 'parceiros') {
-            setParceiros(parceiros.filter(p => p.id !== id))
+            await deleteParceiro(id)
         }
     }
 
     const handleAddClick = () => {
         if (activeSubTab === 'usuarios') {
-            setAddFormData({ numero: usuarios.length + 1, nome: '', email: '', nivel: '', equipe: '', setor: '', parceiro: '', qtdProcessos: 0 })
+            setAddFormData({ nome: '', email: '', nivel: '', equipe: '', setor: '', parceiro: '', qtdProcessos: 0 })
         } else if (activeSubTab === 'equipes') {
-            setAddFormData({ numero: equipes.length + 1, nome: '', setor: '' })
+            setAddFormData({ nome: '', setor: '' })
         } else if (activeSubTab === 'setores') {
-            setAddFormData({ numero: setores.length + 1, nome: '', gestores: '', parceiro: '', qtdProcessos: 0 })
+            setAddFormData({ nome: '', gestores: '', parceiro: '', qtdProcessos: 0 })
         } else if (activeSubTab === 'parceiros') {
-            setAddFormData({ numero: parceiros.length + 1, nome: '', cnpj: '', qtdProcessos: 0 })
+            setAddFormData({ nome: '', cnpj: '', qtdProcessos: 0 })
         }
         setShowAddModal(true)
     }
 
-    const handleSaveAdd = () => {
+    const handleSaveAdd = async () => {
         if (!addFormData) return
 
         if (activeSubTab === 'usuarios') {
-            setUsuarios([...usuarios, { ...addFormData, id: `usr-${usuarios.length + 1}` }])
+            await addUsuario({ nome: addFormData.nome, email: addFormData.email, nivel: addFormData.nivel, equipe: addFormData.equipe, setor: addFormData.setor })
         } else if (activeSubTab === 'equipes') {
-            setEquipes([...equipes, { ...addFormData, id: `eq-${equipes.length + 1}` }])
+            setEquipes([...equipes, { ...addFormData, id: `eq-${Date.now()}`, numero: equipes.length + 1 }])
         } else if (activeSubTab === 'setores') {
-            setSetores([...setores, { ...addFormData, id: `set-${setores.length + 1}` }])
+            setSetores([...setores, { ...addFormData, id: `set-${Date.now()}`, numero: setores.length + 1 }])
         } else if (activeSubTab === 'parceiros') {
-            setParceiros([...parceiros, { ...addFormData, id: `par-${parceiros.length + 1}` }])
+            await addParceiro({ nome: addFormData.nome, cnpj: addFormData.cnpj, email: addFormData.email, telefone: addFormData.telefone })
         }
 
         setShowAddModal(false)
@@ -526,14 +470,14 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                         <tbody>
                             {paginatedData.map((usuario) => (
                                 <tr key={usuario.id} className={`border-b ${borderColor} hover:${darkMode ? 'bg-dark-600' : 'bg-gray-50'} transition`}>
-                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.numero}</td>
+                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{(usuario as any).numero}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.nome}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.email}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.nivel}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.equipe}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.setor}</td>
-                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.parceiro}</td>
-                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{usuario.qtdProcessos}</td>
+                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{(usuario as any).parceiro}</td>
+                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{(usuario as any).qtdProcessos}</td>
                                     <td className="px-2 py-1 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button onClick={() => handleEditClick(usuario, 'usuarios')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
@@ -671,10 +615,10 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                             <tbody>
                                 {getPaginatedData(filteredParceiros).map((parceiro) => (
                                     <tr key={parceiro.id} className={`border-b ${borderColor} hover:${darkMode ? 'bg-dark-600' : 'bg-gray-50'} transition`}>
-                                        <td className={`px-2 py-1 text-xs ${textColor}`}>{parceiro.numero}</td>
+                                        <td className={`px-2 py-1 text-xs ${textColor}`}>{(parceiro as any).numero}</td>
                                         <td className={`px-2 py-1 text-xs ${textColor}`}>{parceiro.nome}</td>
                                         <td className={`px-2 py-1 text-xs ${textColor}`}>{parceiro.cnpj}</td>
-                                        <td className={`px-2 py-1 text-xs ${textColor}`}>{parceiro.qtdProcessos}</td>
+                                        <td className={`px-2 py-1 text-xs ${textColor}`}>{parceiro.qtd_processos}</td>
                                         <td className="px-2 py-1 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button onClick={() => handleEditClick(parceiro, 'parceiros')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>

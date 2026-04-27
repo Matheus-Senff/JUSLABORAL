@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react'
+import { useSupabaseClientes } from '../hooks/useSupabaseClientes'
+import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
 import {
     Download,
     PencilIcon,
@@ -17,13 +19,14 @@ import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
 
 interface Client {
     id: string
-    numero: number
+    numero?: number
     nome: string
-    cpfCnpj: string
-    parceiro: string
-    email: string
-    telefone: string
-    uf: string
+    cpf_cnpj?: string
+    cpfCnpj?: string
+    parceiro?: string
+    email?: string
+    telefone?: string
+    uf?: string
 }
 
 interface ClientsTableProps {
@@ -37,23 +40,10 @@ const CalendarIcon = (props: any) => (
 )
 
 export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
-    const mockParceiros = ['UHLMANN & SANTOS', 'SILVA ADVOCACIA', 'COSTA & CIA', 'MARTINS LEGAL', 'FERREIRA CONSULTORIA']
+    const { clientes: mockClients, loading: loadingClientes, addCliente, updateCliente, deleteCliente } = useSupabaseClientes()
+    const { nomes: mockParceiros } = useSupabaseParceiros()
 
-    const mockUFs = ['SP', 'RJ', 'MG', 'BA', 'PR', 'RS', 'PE', 'CE', 'PA', 'SC']
-
-    const mockClients: Client[] = Array.from({ length: 5000 }, (_, i) => ({
-        id: `cli-${i + 1}`,
-        numero: i + 1,
-        nome: [
-            'João Silva da Silva', 'Maria Santos Oliveira', 'Pedro Costa da Costa', 'Ana Paula Mendes', 'Carlos Roberto Fernandes',
-            'Mariana de Sousa', 'Lucas Felipe Alves', 'Fernanda Magalhães', 'Ricardo Pereira', 'Juliana Xavier'
-        ][i % 10] + (i > 10 ? ` ${Math.floor(i / 10)}` : ''),
-        cpfCnpj: `${Math.floor(Math.random() * 99999999999).toString().padStart(11, '0')}`,
-        parceiro: mockParceiros[i % mockParceiros.length],
-        email: `cliente${i + 1}@email.com`,
-        telefone: `(${Math.floor(Math.random() * 89) + 11}) ${Math.floor(Math.random() * 9) + 9}${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}-${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`,
-        uf: mockUFs[i % mockUFs.length]
-    }))
+    const mockUFs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO']
 
     const [filters, setFilters] = useState<Record<string, string>>({
         numero: '',
@@ -128,15 +118,15 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
             }
 
             if (filters.cpfCnpj && matches) {
-                matches = matches && client.cpfCnpj.includes(filters.cpfCnpj)
+                matches = matches && (client.cpf_cnpj || '').includes(filters.cpfCnpj)
             }
 
             if (filters.parceiro && matches) {
-                matches = matches && client.parceiro.toLowerCase().includes(filters.parceiro.toLowerCase())
+                matches = matches && (client.parceiro || '').toLowerCase().includes(filters.parceiro.toLowerCase())
             }
 
             if (filters.email && matches) {
-                matches = matches && client.email.toLowerCase().includes(filters.email.toLowerCase())
+                matches = matches && (client.email || '').toLowerCase().includes(filters.email.toLowerCase())
             }
 
             if (filters.telefone && matches) {
@@ -184,7 +174,7 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
             } else if (key === 'cpfCnpj') {
                 suggestions = autocompleteSearch(
                     value,
-                    mockClients.map((c) => c.cpfCnpj),
+                    mockClients.map((c) => c.cpf_cnpj || ''),
                     (x) => x,
                     5
                 )
@@ -248,28 +238,21 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
         setShowEditModal(true)
     }
 
-    const handleSaveEdit = () => {
-        if (!editFormData) return
-        const index = mockClients.findIndex(c => c.id === editingClient?.id)
-        if (index !== -1) {
-            mockClients[index] = editFormData
-        }
+    const handleSaveEdit = async () => {
+        if (!editFormData || !editingClient) return
+        await updateCliente(editingClient.id, editFormData)
         setShowEditModal(false)
         setEditingClient(null)
         setEditFormData(null)
     }
 
-    const handleDeleteClick = (clientId: string) => {
+    const handleDeleteClick = async (clientId: string) => {
         if (!confirm('Deseja excluir este cliente?')) return
-        const index = mockClients.findIndex(c => c.id === clientId)
-        if (index !== -1) {
-            mockClients.splice(index, 1)
-        }
+        await deleteCliente(clientId)
     }
 
     const handleAddClick = () => {
         setAddFormData({
-            numero: mockClients.length + 1,
             nome: '',
             cpfCnpj: '',
             parceiro: '',
@@ -280,19 +263,16 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
         setShowAddModal(true)
     }
 
-    const handleSaveAdd = () => {
+    const handleSaveAdd = async () => {
         if (!addFormData || !addFormData.nome) return
-        const newClient: Client = {
-            id: `cli-${mockClients.length + 1}`,
-            numero: mockClients.length + 1,
+        await addCliente({
             nome: addFormData.nome || '',
-            cpfCnpj: addFormData.cpfCnpj || '',
-            parceiro: addFormData.parceiro || mockParceiros[0],
+            cpf_cnpj: addFormData.cpf_cnpj || '',
+            parceiro: addFormData.parceiro || '',
             email: addFormData.email || '',
             telefone: addFormData.telefone || '',
-            uf: addFormData.uf || mockUFs[0]
-        }
-        mockClients.push(newClient)
+            uf: addFormData.uf || ''
+        })
         setShowAddModal(false)
         setAddFormData(null)
     }
@@ -584,7 +564,7 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
                                 >
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{client.numero}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{client.nome}</td>
-                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{client.cpfCnpj}</td>
+                                    <td className={`px-2 py-1 text-xs ${textColor}`}>{client.cpf_cnpj}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{client.parceiro}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{client.email}</td>
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{client.telefone}</td>
@@ -688,8 +668,8 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
                                 <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF/CNPJ</label>
                                 <input
                                     type="text"
-                                    value={editFormData.cpfCnpj}
-                                    onChange={(e) => setEditFormData({ ...editFormData, cpfCnpj: e.target.value })}
+                                    value={editFormData.cpf_cnpj || ''}
+                                    onChange={(e) => setEditFormData({ ...editFormData, cpf_cnpj: e.target.value })}
                                     className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
                                 />
                             </div>
@@ -766,8 +746,8 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
                                 <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF/CNPJ</label>
                                 <input
                                     type="text"
-                                    value={addFormData.cpfCnpj || ''}
-                                    onChange={(e) => setAddFormData({ ...addFormData, cpfCnpj: e.target.value })}
+                                    value={addFormData.cpf_cnpj || ''}
+                                    onChange={(e) => setAddFormData({ ...addFormData, cpf_cnpj: e.target.value })}
                                     className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
                                 />
                             </div>
@@ -888,7 +868,7 @@ export const ClientsTable: React.FC<ClientsTableProps> = ({ darkMode }) => {
                                         className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'
                                             }`}
                                     >
-                                        {selectedClient.cpfCnpj}
+                                        {selectedClient.cpf_cnpj}
                                     </p>
                                 </div>
                                 <div>

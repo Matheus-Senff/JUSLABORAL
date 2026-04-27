@@ -2,19 +2,19 @@ import React, { useState, useMemo } from 'react'
 import { X, Plus, Edit2, Trash2, CheckCircle2, Filter, RotateCcw, AlertCircle } from 'lucide-react'
 import { ProcessTask } from '../types'
 import { useTasks } from '../contexts/TasksContext'
-import { mockUsers } from '../data/mockData'
+import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
 
 interface TasksIndexProps {
   darkMode: boolean
 }
 
 const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
-const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
 const STATUS_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado']
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro']
 
 export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
   const { tasks, deleteTask, completeTask } = useTasks()
+  const { nomes: RESPONSAVEIS_OPTIONS } = useSupabaseUsuarios()
 
   const [filters, setFilters] = useState({
     responsavel: '',
