@@ -91,3 +91,18 @@ export interface ProcessNote {
   autor: string
   data: string
 }
+
+export interface ProcessTask {
+  id: string
+  processId: string
+  titulo: string
+  descricao?: string
+  responsavel: string
+  setor: string
+  observacao: string
+  tipoAcao: 'Pedir Documentação' | 'Anotação' | 'Evento' | 'Reunião' | 'Análise' | 'Outro'
+  status: 'Aberto' | 'Em Andamento' | 'Concluído' | 'Cancelado'
+  dataCriacao: string
+  dataConclusao?: string
+  autor: string
+}

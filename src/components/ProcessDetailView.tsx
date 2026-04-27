@@ -1,9 +1,9 @@
 ﻿import React, { useState } from 'react'
 import {
     ChevronLeft, FileText, Paperclip, Calendar, StickyNote,
-    Plus, X, Clock, MapPin, Save, History, MessageSquare
+    Plus, X, Clock, MapPin, Save, History, MessageSquare, CheckCircle2, AlertCircle, Edit2, Trash2
 } from 'lucide-react'
-import { Process, ProcessHistoryEntry, ProcessEvent, ProcessNote } from '../types'
+import { Process, ProcessHistoryEntry, ProcessEvent, ProcessNote, ProcessTask } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
 import { mockUsers, mockParceiros } from '../data/mockData'
 
@@ -34,6 +34,8 @@ const TIPO_OPTIONS: Record<string, string[]> = {
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
 const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso']
 const RESPONSAVEIS_OPTIONS = mockUsers.filter(u => u.id !== 'geral').map(u => u.name)
+const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro'] as const
+const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
 
 export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     process, type, darkMode, onBack, onAddEvent
@@ -91,6 +93,22 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         senhaInss: '',
         rg: '',
         observacao: '',
+    })
+
+    // tarefas locais
+    const [tasks, setTasks] = useState<ProcessTask[]>([])
+    const [showTaskModal, setShowTaskModal] = useState(false)
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+    const [taskForm, setTaskForm] = useState({
+        titulo: '',
+        descricao: '',
+        responsavel: '',
+        setor: '',
+        observacao: '',
+        tipoAcao: 'Pedir Documentação' as typeof TIPO_ACAO_OPTIONS[number],
+        showResponsavelDropdown: false,
+        showSetorDropdown: false,
+        showTipoAcaoDropdown: false,
     })
 
     // edição de campos do processo
@@ -202,6 +220,93 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         setNotes(prev => prev.filter(n => n.id !== id))
     }
 
+    const handleSaveTask = () => {
+        if (!taskForm.titulo.trim() || !taskForm.responsavel || !taskForm.setor) return
+        
+        if (editingTaskId) {
+            // Editar tarefa existente
+            setTasks(prev => prev.map(t => 
+                t.id === editingTaskId 
+                    ? { ...t, ...taskForm, showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }
+                    : t
+            ))
+            setEditingTaskId(null)
+        } else {
+            // Adicionar nova tarefa
+            const newTask: ProcessTask = {
+                id: Date.now().toString(),
+                processId: process.id,
+                titulo: taskForm.titulo,
+                descricao: taskForm.descricao,
+                responsavel: taskForm.responsavel,
+                setor: taskForm.setor,
+                observacao: taskForm.observacao,
+                tipoAcao: taskForm.tipoAcao,
+                status: 'Aberto',
+                dataCriacao: new Date().toLocaleString('pt-BR'),
+                autor: process.responsavel,
+            }
+            setTasks(prev => [newTask, ...prev])
+        }
+        
+        setTaskForm({
+            titulo: '',
+            descricao: '',
+            responsavel: '',
+            setor: '',
+            observacao: '',
+            tipoAcao: 'Pedir Documentação',
+            showResponsavelDropdown: false,
+            showSetorDropdown: false,
+            showTipoAcaoDropdown: false,
+        })
+        setShowTaskModal(false)
+    }
+
+    const handleDeleteTask = (id: string) => {
+        setTasks(prev => prev.filter(t => t.id !== id))
+    }
+
+    const handleCompleteTask = (id: string) => {
+        setTasks(prev => prev.map(t =>
+            t.id === id
+                ? { ...t, status: t.status === 'Concluído' ? 'Aberto' : 'Concluído', dataConclusao: t.status === 'Concluído' ? undefined : new Date().toLocaleString('pt-BR') }
+                : t
+        ))
+    }
+
+    const handleEditTask = (task: ProcessTask) => {
+        setEditingTaskId(task.id)
+        setTaskForm({
+            titulo: task.titulo,
+            descricao: task.descricao || '',
+            responsavel: task.responsavel,
+            setor: task.setor,
+            observacao: task.observacao,
+            tipoAcao: task.tipoAcao,
+            showResponsavelDropdown: false,
+            showSetorDropdown: false,
+            showTipoAcaoDropdown: false,
+        })
+        setShowTaskModal(true)
+    }
+
+    const handleCancelTaskEdit = () => {
+        setEditingTaskId(null)
+        setTaskForm({
+            titulo: '',
+            descricao: '',
+            responsavel: '',
+            setor: '',
+            observacao: '',
+            tipoAcao: 'Pedir Documentação',
+            showResponsavelDropdown: false,
+            showSetorDropdown: false,
+            showTipoAcaoDropdown: false,
+        })
+        setShowTaskModal(false)
+    }
+
     const handleSaveProcess = () => {
         const initial: Record<string, string> = {
             telefone: process.telefone || '',
@@ -275,10 +380,16 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 >
                     <Calendar size={16} /> Eventos
                 </button>
+                <button
+                    onClick={() => { setEditingTaskId(null); setTaskForm({ titulo: '', descricao: '', responsavel: '', setor: '', observacao: '', tipoAcao: 'Pedir Documentação', showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }); setShowTaskModal(true) }}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition shadow-md"
+                >
+                    <AlertCircle size={16} /> Tarefas
+                </button>
             </div>
 
-            {/* Layout 3 colunas */}
-            <div className="p-4 grid grid-cols-1 xl:grid-cols-[280px_1fr_260px] gap-4 items-start">
+            {/* Layout 4 colunas */}
+            <div className="p-4 grid grid-cols-1 xl:grid-cols-[200px_220px_1fr_260px] gap-4 items-start">
 
                 {/* ===== ESQUERDA: HISTÓRICO ===== */}
                 <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
@@ -318,6 +429,74 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                 </div>
                             )
                         })}
+                    </div>
+                </div>
+
+                {/* ===== ESQUERDA CENTRO: TAREFAS ===== */}
+                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
+                    <div className={`flex items-center justify-between px-4 py-3 border-b ${border} shrink-0`}>
+                        <h2 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${muted}`}>
+                            <AlertCircle size={13} /> Tarefas ({tasks.length})
+                        </h2>
+                        <button
+                            onClick={() => { setEditingTaskId(null); setTaskForm({ titulo: '', descricao: '', responsavel: '', setor: '', observacao: '', tipoAcao: 'Pedir Documentação', showResponsavelDropdown: false, showSetorDropdown: false, showTipoAcaoDropdown: false }); setShowTaskModal(true) }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition"
+                        >
+                            <Plus size={12} /> Adicionar
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+                        {tasks.length === 0 && (
+                            <p className={`text-xs italic text-center py-4 ${muted}`}>Nenhuma tarefa.</p>
+                        )}
+                        {tasks.map(task => (
+                            <div key={task.id} className={`p-3 rounded-lg border ${border} space-y-2`}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className={`font-semibold text-xs ${text}`}>{task.titulo}</h3>
+                                        <p className={`text-xs ${muted} line-clamp-1`}>{task.descricao || '—'}</p>
+                                    </div>
+                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white text-xs font-semibold shrink-0 ${
+                                        task.status === 'Concluído' ? 'bg-green-600' :
+                                        task.status === 'Em Andamento' ? 'bg-blue-600' :
+                                        task.status === 'Cancelado' ? 'bg-gray-500' : 'bg-orange-500'
+                                    }`}>
+                                        {task.status === 'Concluído' && <CheckCircle2 size={11} />}
+                                        {task.status.length > 12 ? task.status.substring(0, 10) + '...' : task.status}
+                                    </span>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className={`text-xs ${muted}`}><span className="font-semibold">Responsável:</span> {task.responsavel}</div>
+                                    <div className={`text-xs ${muted}`}><span className="font-semibold">Setor:</span> {task.setor}</div>
+                                    <div className={`text-xs ${muted}`}><span className="font-semibold">Tipo:</span> {task.tipoAcao}</div>
+                                    {task.observacao && <div className={`text-xs ${muted} line-clamp-2`}><span className="font-semibold">Obs:</span> {task.observacao}</div>}
+                                </div>
+                                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-opacity-20">
+                                    <button
+                                        onClick={() => handleCompleteTask(task.id)}
+                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${
+                                            task.status === 'Concluído' 
+                                                ? 'bg-green-600 hover:bg-green-700 text-white'
+                                                : 'bg-green-100 hover:bg-green-200 text-green-700'
+                                        }`}
+                                    >
+                                        <CheckCircle2 size={12} /> Concluir
+                                    </button>
+                                    <button
+                                        onClick={() => handleEditTask(task)}
+                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold transition"
+                                    >
+                                        <Edit2 size={12} /> Editar
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteTask(task.id)}
+                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition"
+                                    >
+                                        <Trash2 size={12} /> Deletar
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -759,6 +938,141 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                 className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition disabled:opacity-40 flex items-center justify-center gap-1.5"
                             >
                                 <Save size={14} /> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ===== MODAL TAREFA ===== */}
+            {showTaskModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+                        <div className={`flex items-center justify-between p-5 border-b ${border} sticky top-0 ${card}`}>
+                            <h3 className={`text-base font-bold ${text}`}>{editingTaskId ? 'Editar Tarefa' : 'Adicionar Tarefa'}</h3>
+                            <button onClick={handleCancelTaskEdit} className={`p-1 rounded ${muted} hover:opacity-70`}><X size={20} /></button>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div>
+                                <label className={labelCls}>Título *</label>
+                                <input
+                                    type="text"
+                                    value={taskForm.titulo}
+                                    onChange={e => setTaskForm(f => ({ ...f, titulo: e.target.value }))}
+                                    placeholder="Título da tarefa..."
+                                    className={inputCls}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={labelCls}>Descrição</label>
+                                <textarea
+                                    rows={2}
+                                    value={taskForm.descricao}
+                                    onChange={e => setTaskForm(f => ({ ...f, descricao: e.target.value }))}
+                                    placeholder="Descrição detalhada da tarefa..."
+                                    className={`${inputCls} resize-none`}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Responsável dropdown */}
+                                <div className="relative">
+                                    <label className={labelCls}>Responsável *</label>
+                                    <button
+                                        onClick={() => { setTaskForm(f => ({ ...f, showResponsavelDropdown: !f.showResponsavelDropdown, showSetorDropdown: false, showTipoAcaoDropdown: false })) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{taskForm.responsavel || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {taskForm.showResponsavelDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
+                                            {RESPONSAVEIS_OPTIONS.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setTaskForm(f => ({ ...f, responsavel: opt, showResponsavelDropdown: false })) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.responsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Setor dropdown */}
+                                <div className="relative">
+                                    <label className={labelCls}>Setor *</label>
+                                    <button
+                                        onClick={() => { setTaskForm(f => ({ ...f, showSetorDropdown: !f.showSetorDropdown, showResponsavelDropdown: false, showTipoAcaoDropdown: false })) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{taskForm.setor || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {taskForm.showSetorDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                            {SETORES_OPTIONS.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setTaskForm(f => ({ ...f, setor: opt, showSetorDropdown: false })) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tipo de Ação dropdown */}
+                            <div className="relative">
+                                <label className={labelCls}>Tipo de Ação</label>
+                                <button
+                                    onClick={() => { setTaskForm(f => ({ ...f, showTipoAcaoDropdown: !f.showTipoAcaoDropdown, showResponsavelDropdown: false, showSetorDropdown: false })) }}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                >
+                                    <span className="truncate">{taskForm.tipoAcao || '— Selecionar —'}</span>
+                                    <span className="text-xs opacity-50 ml-2">▼</span>
+                                </button>
+                                {taskForm.showTipoAcaoDropdown && (
+                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                        {TIPO_ACAO_OPTIONS.map(opt => (
+                                            <button
+                                                key={opt}
+                                                onClick={() => { setTaskForm(f => ({ ...f, tipoAcao: opt, showTipoAcaoDropdown: false })) }}
+                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${taskForm.tipoAcao === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className={labelCls}>Observação</label>
+                                <textarea
+                                    rows={3}
+                                    value={taskForm.observacao}
+                                    onChange={e => setTaskForm(f => ({ ...f, observacao: e.target.value }))}
+                                    placeholder="Anotações e observações sobre a tarefa..."
+                                    className={`${inputCls} resize-none`}
+                                />
+                            </div>
+                        </div>
+                        <div className={`flex gap-2 p-5 border-t ${border} sticky bottom-0 ${card}`}>
+                            <button onClick={handleCancelTaskEdit} className={`flex-1 px-4 py-2 rounded-lg text-sm transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600' : 'bg-gray-200 hover:bg-gray-300'} ${text}`}>
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveTask}
+                                disabled={!taskForm.titulo.trim() || !taskForm.responsavel || !taskForm.setor}
+                                className="flex-1 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition disabled:opacity-40 flex items-center justify-center gap-1.5"
+                            >
+                                <Save size={14} /> {editingTaskId ? 'Atualizar' : 'Criar'} Tarefa
                             </button>
                         </div>
                     </div>
