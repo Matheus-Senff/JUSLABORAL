@@ -26,9 +26,9 @@ const STATUS_OPTIONS = [
 
 const NATUREZA_OPTIONS = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
 const TIPO_OPTIONS: Record<string, string[]> = {
-  'CIVIL': ['ÇÕES CIVIS'],
-  'TRABALHISTA': ['TRABALHISTA', 'ÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
-  'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOEÇA', 'AUXÍLIO-REC-PROFISSIONAL', 'AUXÍLIO-TRAb-ACIDENTE', 'AVENT-RÁPIDA-FĀMLIA', 'BENEFÍCIO-ASSISTENCIAL-IDOSO', 'BENÉFİCIO-ASSISTENCIAL-PESSOA-DEFICIENTE', 'BENÉFİCIO-PRESTADOR-INFORMACAO', 'BENÉFİCIO-REQUERENTE-INFORMACAO', 'BENÉFİCIO-SOLICITACAO-COPIA-DOCUMENTO', 'BENÉFİCIO-VALIDADE-DOCUMENTO', 'BUSC-ATIVO-INFORMACAO', 'CERTIDAO-AUXILIO-ACIDENTE', 'CERTIDAO-AUXILIO-DOENCA', 'CERTIDAO-AUXILIO-REC-PROFISSIONAL']
+    'CIVIL': ['ÇÕES CIVIS'],
+    'TRABALHISTA': ['TRABALHISTA', 'ÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
+    'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOEÇA', 'AUXÍLIO-REC-PROFISSIONAL', 'AUXÍLIO-TRAb-ACIDENTE', 'AVENT-RÁPIDA-FĀMLIA', 'BENEFÍCIO-ASSISTENCIAL-IDOSO', 'BENÉFİCIO-ASSISTENCIAL-PESSOA-DEFICIENTE', 'BENÉFİCIO-PRESTADOR-INFORMACAO', 'BENÉFİCIO-REQUERENTE-INFORMACAO', 'BENÉFİCIO-SOLICITACAO-COPIA-DOCUMENTO', 'BENÉFİCIO-VALIDADE-DOCUMENTO', 'BUSC-ATIVO-INFORMACAO', 'CERTIDAO-AUXILIO-ACIDENTE', 'CERTIDAO-AUXILIO-DOENCA', 'CERTIDAO-AUXILIO-REC-PROFISSIONAL']
 }
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
@@ -104,7 +104,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         dataInicio: process.dataInicio || '',
         orgao: process.orgao || '',
         endereco: process.endereco || '',
-        fase: process.fase || '',
         setor: process.setor || '',
         responsavel: process.responsavel || '',
         andamento: process.andamento || '',
@@ -214,7 +213,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             dataInicio: process.dataInicio || '',
             orgao: process.orgao || '',
             endereco: process.endereco || '',
-            fase: process.fase || '',
             setor: process.setor || '',
             responsavel: process.responsavel || '',
             andamento: process.andamento || '',
@@ -223,7 +221,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             telefone: 'Telefone', email: 'E-mail', parceiro: 'Parceiro',
             natureza: 'Natureza', tipo: 'Tipo', nProcesso: 'N° Processo',
             dataInicio: 'Data Início', orgao: 'Órgão', endereco: 'Endereço',
-            fase: 'Fase', setor: 'Setor', responsavel: 'Responsável', andamento: 'Andamento',
+            setor: 'Setor', responsavel: 'Responsável', andamento: 'Andamento',
         }
         const current = editForm as Record<string, string>
         const newEntries: ProcessHistoryEntry[] = []
@@ -436,10 +434,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             <div className="col-span-2">
                                 <label className={labelCls}>Endereço</label>
                                 <input type="text" value={editForm.endereco} onChange={e => setEditForm(f => ({ ...f, endereco: e.target.value }))} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Fase</label>
-                                <input type="text" value={editForm.fase} onChange={e => setEditForm(f => ({ ...f, fase: e.target.value }))} className={inputCls} />
                             </div>
                         </div>
                     </div>
