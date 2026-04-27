@@ -182,15 +182,22 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
 
   // Handlers específicos para Natureza e Tipo
   const handleSelectNatureza = (natureza: string) => {
-    handleFilterChange('natureza', natureza)
-    handleFilterChange('tipo', '')
+    // Consolidar atualização de estado para evitar batching issues
+    setFilters(prev => ({ ...prev, natureza, tipo: '' }))
+    setCurrentPage(1)
     setShowNaturezaDropdown(false)
   }
 
   const handleSelectTipo = (tipo: string) => {
-    handleFilterChange('tipo', tipo)
+    setFilters(prev => ({ ...prev, tipo }))
+    setCurrentPage(1)
     setShowTipoDropdown(false)
   }
+
+  // Monitor changes in natureza filter
+  useEffect(() => {
+    // Effect apenas para sincronização, sem logs
+  }, [filters.natureza])
 
   // Function to clear all filters
   const handleClearFilters = () => {
@@ -336,14 +343,18 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
         matches = matches && (process.email || '').toLowerCase().includes(filters.email.toLowerCase())
       }
 
-      // Natureza
+      // Natureza - correspondência exata após uppercase
       if (filters.natureza && matches) {
-        matches = matches && (process.natureza || '').toUpperCase() === filters.natureza.toUpperCase()
+        const processNatureza = (process.natureza || '').toUpperCase().trim()
+        const filterNatureza = filters.natureza.toUpperCase().trim()
+        matches = matches && processNatureza === filterNatureza
       }
 
-      // Tipo
+      // Tipo - correspondência exata após uppercase
       if (filters.tipo && matches) {
-        matches = matches && (process.tipo || '').toUpperCase() === filters.tipo.toUpperCase()
+        const processTipo = (process.tipo || '').toUpperCase().trim()
+        const filterTipo = filters.tipo.toUpperCase().trim()
+        matches = matches && processTipo === filterTipo
       }
 
       return matches
@@ -773,14 +784,24 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   {showNaturezaDropdown && (
                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
                       <button
-                        onClick={() => handleSelectNatureza('')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectNatureza('')
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
                         type="button"
                         className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.natureza ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                       >Todos</button>
                       {_naturezas.map(nat => (
                         <button
                           key={nat}
-                          onClick={() => handleSelectNatureza(nat)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectNatureza(nat)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
                           type="button"
                           className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.natureza === nat ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >{nat}</button>
@@ -805,14 +826,24 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   {showTipoDropdown && filters.natureza && (
                     <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
                       <button
-                        onClick={() => handleSelectTipo('')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectTipo('')
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
                         type="button"
                         className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                       >Todos</button>
                       {(tiposByNatureza[filters.natureza] || []).map(tipo => (
                         <button
                           key={tipo}
-                          onClick={() => handleSelectTipo(tipo)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectTipo(tipo)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
                           type="button"
                           className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
                         >{tipo}</button>
