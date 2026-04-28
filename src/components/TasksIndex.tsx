@@ -3,22 +3,23 @@ import { X, Plus, Edit2, Trash2, CheckCircle2, Filter, RotateCcw, AlertCircle } 
 import { ProcessTask } from '../types'
 import { useTasks } from '../contexts/TasksContext'
 import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
+import { useSupabaseSetores } from '../hooks/useSupabaseSetores'
 
 interface TasksIndexProps {
   darkMode: boolean
 }
 
-const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
 const STATUS_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado']
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro']
 
 export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
   const { tasks, deleteTask, completeTask } = useTasks()
   const { nomes: RESPONSAVEIS_OPTIONS } = useSupabaseUsuarios()
+  const { nomes: SETORES_OPTIONS } = useSupabaseSetores()
 
   const [filters, setFilters] = useState({
     responsavel: '',
-    setor: 'Administrativo', // Padrão: Administrativo
+    setor: '',
     status: '',
     tipoAcao: '',
     titulo: '',
@@ -44,7 +45,7 @@ export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
   const handleClearFilters = () => {
     setFilters({
       responsavel: '',
-      setor: 'Administrativo',
+      setor: '',
       status: '',
       tipoAcao: '',
       titulo: '',
@@ -185,18 +186,33 @@ export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
                 </button>
                 {showSetorDropdown && (
                   <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                    {SETORES_OPTIONS.map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => {
-                          setFilters(f => ({ ...f, setor: opt }))
-                          setShowSetorDropdown(false)
-                        }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${filters.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                    <button
+                      onClick={() => {
+                        setFilters(f => ({ ...f, setor: '' }))
+                        setShowSetorDropdown(false)
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${!filters.setor ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                    >
+                      Todos
+                    </button>
+                    {SETORES_OPTIONS.length === 0 ? (
+                      <div className={`px-3 py-2 text-xs italic ${muted}`}>
+                        Nenhum setor cadastrado
+                      </div>
+                    ) : (
+                      SETORES_OPTIONS.map(opt => (
+                        <button
+                          key={opt}
+                          onClick={() => {
+                            setFilters(f => ({ ...f, setor: opt }))
+                            setShowSetorDropdown(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${filters.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                        >
+                          {opt}
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
               </div>

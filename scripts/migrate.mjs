@@ -48,6 +48,22 @@ do $$ begin
   end if;
 end $$;
 
+-- Setores do sistema
+create table if not exists setores (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references auth.users(id) on delete cascade,
+  nome text not null unique,
+  created_at timestamp with time zone default now()
+);
+
+alter table setores enable row level security;
+
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename = 'setores' and policyname = 'setores_all') then
+    execute 'create policy "setores_all" on setores for all using (true) with check (true)';
+  end if;
+end $$;
+
 -- Processos (estaduais e federais)
 create table if not exists processos (
   id uuid primary key default gen_random_uuid(),

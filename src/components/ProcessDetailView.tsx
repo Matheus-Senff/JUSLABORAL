@@ -8,6 +8,7 @@ import { usePastaStore } from './pasta/pastaStore'
 import { useTasks } from '../contexts/TasksContext'
 import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
 import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
+import { useSupabaseSetores } from '../hooks/useSupabaseSetores'
 
 interface ProcessDetailViewProps {
     process: Process
@@ -34,7 +35,6 @@ const TIPO_OPTIONS: Record<string, string[]> = {
 }
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
-const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro'] as const
 const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
 const ANDAMENTO_OPTIONS = ['Parado', 'Em Análise', 'Pendência', 'Aguardando', 'Resolvido']
@@ -62,6 +62,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     const { addTask: addGlobalTask } = useTasks()
     const { nomes: RESPONSAVEIS_OPTIONS } = useSupabaseUsuarios()
     const { nomes: parceiroNomes } = useSupabaseParceiros()
+    const { nomes: SETORES_OPTIONS } = useSupabaseSetores()
 
     const bg = darkMode ? 'bg-dark-900' : 'bg-gray-50'
     const card = darkMode ? 'bg-dark-800' : 'bg-white'

@@ -4,6 +4,7 @@ import { usePastaStore } from './pastaStore'
 import { useTasks } from '../../contexts/TasksContext'
 import { ProcessTask } from '../../types'
 import { useSupabaseUsuarios } from '../../hooks/useSupabaseUsuarios'
+import { useSupabaseSetores } from '../../hooks/useSupabaseSetores'
 
 // ============================================================
 // TYPES & INTERFACES
@@ -28,7 +29,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   // TASK FILTERS
   const [taskFilters, setTaskFilters] = useState({
     responsavel: '',
-    setor: 'Administrativo',
+    setor: '',
     status: '',
     tipoAcao: '',
     titulo: '',
@@ -40,8 +41,8 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   const [showTipoAcaoDropdown, setShowTipoAcaoDropdown] = useState(false)
 
   const { nomes: usuariosNomes } = useSupabaseUsuarios()
+  const { nomes: SETORES_OPTIONS } = useSupabaseSetores()
 
-  const SETORES_OPTIONS = ['Administrativo', 'Jurídico', 'Previdenciário', 'Contencioso', 'Financeiro']
   const RESPONSAVEIS_OPTIONS = usuariosNomes
   const STATUS_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado']
   const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro']
@@ -75,7 +76,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   const handleClearTaskFilters = () => {
     setTaskFilters({
       responsavel: '',
-      setor: 'Administrativo',
+      setor: '',
       status: '',
       tipoAcao: '',
       titulo: '',
@@ -204,18 +205,33 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                 </button>
                 {showSetorDropdown && (
                   <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
-                    {SETORES_OPTIONS.map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => {
-                          setTaskFilters(f => ({ ...f, setor: opt }))
-                          setShowSetorDropdown(false)
-                        }}
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.setor === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                    <button
+                      onClick={() => {
+                        setTaskFilters(f => ({ ...f, setor: '' }))
+                        setShowSetorDropdown(false)
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {SETORES_OPTIONS.length === 0 ? (
+                      <div className={`px-3 py-2 text-xs italic ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Nenhum setor cadastrado
+                      </div>
+                    ) : (
+                      SETORES_OPTIONS.map(opt => (
+                        <button
+                          key={opt}
+                          onClick={() => {
+                            setTaskFilters(f => ({ ...f, setor: opt }))
+                            setShowSetorDropdown(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.setor === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
+                        >
+                          {opt}
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
