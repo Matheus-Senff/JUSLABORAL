@@ -372,7 +372,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                     {task.tarefa && (
                       <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         <span>Tarefa:</span>
-                        <span className="font-semibold text-right" style={{maxWidth: '60%'}}>{task.tarefa}</span>
+                        <span className="font-semibold text-right" style={{ maxWidth: '60%' }}>{task.tarefa}</span>
                       </div>
                     )}
                     {task.prazo && (
@@ -400,10 +400,10 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                     <button
                       onClick={() => completeTask(task.id)}
                       className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Concluído'
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : darkMode
-                            ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
-                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : darkMode
+                          ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                         }`}
                     >
                       <CheckCircle2 size={11} /> Concluir

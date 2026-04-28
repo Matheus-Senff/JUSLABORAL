@@ -76,6 +76,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showAddModal, setShowAddModal] = useState(false)
     const [addFormData, setAddFormData] = useState<any>(null)
+    const [modalError, setModalError] = useState<string>('')
 
     const textColor = darkMode ? 'text-white' : 'text-gray-900'
     const borderColor = darkMode ? 'border-dark-600' : 'border-gray-200'
@@ -252,18 +253,60 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const handleSaveAdd = async () => {
         if (!addFormData) return
 
-        if (activeSubTab === 'usuarios') {
-            await addUsuario({ nome: addFormData.nome, email: addFormData.email, nivel: addFormData.nivel, equipe: addFormData.equipe, setor: addFormData.setor })
-        } else if (activeSubTab === 'equipes') {
-            setEquipes([...equipes, { ...addFormData, id: `eq-${Date.now()}`, numero: equipes.length + 1 }])
-        } else if (activeSubTab === 'setores') {
-            setSetores([...setores, { ...addFormData, id: `set-${Date.now()}`, numero: setores.length + 1 }])
-        } else if (activeSubTab === 'parceiros') {
-            await addParceiro({ nome: addFormData.nome, cnpj: addFormData.cnpj, email: addFormData.email, telefone: addFormData.telefone })
-        }
+        try {
+            setModalError('')
 
-        setShowAddModal(false)
-        setAddFormData(null)
+            if (activeSubTab === 'usuarios') {
+                // Validar campos obrigatórios
+                if (!addFormData.nome?.trim()) {
+                    setModalError('Nome é obrigatório')
+                    return
+                }
+                if (!addFormData.email?.trim()) {
+                    setModalError('Email é obrigatório')
+                    return
+                }
+
+                await addUsuario({
+                    nome: addFormData.nome.trim(),
+                    email: addFormData.email.trim(),
+                    nivel: addFormData.nivel || 'Visualizador',
+                    equipe: addFormData.equipe || '',
+                    setor: addFormData.setor || ''
+                })
+            } else if (activeSubTab === 'equipes') {
+                if (!addFormData.nome?.trim()) {
+                    setModalError('Nome é obrigatório')
+                    return
+                }
+                setEquipes([...equipes, { ...addFormData, id: `eq-${Date.now()}`, numero: equipes.length + 1 }])
+            } else if (activeSubTab === 'setores') {
+                if (!addFormData.nome?.trim()) {
+                    setModalError('Nome é obrigatório')
+                    return
+                }
+                setSetores([...setores, { ...addFormData, id: `set-${Date.now()}`, numero: setores.length + 1 }])
+            } else if (activeSubTab === 'parceiros') {
+                if (!addFormData.nome?.trim()) {
+                    setModalError('Nome é obrigatório')
+                    return
+                }
+                await addParceiro({
+                    nome: addFormData.nome.trim(),
+                    cnpj: addFormData.cnpj || '',
+                    email: addFormData.email || '',
+                    telefone: addFormData.telefone || ''
+                })
+            }
+
+            setShowAddModal(false)
+            setAddFormData(null)
+            setModalError('')
+        } catch (err) {
+            const errMsg = err instanceof Error ? err.message : 'Erro ao adicionar'
+            setModalError(errMsg)
+            console.error('Erro em handleSaveAdd:', err)
+        }
     }
 
     const getPaginatedData = <T,>(data: T[]) => {
@@ -371,10 +414,16 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                 <div className={`${modalBg} rounded-lg p-6 max-w-md w-full space-y-4`}>
                     <div className="flex items-center justify-between">
                         <h3 className={`text-lg font-bold ${textColor}`}>Adicionar {modalTitle}</h3>
-                        <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                        <button onClick={() => { setShowAddModal(false); setModalError('') }} className="text-gray-400 hover:text-gray-600">
                             <X size={20} />
                         </button>
                     </div>
+
+                    {modalError && (
+                        <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg">
+                            <p className="text-red-500 text-sm font-medium">{modalError}</p>
+                        </div>
+                    )}
 
                     <div className="space-y-3">
                         {activeSubTab === 'usuarios' && (
@@ -412,7 +461,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                         <button onClick={handleSaveAdd} className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded font-semibold transition">
                             Adicionar
                         </button>
-                        <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded font-semibold transition">
+                        <button onClick={() => { setShowAddModal(false); setModalError('') }} className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded font-semibold transition">
                             Cancelar
                         </button>
                     </div>

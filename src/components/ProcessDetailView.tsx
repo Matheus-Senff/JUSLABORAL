@@ -439,11 +439,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                         <h3 className={`font-semibold text-xs ${text}`}>{task.titulo}</h3>
                                         <p className={`text-xs ${muted} line-clamp-1`}>{task.descricao || '—'}</p>
                                     </div>
-                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white text-xs font-semibold shrink-0 ${
-                                        task.status === 'Concluído' ? 'bg-green-600' :
-                                        task.status === 'Em Andamento' ? 'bg-blue-600' :
-                                        task.status === 'Cancelado' ? 'bg-gray-500' : 'bg-orange-500'
-                                    }`}>
+                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white text-xs font-semibold shrink-0 ${task.status === 'Concluído' ? 'bg-green-600' :
+                                            task.status === 'Em Andamento' ? 'bg-blue-600' :
+                                                task.status === 'Cancelado' ? 'bg-gray-500' : 'bg-orange-500'
+                                        }`}>
                                         {task.status === 'Concluído' && <CheckCircle2 size={11} />}
                                         {task.status.length > 12 ? task.status.substring(0, 10) + '...' : task.status}
                                     </span>
@@ -458,11 +457,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-opacity-20">
                                     <button
                                         onClick={() => handleCompleteTask(task.id)}
-                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${
-                                            task.status === 'Concluído' 
+                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Concluído'
                                                 ? 'bg-green-600 hover:bg-green-700 text-white'
                                                 : 'bg-green-100 hover:bg-green-200 text-green-700'
-                                        }`}
+                                            }`}
                                     >
                                         <CheckCircle2 size={12} /> Concluir
                                     </button>

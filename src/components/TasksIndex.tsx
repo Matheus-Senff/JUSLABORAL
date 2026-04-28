@@ -367,13 +367,12 @@ export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
               <div className="flex items-center gap-2 mt-auto pt-3 border-t border-opacity-20">
                 <button
                   onClick={() => completeTask(task.id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded text-xs font-bold transition ${
-                    task.status === 'Concluído'
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded text-xs font-bold transition ${task.status === 'Concluído'
                       ? 'bg-green-600 hover:bg-green-700 text-white'
                       : darkMode
-                      ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                  }`}
+                        ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    }`}
                 >
                   <CheckCircle2 size={12} /> Concluir
                 </button>
