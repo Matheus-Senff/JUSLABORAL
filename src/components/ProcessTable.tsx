@@ -1793,11 +1793,11 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
               <div className="space-y-6 max-h-[60vh] overflow-y-auto">
                 {/* Dados do Cliente */}
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Dados do Cliente</label>
+                  <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Nome do Cliente</label>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Buscar por nome, CPF ou CNPJ"
+                      placeholder=""
                       value={newProcessData.cliente}
                       onChange={(e) => handleClienteSearch(e.target.value)}
                       onFocus={() => setShowClienteSearch(true)}
@@ -1818,16 +1818,14 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                       </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-3 mt-3">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF/CNPJ</label>
-                      <input
-                        type="text"
-                        value={newProcessData.cpf}
-                        readOnly
-                        className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder} opacity-75`}
-                      />
-                    </div>
+                  <div className="mt-3">
+                    <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF/CNPJ</label>
+                    <input
+                      type="text"
+                      value={newProcessData.cpf}
+                      readOnly
+                      className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder} opacity-75`}
+                    />
                   </div>
                 </div>
 
