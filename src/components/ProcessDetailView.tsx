@@ -391,8 +391,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
 
     return (
         <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowAndamentoDropdown(false) }}>
-            {/* Header */}
-            <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between sticky top-0 z-10`} onClick={e => e.stopPropagation()}>
+            {/* Header - FIXED at top (does NOT follow scroll) */}
+            <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between fixed top-0 left-0 right-0 z-20 h-20`} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
@@ -415,8 +415,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 </div>
             </div>
 
-                        {/* Layout 2 colunas: LEFT (Identificação, Dados, Andamento, Documentos) | RIGHT (Tarefas, Anotações, Histórico) */}
-            <div className="p-4 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 h-screen">
+            {/* Layout 2 colunas with top padding to account for fixed header */}
+            <div className="pt-24 p-4 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 min-h-screen">
 
                 {/* ===== ESQUERDA: CONTEÚDO PRINCIPAL (scrollable) ===== */}
                 <div className="space-y-4 overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -721,7 +721,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 </div>
 
                 {/* ===== DIREITA: SIDEBAR FIXO (Tarefas, Anotações, Histórico) ===== */}
-                <div className="sticky top-20 h-fit flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+                <div className="sticky top-24 h-fit flex flex-col gap-4" onClick={e => e.stopPropagation()}>
 
                     {/* PAINEL 1: TAREFAS */}
                     <div className={`${card} rounded-xl border ${border} flex flex-col h-64 overflow-hidden`}>
@@ -794,9 +794,22 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             </h2>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-                            {notes.length === 0 && (
-                                <p className={`text-xs italic text-center py-4 ${muted}`}>Nenhuma anotação.</p>
-                            )}
+                            {/* Form to add new note - always visible */}
+                            <div className={`rounded-lg border ${border} p-2 space-y-1 flex-shrink-0`}>
+                                <input type="text" placeholder="Título" value={noteForm.titulo} onChange={e => setNoteForm(f => ({ ...f, titulo: e.target.value }))} className={`${inputCls} text-xs py-1 h-8`} />
+                                <input type="text" placeholder="CAT" value={noteForm.numeroCat} onChange={e => setNoteForm(f => ({ ...f, numeroCat: e.target.value }))} className={`${inputCls} text-xs py-1 h-8`} />
+                                <div className="grid grid-cols-2 gap-1">
+                                    <input type="text" placeholder="INSS" value={noteForm.senhaInss} onChange={e => setNoteForm(f => ({ ...f, senhaInss: e.target.value }))} className={`${inputCls} text-xs py-1 h-8`} />
+                                    <input type="text" placeholder="RG" value={noteForm.rg} onChange={e => setNoteForm(f => ({ ...f, rg: e.target.value }))} className={`${inputCls} text-xs py-1 h-8`} />
+                                </div>
+                                <textarea placeholder="Obs..." rows={2} value={noteForm.observacao} onChange={e => setNoteForm(f => ({ ...f, observacao: e.target.value }))} className={`${inputCls} text-xs resize-none py-1`} />
+                                <button onClick={handleSaveNote} className="w-full px-2 py-1 rounded text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold transition">
+                                    + Adicionar
+                                </button>
+                            </div>
+
+                            {/* List of saved notes */}
+                            {notes.length === 0 ? null : null}
                             {notes.map(note => (
                                 <div key={note.id} className={`rounded-lg border ${border} p-3`}>
                                     <div className="flex items-start justify-between mb-1">
