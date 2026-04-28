@@ -942,48 +942,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   )}
                 </div>
               </div>
-
-              {/* Tipo Dropdown (dependent on Natureza) */}
-              <div>
-                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Tipo</label>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowTipoDropdown(!showTipoDropdown)}
-                    disabled={!filters.natureza}
-                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder} ${!filters.natureza ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <span>{filters.tipo || 'Todos'}</span>
-                    <span className="opacity-50 text-xs">&#9660;</span>
-                  </button>
-                  {showTipoDropdown && filters.natureza && (
-                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-64 overflow-y-auto`}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectTipo('')
-                        }}
-                        onMouseDown={(e) => e.preventDefault()}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.tipo ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                      >Todos</button>
-                      {(tiposByNatureza[filters.natureza] || []).map(tipo => (
-                        <button
-                          key={tipo}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSelectTipo(tipo)
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                          type="button"
-                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.tipo === tipo ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                        >{tipo}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -1008,7 +966,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Status</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Setor</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Natureza</div></th>
-                <th className="px-2 py-2 text-left font-semibold text-xs"><div>Tipo</div></th>
                 <th className="px-2 py-2 text-left font-semibold text-xs"><div>Última Alteração</div></th>
               </tr>
 
@@ -1349,7 +1306,6 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.status}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.setor || '-'}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.natureza || '-'}</td>
-                  <td className={`px-3 py-2 text-sm ${textColor}`}>{process.tipo || '-'}</td>
                   <td className={`px-3 py-2 text-sm ${textColor}`}>{process.ultimaAlteracao}</td>
                 </tr>
               ))}
