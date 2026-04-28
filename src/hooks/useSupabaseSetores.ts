@@ -5,6 +5,7 @@ interface Setor {
     id: string
     org_id?: string
     nome: string
+    criador?: string
     created_at?: string
 }
 
@@ -43,14 +44,14 @@ export const useSupabaseSetores = () => {
         fetchSetores()
     }, [])
 
-    const addSetor = async (nome: string) => {
+    const addSetor = async (nome: string, criador?: string) => {
         try {
             const { data: userData, error: userError } = await supabase.auth.getUser()
             if (userError || !userData.user) throw new Error('Usuário não autenticado')
 
             const { data, error } = await supabase
                 .from('setores')
-                .insert([{ nome, org_id: userData.user.id }])
+                .insert([{ nome, org_id: userData.user.id, criador: criador || userData.user.id }])
                 .select()
 
             if (error) throw error

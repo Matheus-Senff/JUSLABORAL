@@ -6,6 +6,7 @@ export interface Equipe {
     org_id?: string
     nome: string
     setor?: string
+    criador?: string
     created_at?: string
 }
 
@@ -31,13 +32,13 @@ export function useSupabaseEquipes() {
         setLoading(false)
     }
 
-    async function addEquipe(nome: string, setor?: string) {
+    async function addEquipe(nome: string, setor?: string, criador?: string) {
         const { data: userData, error: userError } = await supabase.auth.getUser()
         if (userError || !userData.user) throw new Error('Usuário não autenticado')
 
         const { data, error } = await supabase
             .from('equipes')
-            .insert([{ nome, setor, org_id: userData.user.id }])
+            .insert([{ nome, setor, org_id: userData.user.id, criador: criador || userData.user.id }])
             .select()
 
         if (error) throw error

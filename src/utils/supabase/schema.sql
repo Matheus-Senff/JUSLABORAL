@@ -155,7 +155,7 @@ create table if not exists usuarios_sistema (
   org_id uuid references auth.users(id) on delete cascade,
   nome text not null,
   email text,
-  nivel text default 'Visualizador' check (nivel in ('Administrador', 'Gerente', 'Analista', 'Associado', 'Visualizador')),
+  nivel text default 'Utilizador' check (nivel in ('Administrador', 'Utilizador')),
   equipe text,
   setor text,
   created_at timestamp with time zone default now()
@@ -173,6 +173,7 @@ create table if not exists parceiros (
   email text,
   telefone text,
   qtd_processos integer default 0,
+  criador uuid references usuarios_sistema(id) on delete set null,
   created_at timestamp with time zone default now()
 );
 
@@ -184,6 +185,7 @@ create table if not exists setores (
   id uuid primary key default gen_random_uuid(),
   org_id uuid references auth.users(id) on delete cascade,
   nome text not null unique,
+  criador uuid references usuarios_sistema(id) on delete set null,
   created_at timestamp with time zone default now()
 );
 
@@ -270,6 +272,7 @@ create table if not exists clientes (
   telefone text,
   uf text,
   cidade text,
+  criador uuid references usuarios_sistema(id) on delete set null,
   created_at timestamp with time zone default now()
 );
 
@@ -284,6 +287,7 @@ create table if not exists equipes (
   org_id uuid references auth.users(id) on delete cascade,
   nome text not null,
   setor text,
+  criador uuid references usuarios_sistema(id) on delete set null,
   created_at timestamp with time zone default now()
 );
 

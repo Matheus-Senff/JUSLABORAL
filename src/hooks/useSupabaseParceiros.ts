@@ -9,6 +9,7 @@ export interface Parceiro {
   email?: string
   telefone?: string
   qtd_processos?: number
+  criador?: string
   created_at?: string
 }
 
@@ -34,7 +35,7 @@ export function useSupabaseParceiros() {
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData.user) throw new Error('Usuário não autenticado')
 
-    const { data, error } = await supabase.from('parceiros').insert({ ...p, org_id: userData.user.id }).select().single()
+    const { data, error } = await supabase.from('parceiros').insert({ ...p, org_id: userData.user.id, criador: userData.user.id }).select().single()
     if (error) throw error
     setParceiros(prev => [...prev, data])
     return data

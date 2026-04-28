@@ -30,6 +30,7 @@ interface Equipe {
     numero: number
     nome: string
     setor: string
+    criador?: string
 }
 
 interface Setor {
@@ -39,6 +40,7 @@ interface Setor {
     gestores: string
     parceiro: string
     qtdProcessos: number
+    criador?: string
 }
 
 interface Parceiro {
@@ -47,6 +49,7 @@ interface Parceiro {
     nome: string
     cnpj: string
     qtdProcessos: number
+    criador?: string
 }
 
 export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
@@ -81,6 +84,23 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const [showAddModal, setShowAddModal] = useState(false)
     const [addFormData, setAddFormData] = useState<any>(null)
     const [modalError, setModalError] = useState<string>('')
+    const [currentUser, setCurrentUser] = useState<any>(null)
+
+    // Carregar usuário atual
+    React.useEffect(() => {
+        const user = usuarios.find(u => u.id === localStorage.getItem('currentUserId')) || usuarios[0]
+        setCurrentUser(user)
+    }, [usuarios])
+
+    // Verificar se usuário é administrador
+    const isAdmin = currentUser?.nivel === 'Administrador'
+
+    // Verificar se pode editar item
+    const canEditItem = (item: any) => {
+        if (isAdmin) return true
+        // Utilizadores só podem editar suas próprias equipes/setores
+        return item?.criador === currentUser?.id
+    }
 
     const textColor = darkMode ? 'text-white' : 'text-gray-900'
     const borderColor = darkMode ? 'border-dark-600' : 'border-gray-200'
@@ -218,6 +238,11 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     }
 
     const handleEditClick = (item: any, type: SubTab) => {
+        // Verificar permissão
+        if (!isAdmin && item.criador !== currentUser?.id) {
+            setModalError('Você só pode editar itens que criou')
+            return
+        }
         setEditingItem(item)
         setEditFormData({ ...item })
         setShowEditModal(true)
@@ -242,20 +267,42 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     }
 
     const handleDeleteClick = async (id: string) => {
+        // Verificar permissão
+        let item: any
         if (activeSubTab === 'usuarios') {
+            item = usuarios.find(u => u.id === id)
+            if (!isAdmin) {
+                alert('Apenas Administradores podem deletar usuários')
+                return
+            }
             await deleteUsuario(id)
         } else if (activeSubTab === 'equipes') {
+            item = equipes.find(e => e.id === id)
+            if (!isAdmin && item.criador !== currentUser?.id) {
+                alert('Você só pode deletar equipes que criou')
+                return
+            }
             await deleteEquipe(id)
         } else if (activeSubTab === 'setores') {
+            item = setores.find(s => s.id === id)
+            if (!isAdmin && item.criador !== currentUser?.id) {
+                alert('Você só pode deletar setores que criou')
+                return
+            }
             await deleteSetor(id)
         } else if (activeSubTab === 'parceiros') {
+            item = parceiros.find(p => p.id === id)
+            if (!isAdmin && item.criador !== currentUser?.id) {
+                alert('Você só pode deletar parceiros que criou')
+                return
+            }
             await deleteParceiro(id)
         }
     }
 
     const handleAddClick = () => {
         if (activeSubTab === 'usuarios') {
-            setAddFormData({ nome: '', email: '', nivel: '', equipe: '', setor: '', parceiro: '', qtdProcessos: 0 })
+            setAddFormData({ nome: '', email: '', nivel: 'Utilizador', equipe: '', setor: '', parceiro: '', qtdProcessos: 0 })
         } else if (activeSubTab === 'equipes') {
             setAddFormData({ nome: '', setor: '' })
         } else if (activeSubTab === 'setores') {
@@ -283,10 +330,19 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                     return
                 }
 
+                // Apenas Administrador pode adicionar usuários
+                if (!isAdmin) {
+                    setModalError('Apenas Administradores podem adicionar usuários')
+                    return
+                }
+                if (!addFormData.nivel?.trim()) {
+                    setModalError('Nível é obrigatório')
+                    return
+                }
                 await addUsuario({
                     nome: addFormData.nome.trim(),
                     email: addFormData.email.trim(),
-                    nivel: addFormData.nivel || 'Visualizador',
+                    nivel: addFormData.nivel.trim(),
                     equipe: addFormData.equipe || '',
                     setor: addFormData.setor || ''
                 })
@@ -379,7 +435,10 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                             <>
                                 <input type="text" placeholder="Nome" value={(editFormData as any).nome} onChange={(e) => setEditFormData({ ...editFormData, nome: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
                                 <input type="email" placeholder="Email" value={(editFormData as any).email} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
-                                <input type="text" placeholder="Nível" value={(editFormData as any).nivel} onChange={(e) => setEditFormData({ ...editFormData, nivel: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
+                                <select value={(editFormData as any).nivel} onChange={(e) => setEditFormData({ ...editFormData, nivel: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} disabled={!isAdmin}>
+                                    <option value="Administrador">Administrador</option>
+                                    <option value="Utilizador">Utilizador</option>
+                                </select>
                                 <input type="text" placeholder="Equipe" value={(editFormData as any).equipe} onChange={(e) => setEditFormData({ ...editFormData, equipe: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
                                 <input type="text" placeholder="Setor" value={(editFormData as any).setor} onChange={(e) => setEditFormData({ ...editFormData, setor: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
                                 <input type="text" placeholder="Parceiro" value={(editFormData as any).parceiro} onChange={(e) => setEditFormData({ ...editFormData, parceiro: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
@@ -446,7 +505,10 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                             <>
                                 <input type="text" placeholder="Nome" value={(addFormData as any).nome} onChange={(e) => setAddFormData({ ...addFormData, nome: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
                                 <input type="email" placeholder="Email" value={(addFormData as any).email} onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
-                                <input type="text" placeholder="Nível" value={(addFormData as any).nivel} onChange={(e) => setAddFormData({ ...addFormData, nivel: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
+                                <select value={(addFormData as any).nivel} onChange={(e) => setAddFormData({ ...addFormData, nivel: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}>
+                                    <option value="Administrador">Administrador</option>
+                                    <option value="Utilizador">Utilizador</option>
+                                </select>
                                 <input type="text" placeholder="Equipe" value={(addFormData as any).equipe} onChange={(e) => setAddFormData({ ...addFormData, equipe: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
                                 <input type="text" placeholder="Setor" value={(addFormData as any).setor} onChange={(e) => setAddFormData({ ...addFormData, setor: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
                                 <input type="text" placeholder="Parceiro" value={(addFormData as any).parceiro} onChange={(e) => setAddFormData({ ...addFormData, parceiro: e.target.value } as any)} className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`} />
@@ -545,8 +607,15 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                                     <td className={`px-2 py-1 text-xs ${textColor}`}>{(usuario as any).qtdProcessos}</td>
                                     <td className="px-2 py-1 text-right">
                                         <div className="flex justify-end gap-2">
-                                            <button onClick={() => handleEditClick(usuario, 'usuarios')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
-                                            <button onClick={() => handleDeleteClick(usuario.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                            {isAdmin && (
+                                                <>
+                                                    <button onClick={() => handleEditClick(usuario, 'usuarios')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
+                                                    <button onClick={() => handleDeleteClick(usuario.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                </>
+                                            )}
+                                            {!isAdmin && (
+                                                <span className="px-3 py-1 text-xs text-gray-400">-</span>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -603,8 +672,15 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                                         <td className={`px-2 py-1 text-xs ${textColor}`}>{equipe.setor}</td>
                                         <td className="px-2 py-1 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <button onClick={() => handleEditClick(equipe, 'equipes')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
-                                                <button onClick={() => handleDeleteClick(equipe.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                {(isAdmin || (equipe as any).criador === currentUser?.id) && (
+                                                    <>
+                                                        <button onClick={() => handleEditClick(equipe, 'equipes')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
+                                                        <button onClick={() => handleDeleteClick(equipe.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                    </>
+                                                )}
+                                                {!isAdmin && (equipe as any).criador !== currentUser?.id && (
+                                                    <span className="px-3 py-1 text-xs text-gray-400">-</span>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -646,8 +722,15 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                                         <td className={`px-2 py-1 text-xs ${textColor}`}>{setor.qtdProcessos}</td>
                                         <td className="px-2 py-1 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <button onClick={() => handleEditClick(setor, 'setores')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
-                                                <button onClick={() => handleDeleteClick(setor.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                {(isAdmin || (setor as any).criador === currentUser?.id) && (
+                                                    <>
+                                                        <button onClick={() => handleEditClick(setor, 'setores')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
+                                                        <button onClick={() => handleDeleteClick(setor.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                    </>
+                                                )}
+                                                {!isAdmin && (setor as any).criador !== currentUser?.id && (
+                                                    <span className="px-3 py-1 text-xs text-gray-400">-</span>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -686,8 +769,15 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                                         <td className={`px-2 py-1 text-xs ${textColor}`}>{parceiro.qtd_processos}</td>
                                         <td className="px-2 py-1 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <button onClick={() => handleEditClick(parceiro, 'parceiros')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
-                                                <button onClick={() => handleDeleteClick(parceiro.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                {(isAdmin || (parceiro as any).criador === currentUser?.id) && (
+                                                    <>
+                                                        <button onClick={() => handleEditClick(parceiro, 'parceiros')} className="px-3 py-1 text-xs rounded transition text-white bg-blue-600 hover:bg-blue-700">Editar</button>
+                                                        <button onClick={() => handleDeleteClick(parceiro.id)} className="px-3 py-1 text-xs rounded transition text-white bg-red-600 hover:bg-red-700">Excluir</button>
+                                                    </>
+                                                )}
+                                                {!isAdmin && (parceiro as any).criador !== currentUser?.id && (
+                                                    <span className="px-3 py-1 text-xs text-gray-400">-</span>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
