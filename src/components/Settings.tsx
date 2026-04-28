@@ -5,6 +5,7 @@ import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
 import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
 import { useSupabaseSetores } from '../hooks/useSupabaseSetores'
 import { useSupabaseClientes } from '../hooks/useSupabaseClientes'
+import { useSupabaseEquipes } from '../hooks/useSupabaseEquipes'
 
 interface SettingsProps {
     darkMode: boolean
@@ -53,7 +54,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const { parceiros, addParceiro, updateParceiro, deleteParceiro } = useSupabaseParceiros()
     const { setores, addSetor, updateSetor, deleteSetor } = useSupabaseSetores()
     const { clientes, addCliente, updateCliente, deleteCliente } = useSupabaseClientes()
-    const [equipes, setEquipes] = useState<Equipe[]>([])
+    const { equipes, addEquipe, updateEquipe, deleteEquipe } = useSupabaseEquipes()
 
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('usuarios')
     const [currentPage, setCurrentPage] = useState(1)
@@ -105,7 +106,12 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
 
     // Filtro de equipes
     const filteredEquipes = useMemo(() => {
-        return equipes.filter(e => {
+        return (equipes as any[]).map(e => ({
+            id: e.id,
+            numero: 0,
+            nome: e.nome,
+            setor: e.setor || ''
+        })).filter(e => {
             return (
                 (equipesFilters.nome ? e.nome.toLowerCase().includes(equipesFilters.nome.toLowerCase()) : true) &&
                 (equipesFilters.setor ? e.setor.toLowerCase().includes(equipesFilters.setor.toLowerCase()) : true)
@@ -223,7 +229,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
         if (activeSubTab === 'usuarios') {
             await updateUsuario(editingItem.id, editFormData)
         } else if (activeSubTab === 'equipes') {
-            setEquipes(equipes.map(e => e.id === editingItem.id ? editFormData : e))
+            await updateEquipe(editingItem.id, editFormData)
         } else if (activeSubTab === 'setores') {
             await updateSetor(editingItem.id, editFormData)
         } else if (activeSubTab === 'parceiros') {
@@ -239,7 +245,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
         if (activeSubTab === 'usuarios') {
             await deleteUsuario(id)
         } else if (activeSubTab === 'equipes') {
-            setEquipes(equipes.filter(e => e.id !== id))
+            await deleteEquipe(id)
         } else if (activeSubTab === 'setores') {
             await deleteSetor(id)
         } else if (activeSubTab === 'parceiros') {
@@ -289,7 +295,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                     setModalError('Nome é obrigatório')
                     return
                 }
-                setEquipes([...equipes, { ...addFormData, id: `eq-${Date.now()}`, numero: equipes.length + 1 }])
+                await addEquipe(addFormData.nome.trim(), addFormData.setor || '')
             } else if (activeSubTab === 'setores') {
                 if (!addFormData.nome?.trim()) {
                     setModalError('Nome é obrigatório')

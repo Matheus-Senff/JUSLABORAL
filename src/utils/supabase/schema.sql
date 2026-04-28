@@ -277,3 +277,23 @@ create index if not exists clientes_org_id_idx on clientes(org_id);
 
 alter table clientes enable row level security;
 create policy "clientes_all" on clientes for all using (true) with check (true);
+
+-- Equipes
+create table if not exists equipes (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references auth.users(id) on delete cascade,
+  nome text not null,
+  setor text,
+  created_at timestamp with time zone default now()
+);
+
+create index if not exists equipes_org_id_idx on equipes(org_id);
+
+alter table equipes enable row level security;
+create policy "equipes_all" on equipes for all using (true) with check (true);
+
+-- Incluir usuário Vizualizador, Editor, Admin --
+
+"Setores" adicionados não estão ficando ao recarregar a página
+  verificar se está acontecendo com "Clientes" "Usuários" "Equipes" "Setores" "Parceiros"
+    incluindo tarefa adicionada, anotação, histórico, que use o banco de dados e que o usuário pode mexer incluir ou excluir --
