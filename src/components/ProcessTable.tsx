@@ -74,11 +74,15 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showSetorFilterDropdown, setShowSetorFilterDropdown] = useState(false)
   const [showSetorTableDropdown, setShowSetorTableDropdown] = useState(false)
+  const [showParceirosFilterDropdown, setShowParceirosFilterDropdown] = useState(false)
+  const [showClientesFilterDropdown, setShowClientesFilterDropdown] = useState(false)
   const [showNaturezaDropdown, setShowNaturezaDropdown] = useState(false)
   const [showNaturezaTableDropdown, setShowNaturezaTableDropdown] = useState(false)
   const [showTipoDropdown, setShowTipoDropdown] = useState(false)
   const [showTelefoneDropdown, setShowTelefoneDropdown] = useState(false)
   const [showEmailDropdown, setShowEmailDropdown] = useState(false)
+  const [showParceirosTableDropdown, setShowParceirosTableDropdown] = useState(false)
+  const [showClientesTableDropdown, setShowClientesTableDropdown] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({
     numero: [],
     parceiro: [],
@@ -641,6 +645,93 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   )}
                 </div>
               </div>
+
+              {/* Parceiros Dropdown */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Parceiro</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowParceirosFilterDropdown(!showParceirosFilterDropdown)}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span>{filters.parceiro || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showParceirosFilterDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFilterChange('parceiro', '');
+                          setShowParceirosFilterDropdown(false)
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.parceiro ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {parceirosNomes.map(p => (
+                        <button
+                          key={p}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('parceiro', p);
+                            setShowParceirosFilterDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.parceiro === p ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{p}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Clientes Dropdown */}
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${textColor}`}>Cliente</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowClientesFilterDropdown(!showClientesFilterDropdown)}
+                    className={`w-full px-3 py-2 text-sm border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                  >
+                    <span>{filters.cliente || 'Todos'}</span>
+                    <span className="opacity-50 text-xs">&#9660;</span>
+                  </button>
+                  {showClientesFilterDropdown && (
+                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden`}>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleFilterChange('cliente', '');
+                          setShowClientesFilterDropdown(false)
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${!filters.cliente ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                      >Todos</button>
+                      {clientesNomes.map(c => (
+                        <button
+                          key={c}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('cliente', c);
+                            setShowClientesFilterDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
+                          className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${filters.cliente === c ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >{c}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className={`block text-xs font-medium mb-1 ${textColor}`}>N° Processo</label>
                 <input
@@ -856,17 +947,39 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 </td>
                 <td className="px-2 py-1 relative">
                   <div>
-                    <input type="text" placeholder="Filtro" value={filters.parceiro} onFocus={() => setActiveSuggestionField('parceiro')} onChange={(e) => handleFilterChange('parceiro', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
-                    {activeSuggestionField === 'parceiro' && suggestions.parceiro && suggestions.parceiro.length > 0 && (
-                      <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-lg z-20 border ${borderColor} ${tableBg} max-h-32 overflow-y-auto`}>
-                        {suggestions.parceiro.map((suggestion, idx) => (
+                    <button
+                      onClick={() => setShowParceirosTableDropdown(!showParceirosTableDropdown)}
+                      className={`w-full px-1 py-0.5 text-xs border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                    >
+                      <span className="truncate">{filters.parceiro || 'Filtro'}</span>
+                      <span className="opacity-50 ml-1">▼</span>
+                    </button>
+                    {showParceirosTableDropdown && (
+                      <div className={`absolute top-full left-0 mt-1 w-40 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-40 overflow-y-auto`}>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('parceiro', '');
+                            setShowParceirosTableDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
+                          className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.parceiro ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >Todos</button>
+                        {parceirosNomes.map(p => (
                           <button
-                            key={idx}
-                            onClick={() => handleSuggestionClick('parceiro', suggestion)}
-                            className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-100'} ${textColor}`}
-                          >
-                            {suggestion}
-                          </button>
+                            key={p}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFilterChange('parceiro', p);
+                              setShowParceirosTableDropdown(false)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.parceiro === p ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                          >{p}</button>
                         ))}
                       </div>
                     )}
@@ -874,17 +987,39 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                 </td>
                 <td className="px-2 py-1 relative">
                   <div>
-                    <input type="text" placeholder="Filtro" value={filters.cliente} onFocus={() => setActiveSuggestionField('cliente')} onChange={(e) => handleFilterChange('cliente', e.target.value)} className={`w-full px-1 py-0.5 text-xs border rounded ${inputBg} ${inputBorder}`} />
-                    {activeSuggestionField === 'cliente' && suggestions.cliente && suggestions.cliente.length > 0 && (
-                      <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-lg z-20 border ${borderColor} ${tableBg} max-h-32 overflow-y-auto`}>
-                        {suggestions.cliente.map((suggestion, idx) => (
+                    <button
+                      onClick={() => setShowClientesTableDropdown(!showClientesTableDropdown)}
+                      className={`w-full px-1 py-0.5 text-xs border rounded text-left flex items-center justify-between ${inputBg} ${inputBorder}`}
+                    >
+                      <span className="truncate">{filters.cliente || 'Filtro'}</span>
+                      <span className="opacity-50 ml-1">▼</span>
+                    </button>
+                    {showClientesTableDropdown && (
+                      <div className={`absolute top-full left-0 mt-1 w-40 rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} overflow-hidden max-h-40 overflow-y-auto`}>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFilterChange('cliente', '');
+                            setShowClientesTableDropdown(false)
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          type="button"
+                          className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${!filters.cliente ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                        >Todos</button>
+                        {clientesNomes.map(c => (
                           <button
-                            key={idx}
-                            onClick={() => handleSuggestionClick('cliente', suggestion)}
-                            className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-100'} ${textColor}`}
-                          >
-                            {suggestion}
-                          </button>
+                            key={c}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFilterChange('cliente', c);
+                              setShowClientesTableDropdown(false)
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 text-xs border-b ${borderColor} transition ${filters.cliente === c ? (darkMode ? 'bg-dark-600 text-blue-400' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                          >{c}</button>
                         ))}
                       </div>
                     )}
