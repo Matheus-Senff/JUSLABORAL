@@ -2,6 +2,7 @@
 import { X, FileText, User, ChevronDown, Filter, RotateCcw, CheckCircle2, Trash2, AlertCircle } from 'lucide-react'
 import { usePastaStore } from './pastaStore'
 import { useTasks } from '../../contexts/TasksContext'
+import { useFilters } from '../../contexts/FiltersContext'
 import { ProcessTask } from '../../types'
 import { useSupabaseUsuarios } from '../../hooks/useSupabaseUsuarios'
 import { useSupabaseSetores } from '../../hooks/useSupabaseSetores'
@@ -20,19 +21,20 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   const filterState = usePastaStore((s) => s.filterState)
   const clearFilters = usePastaStore((s) => s.clearFilters)
   const { tasks, deleteTask, completeTask } = useTasks()
+  const { filters: globalFilters, updateFilter: updateGlobalFilter, clearCommonFilters } = useFilters()
 
   // LOCAL STATE
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory>('tarefas')
   const [assigneeFilter, setAssigneeFilter] = useState<string>('')
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false)
 
-  // TASK FILTERS
+  // TASK FILTERS - Use global filters for common fields
   const [taskFilters, setTaskFilters] = useState({
-    responsavel: '',
-    setor: '',
-    status: '',
-    tipoAcao: '',
-    titulo: '',
+    responsavel: globalFilters.responsavel,
+    setor: globalFilters.setor,
+    status: globalFilters.status,
+    tipoAcao: globalFilters.tipoAcao,
+    titulo: globalFilters.titulo,
   })
   const [showTaskFilters, setShowTaskFilters] = useState(false)
   const [showResponsavelDropdown, setShowResponsavelDropdown] = useState(false)
@@ -81,6 +83,18 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
       tipoAcao: '',
       titulo: '',
     })
+    // Also clear common filters from global context
+    clearCommonFilters()
+  }
+
+  // Handle filter changes - update both local and global state
+  const handleTaskFilterChange = (key: string, value: string) => {
+    setTaskFilters(prev => ({ ...prev, [key]: value }))
+
+    // Update global context for common filters
+    if (key === 'responsavel' || key === 'setor' || key === 'status') {
+      updateGlobalFilter(key as any, value)
+    }
   }
 
   const getTipoAcaoIcon = (tipo: ProcessTask['tipoAcao']) => {
@@ -165,7 +179,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden max-h-48 overflow-y-auto`}>
                     <button
                       onClick={() => {
-                        setTaskFilters(f => ({ ...f, responsavel: '' }))
+                        handleTaskFilterChange('responsavel', '')
                         setShowResponsavelDropdown(false)
                       }}
                       className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.responsavel ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -176,7 +190,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                       <button
                         key={opt}
                         onClick={() => {
-                          setTaskFilters(f => ({ ...f, responsavel: opt }))
+                          handleTaskFilterChange('responsavel', opt)
                           setShowResponsavelDropdown(false)
                         }}
                         className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.responsavel === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -207,7 +221,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
                     <button
                       onClick={() => {
-                        setTaskFilters(f => ({ ...f, setor: '' }))
+                        handleTaskFilterChange('setor', '')
                         setShowSetorDropdown(false)
                       }}
                       className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.setor ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -223,7 +237,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                         <button
                           key={opt}
                           onClick={() => {
-                            setTaskFilters(f => ({ ...f, setor: opt }))
+                            handleTaskFilterChange('setor', opt)
                             setShowSetorDropdown(false)
                           }}
                           className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.setor === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -255,7 +269,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden`}>
                     <button
                       onClick={() => {
-                        setTaskFilters(f => ({ ...f, status: '' }))
+                        handleTaskFilterChange('status', '')
                         setShowStatusDropdown(false)
                       }}
                       className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.status ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -266,7 +280,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                       <button
                         key={opt}
                         onClick={() => {
-                          setTaskFilters(f => ({ ...f, status: opt }))
+                          handleTaskFilterChange('status', opt)
                           setShowStatusDropdown(false)
                         }}
                         className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.status === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -297,7 +311,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${darkMode ? 'border-dark-600 bg-dark-700' : 'border-gray-200 bg-white'} overflow-hidden max-h-48 overflow-y-auto`}>
                     <button
                       onClick={() => {
-                        setTaskFilters(f => ({ ...f, tipoAcao: '' }))
+                        handleTaskFilterChange('tipoAcao', '')
                         setShowTipoAcaoDropdown(false)
                       }}
                       className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${!taskFilters.tipoAcao ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}
@@ -308,7 +322,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                       <button
                         key={opt}
                         onClick={() => {
-                          setTaskFilters(f => ({ ...f, tipoAcao: opt }))
+                          handleTaskFilterChange('tipoAcao', opt)
                           setShowTipoAcaoDropdown(false)
                         }}
                         className={`w-full text-left px-3 py-2 text-sm border-b ${darkMode ? 'border-dark-600 hover:bg-dark-600' : 'border-gray-200 hover:bg-gray-50'} ${taskFilters.tipoAcao === opt ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : ''}`}

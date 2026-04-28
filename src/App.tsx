@@ -10,6 +10,7 @@ import { PastaIndex } from './components/PastaIndex'
 import { AuthPage } from './components/AuthPage'
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { TasksProvider } from './contexts/TasksContext'
+import { FiltersProvider } from './contexts/FiltersContext'
 import { useSupabaseAuth } from './hooks/useSupabaseAuth'
 import { ProcessEvent } from './types'
 
@@ -91,9 +92,11 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <TasksProvider>
-        <AppContent />
-      </TasksProvider>
+      <FiltersProvider>
+        <TasksProvider>
+          <AppContent />
+        </TasksProvider>
+      </FiltersProvider>
     </ThemeProvider>
   )
 }
