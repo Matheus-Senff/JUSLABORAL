@@ -629,54 +629,43 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
           </button>
         </div>
 
-        <div className="mb-4 flex gap-3 items-center justify-between">
-          <div className="flex gap-3 items-center">
-            <div className="relative">
-              <button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
-              >
-                👤 {selectedUser && selectedUser !== 'geral' ? selectedUser : 'Usuário Responsável'}
-              </button>
-              {showUserDropdown && (
-                <div className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-10 border ${borderColor} ${tableBg}`}>
-                  <button
-                    key="geral"
-                    onClick={() => { setSelectedUser('geral'); setShowUserDropdown(false) }}
-                    className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === 'geral' ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                  >
-                    <div className="font-medium">Todos</div>
-                  </button>
-                  {usuariosNomes.map((nome) => (
-                    <button
-                      key={nome}
-                      onClick={() => { setSelectedUser(nome); setShowUserDropdown(false) }}
-                      className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === nome ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
-                    >
-                      <div className="font-medium">{nome}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
+        <div className="mb-4 flex gap-3">
+          <div className="relative">
             <button
-              onClick={() => setShowDetailedFilter(!showDetailedFilter)}
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
               className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
             >
-              <Sliders size={16} />
-              Filtro Detalhado
+              👤 {selectedUser && selectedUser !== 'geral' ? selectedUser : 'Usuário Responsável'}
             </button>
-
-            <button
-              onClick={handleClearFilters}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold border rounded transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-600"
-              title="Limpar todos os filtros"
-            >
-              <X size={16} />
-              Limpar Filtro
-            </button>
+            {showUserDropdown && (
+              <div className={`absolute top-full left-0 mt-2 w-56 rounded-lg shadow-lg z-10 border ${borderColor} ${tableBg}`}>
+                <button
+                  key="geral"
+                  onClick={() => { setSelectedUser('geral'); setShowUserDropdown(false) }}
+                  className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === 'geral' ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                >
+                  <div className="font-medium">Todos</div>
+                </button>
+                {usuariosNomes.map((nome) => (
+                  <button
+                    key={nome}
+                    onClick={() => { setSelectedUser(nome); setShowUserDropdown(false) }}
+                    className={`w-full text-left px-4 py-2 text-sm transition border-b ${borderColor} ${selectedUser === nome ? (darkMode ? 'bg-dark-600' : 'bg-gray-100') : (darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50')} ${textColor}`}
+                  >
+                    <div className="font-medium">{nome}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          <button
+            onClick={() => setShowDetailedFilter(!showDetailedFilter)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${inputBg} ${inputBorder}`}
+          >
+            <Sliders size={16} />
+            Filtro Detalhado
+          </button>
 
           <button
             onClick={() => setShowNewProcessModal(true)}
@@ -684,6 +673,15 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
           >
             <Plus size={16} />
             Novo Processo
+          </button>
+
+          <button
+            onClick={handleClearFilters}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-semibold border rounded transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-600"
+            title="Limpar todos os filtros"
+          >
+            <X size={16} />
+            Limpar Filtro
           </button>
         </div>
 
