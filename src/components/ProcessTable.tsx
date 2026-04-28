@@ -1823,8 +1823,9 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     <input
                       type="text"
                       value={newProcessData.cpf}
-                      readOnly
-                      className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder} opacity-75`}
+                      onChange={(e) => setNewProcessData({ ...newProcessData, cpf: e.target.value })}
+                      placeholder="Preencha manualmente"
+                      className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
                     />
                   </div>
                 </div>
