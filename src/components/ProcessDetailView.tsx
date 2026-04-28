@@ -410,7 +410,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             </div>
 
             {/* Layout 2 colunas with top padding to account for fixed header */}
-            <div className="pt-24 p-4 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 min-h-screen">
+            <div className="pt-20 px-4 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 min-h-screen">
 
                 {/* ===== ESQUERDA: CONTEÚDO PRINCIPAL (scrollable) ===== */}
                 <div className="space-y-4 overflow-y-auto" onClick={e => e.stopPropagation()}>
