@@ -415,8 +415,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 </div>
             </div>
 
-            {/* Layout 4 colunas */}
-            <div className="p-4 grid grid-cols-1 xl:grid-cols-[280px_320px_1fr_300px] gap-5 items-start">
+            {/* Layout 2 colunas: LEFT (conteúdo) | RIGHT (sticky) */}
+            <div className="p-4 grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5 items-start">
 
                 {/* ===== ESQUERDA: HISTÓRICO ===== */}
                 <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
@@ -542,9 +542,15 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     <input type="text" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="—" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div><label className={labelCls}>Cidade</label><p className={valueCls}>{process.cidade}</p></div>
-                                <div><label className={labelCls}>UF</label><p className={valueCls}>{process.uf}</p></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={labelCls}>Cidade</label>
+                                    <p className={`px-3 py-2 rounded-lg text-sm font-medium ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'} break-words`}>{process.cidade}</p>
+                                </div>
+                                <div>
+                                    <label className={labelCls}>UF</label>
+                                    <p className={`px-3 py-2 rounded-lg text-sm font-medium ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{process.uf}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
