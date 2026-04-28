@@ -34,7 +34,7 @@ const NATUREZA_OPTIONS = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
 const TIPO_OPTIONS: Record<string, string[]> = {
     'CIVIL': ['AÇÕES CIVIS'],
     'TRABALHISTA': ['TRABALHISTA', 'AÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
-    'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOENÇA', 'AUXÍLIO-REC-PROFISSIONAL', 'AUXÍLIO-TRAB-ACIDENTE', 'APOSENTADORIA-RÁPIDA-FAMÍLIA', 'BENEFÍCIO-ASSISTENCIAL-IDOSO', 'BENEFÍCIO-ASSISTENCIAL-PESSOA-DEFICIENTE', 'BENEFÍCIO-PRESTADOR-INFORMAÇÃO', 'BENEFÍCIO-REQUERENTE-INFORMAÇÃO', 'BENEFÍCIO-SOLICITAÇÃO-CÓPIA-DOCUMENTO', 'BENEFÍCIO-VALIDADE-DOCUMENTO', 'BUSCA-ATIVO-INFORMAÇÃO', 'CERTIDÃO-AUXÍLIO-ACIDENTE', 'CERTIDÃO-AUXÍLIO-DOENÇA', 'CERTIDÃO-AUXÍLIO-REC-PROFISSIONAL']
+    'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOENÇA', 'AUXÍLIO-REC-PROFISSIONAL', 'AUXÍLIO-TRAB-ACIDENTE', 'APOSENTADORIA-RÁPIDA-FAMILIAR', 'BENEFÍCIO-ASSISTENCIAL-IDOSO', 'BENEFÍCIO-ASSISTENCIAL-PESSOA-DEFICIENTE', 'BENEFÍCIO-PRESTADOR-INFORMAÇÕES', 'BENEFÍCIO-REQUERENTE-INFORMAÇÕES', 'BENEFÍCIO-SOLICITAÇÃO-CÓPIA-DOCUMENTOS', 'BENEFÍCIO-VALIDADE-DOCUMENTOS', 'BUSCA-ATIVO-INFORMAÇÕES', 'CERTIDÃO-AUXÍLIO-ACIDENTE', 'CERTIDÃO-AUXÍLIO-DOENÇA', 'CERTIDÃO-AUXÍLIO-REC-PROFISSIONAL']
 }
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
@@ -419,7 +419,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             <div className="p-4 grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5 items-start">
 
                 {/* ===== ESQUERDA: HISTÓRICO ===== */}
-                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
+                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] h-fit`} onClick={e => e.stopPropagation()}>
                     <div className={`flex items-center justify-between px-4 py-3 border-b ${border} shrink-0`}>
                         <h2 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${muted}`}>
                             <History size={13} /> Histórico ({history.length})
@@ -431,7 +431,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             <Plus size={12} /> Adicionar
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+                    <div className="max-h-48 overflow-y-auto p-3 space-y-3">
                         {history.map(entry => {
                             const cfg = historyTypeConfig[entry.tipo]
                             const showFieldChange = entry.campo !== undefined && entry.valorAnterior !== undefined
@@ -460,7 +460,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 </div>
 
                 {/* ===== ESQUERDA CENTRO: TAREFAS ===== */}
-                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] max-h-[calc(100vh-96px)]`} onClick={e => e.stopPropagation()}>
+                <div className={`${card} rounded-xl border ${border} flex flex-col sticky top-[80px] h-fit`} onClick={e => e.stopPropagation()}>
                     <div className={`flex items-center justify-between px-4 py-3 border-b ${border} shrink-0`}>
                         <h2 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${muted}`}>
                             <AlertCircle size={13} /> Tarefas ({tasks.length})
@@ -472,7 +472,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                             <Plus size={12} /> Adicionar
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+                    <div className="max-h-48 overflow-y-auto p-3 space-y-3">
                         {tasks.length === 0 && (
                             <p className={`text-xs italic text-center py-4 ${muted}`}>Nenhuma tarefa.</p>
                         )}
