@@ -385,9 +385,9 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     }
 
     return (
-        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false) }}>
-            {/* Header - FIXED at top (does NOT follow scroll) */}
-            <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between fixed top-0 left-0 right-0 z-20 h-20`} onClick={e => e.stopPropagation()}>
+        <div className={`${bg} fixed inset-0 overflow-y-auto z-10`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false) }}>
+            {/* Header - STICKY at top within the scrollable overlay */}
+            <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between sticky top-0 z-20 h-20`} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
@@ -409,8 +409,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 </div>
             </div>
 
-            {/* Layout 2 colunas with top padding to account for fixed header */}
-            <div className="pt-20 px-4 pb-8 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4">
+            {/* Layout 2 colunas */}
+            <div className="px-4 pb-8 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4">
 
                 {/* ===== ESQUERDA: CONTEÚDO PRINCIPAL (scrollable) ===== */}
                 <div className="space-y-3" onClick={e => e.stopPropagation()}>
