@@ -9,6 +9,9 @@ import { useTasks } from '../contexts/TasksContext'
 import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
 import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
 import { useSupabaseSetores } from '../hooks/useSupabaseSetores'
+import { useSupabaseTarefas } from '../hooks/useSupabaseTarefas'
+import { useSupabaseProcessHistory } from '../hooks/useSupabaseProcessHistory'
+import { useSupabaseProcessNotes } from '../hooks/useSupabaseProcessNotes'
 
 interface ProcessDetailViewProps {
     process: Process
@@ -30,7 +33,7 @@ const STATUS_OPTIONS = [
 const NATUREZA_OPTIONS = ['CIVIL', 'TRABALHISTA', 'PREVIDENCIÁRIA']
 const TIPO_OPTIONS: Record<string, string[]> = {
     'CIVIL': ['AÇÕES CIVIS'],
-    'TRABALHISTA': ['TRABALHISTA', 'ÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
+    'TRABALHISTA': ['TRABALHISTA', 'AÇÃO DE SEGURO DE VIDA', 'TRABALHISTA EXECUÇÃO', 'TRABALHISTA ACIDENTE'],
     'PREVIDENCIÁRIA': ['AUXÍLIO-ACIDENTE', 'AUXÍLIO-DOEÇA', 'AUXÍLIO-REC-PROFISSIONAL', 'AUXÍLIO-TRAb-ACIDENTE', 'AVENT-RÁPIDA-FĀMLIA', 'BENEFÍCIO-ASSISTENCIAL-IDOSO', 'BENÉFİCIO-ASSISTENCIAL-PESSOA-DEFICIENTE', 'BENÉFİCIO-PRESTADOR-INFORMACAO', 'BENÉFİCIO-REQUERENTE-INFORMACAO', 'BENÉFİCIO-SOLICITACAO-COPIA-DOCUMENTO', 'BENÉFİCIO-VALIDADE-DOCUMENTO', 'BUSC-ATIVO-INFORMACAO', 'CERTIDAO-AUXILIO-ACIDENTE', 'CERTIDAO-AUXILIO-DOENCA', 'CERTIDAO-AUXILIO-REC-PROFISSIONAL']
 }
 
@@ -63,6 +66,9 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     const { nomes: RESPONSAVEIS_OPTIONS } = useSupabaseUsuarios()
     const { nomes: parceiroNomes } = useSupabaseParceiros()
     const { nomes: SETORES_OPTIONS } = useSupabaseSetores()
+    const { addTarefa } = useSupabaseTarefas()
+    const { addHistoryEntry } = useSupabaseProcessHistory()
+    const { addNote } = useSupabaseProcessNotes()
 
     const bg = darkMode ? 'bg-dark-900' : 'bg-gray-50'
     const card = darkMode ? 'bg-dark-800' : 'bg-white'
@@ -179,9 +185,16 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         setHistory(prev => [entry, ...prev])
         setCurrentStatus(newStatus)
         setShowStatusDropdown(false)
+
+        // Salvar no Supabase
+        try {
+            addHistoryEntry(entry, process.id.toString())
+        } catch (err) {
+            console.error('Erro ao salvar histórico no Supabase:', err)
+        }
     }
 
-    const handleAddHistoryEntry = () => {
+    const handleAddHistoryEntry = async () => {
         if (!historyForm.texto.trim()) return
         const entry: ProcessHistoryEntry = {
             id: Date.now().toString(),
@@ -192,11 +205,19 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             data: new Date().toLocaleString('pt-BR'),
         }
         setHistory(prev => [entry, ...prev])
+
+        // Salvar no Supabase
+        try {
+            await addHistoryEntry(entry, process.id.toString())
+        } catch (err) {
+            console.error('Erro ao salvar histórico no Supabase:', err)
+        }
+
         setHistoryForm({ tipo: 'comentario', texto: '' })
         setShowHistoryModal(false)
     }
 
-    const handleSaveEvent = () => {
+    const handleSaveEvent = async () => {
         if (!eventForm.data || !eventForm.hora) return
         const ev: ProcessEvent = {
             id: Date.now().toString(),
@@ -224,11 +245,19 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             data: new Date().toLocaleString('pt-BR'),
         }
         setHistory(prev => [hist, ...prev])
+
+        // Salvar histórico no Supabase
+        try {
+            await addHistoryEntry(hist, process.id.toString())
+        } catch (err) {
+            console.error('Erro ao salvar histórico de evento no Supabase:', err)
+        }
+
         setEventForm({ tipoEvento: 'Audiência', data: '', hora: '', endereco: '', showTipoDropdown: false })
         setShowEventModal(false)
     }
 
-    const handleSaveNote = () => {
+    const handleSaveNote = async () => {
         const hasContent = noteForm.titulo.trim() || noteForm.numeroCat.trim() || noteForm.senhaInss.trim() || noteForm.rg.trim() || noteForm.observacao.trim()
         if (!hasContent) return
         const note: ProcessNote = {
@@ -239,6 +268,14 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             data: new Date().toLocaleString('pt-BR'),
         }
         setNotes(prev => [note, ...prev])
+
+        // Salvar no Supabase
+        try {
+            await addNote(note, process.id.toString())
+        } catch (err) {
+            console.error('Erro ao salvar anotação no Supabase:', err)
+        }
+
         setNoteForm({ titulo: '', numeroCat: '', senhaInss: '', rg: '', observacao: '' })
     }
 
@@ -246,7 +283,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         setNotes(prev => prev.filter(n => n.id !== id))
     }
 
-    const handleSaveTask = () => {
+    const handleSaveTask = async () => {
         if (!taskForm.tipo || !taskForm.acao || !taskForm.tipoResponsavel || !taskForm.responsavel) return
 
         const TIPO_ACAO_MAP: Record<string, typeof TIPO_ACAO_OPTIONS[number]> = {
@@ -277,6 +314,13 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         }
         setTasks(prev => [newTask, ...prev])
         addGlobalTask(newTask)
+
+        // Salvar no Supabase
+        try {
+            await addTarefa(newTask)
+        } catch (err) {
+            console.error('Erro ao salvar tarefa no Supabase:', err)
+        }
 
         setTaskForm({ tipo: '', acao: '', tarefa: '', observacao: '', prazo: '', tipoResponsavel: '', responsavel: '', showTipoDropdown: false, showAcaoDropdown: false, showTarefaDropdown: false, showTipoResponsavelDropdown: false, showResponsavelDropdown: false })
         setShowTaskModal(false)
@@ -498,7 +542,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     <input type="text" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="—" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div><label className={labelCls}>Cidade</label><p className={valueCls}>{process.cidade}</p></div>
                                 <div><label className={labelCls}>UF</label><p className={valueCls}>{process.uf}</p></div>
                             </div>

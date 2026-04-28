@@ -296,6 +296,50 @@ create index if not exists equipes_org_id_idx on equipes(org_id);
 alter table equipes enable row level security;
 create policy "equipes_all" on equipes for all using (true) with check (true);
 
+-- Histórico de Processos
+create table if not exists process_history (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references auth.users(id) on delete cascade,
+  process_id uuid references processos(id) on delete cascade,
+  process_id_texto text,
+  tipo text not null check (tipo in ('status', 'auditoria', 'comentario')),
+  campo text,
+  valor_anterior text,
+  valor_novo text,
+  texto text,
+  autor text,
+  data timestamp with time zone default now(),
+  created_at timestamp with time zone default now()
+);
+
+create index if not exists process_history_process_id_idx on process_history(process_id);
+create index if not exists process_history_org_id_idx on process_history(org_id);
+
+alter table process_history enable row level security;
+create policy "process_history_all" on process_history for all using (true) with check (true);
+
+-- Anotações de Processos
+create table if not exists process_notes (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid references auth.users(id) on delete cascade,
+  process_id uuid references processos(id) on delete cascade,
+  process_id_texto text,
+  titulo text,
+  numero_cat text,
+  senha_inss text,
+  rg text,
+  observacao text,
+  autor text,
+  data timestamp with time zone default now(),
+  created_at timestamp with time zone default now()
+);
+
+create index if not exists process_notes_process_id_idx on process_notes(process_id);
+create index if not exists process_notes_org_id_idx on process_notes(org_id);
+
+alter table process_notes enable row level security;
+create policy "process_notes_all" on process_notes for all using (true) with check (true);
+
 -- Incluir usuário Vizualizador, Editor, Admin --
 
 --"Setores" adicionados não estão ficando ao recarregar a página
