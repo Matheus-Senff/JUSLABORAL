@@ -410,10 +410,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             </div>
 
             {/* Layout 2 colunas with top padding to account for fixed header */}
-            <div className="pt-16 px-4 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 min-h-screen">
+            <div className="pt-20 px-4 pb-8 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4">
 
                 {/* ===== ESQUERDA: CONTEÚDO PRINCIPAL (scrollable) ===== */}
-                <div className="space-y-4 overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="space-y-3" onClick={e => e.stopPropagation()}>
 
                     {/* 1. Identificação */}
                     <div className={`${card} rounded-xl border ${border} p-4`}>
@@ -690,7 +690,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 </div>
 
                 {/* ===== DIREITA: SIDEBAR FIXO (Tarefas, Anotações, Histórico) ===== */}
-                <div className="sticky top-24 h-fit flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+                <div className="sticky top-20 h-fit flex flex-col gap-4" onClick={e => e.stopPropagation()}>
 
                     {/* PAINEL 1: TAREFAS */}
                     <div className={`${card} rounded-xl border ${border} flex flex-col h-64 overflow-hidden`}>
