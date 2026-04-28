@@ -340,8 +340,40 @@ create index if not exists process_notes_org_id_idx on process_notes(org_id);
 alter table process_notes enable row level security;
 create policy "process_notes_all" on process_notes for all using (true) with check (true);
 
--- Incluir usuário Vizualizador, Editor, Admin --
+-- Comentário Dev --
 
---"Setores" adicionados não estão ficando ao recarregar a página
-  verificar se está acontecendo com "Clientes" "Usuários" "Equipes" "Setores" "Parceiros"
-    incluindo tarefa adicionada, anotação, histórico, que use o banco de dados e que o usuário pode mexer incluir ou excluir --
+  console.log('Verificar') user.id (default) "compromissos" existe e está acessível
+id: 'test-${Date.now()}'
+  data: new Date().toISOString().split('T')[0],
+    local: "Sitema",
+      prioridade: 'media',
+        const { data: tableData, error: tableError } = await Supabase
+        .from('compromissos')
+        .select('*')
+        .limit(1)(0)(2)
+      alter table process_notes enable row level security:
+      create index if not exist process_notes_org_id_org
+    alter table process_notes enable row level security
+  .from('compromissos')
+    console.error(Error acess) user.process_id_texto:text
+      id: `test-${Date.now()}`,
+        user_id: session.user.id,
+          data: new Date().toISOString().split('T')[0],
+            horario: '14:00',
+             descricao: 'Teste de conexão',
+               local: 'Sistema',
+                prioridade: 'media',
+                  status: 'pendente', {
+  console.log('Canon');(Cálculo) "cálculo" user.id }
+    // Processos
+    if (filters.processo && matches) {
+      matches = matches && process.processo.includes(filters.processo)
+        // cidade
+      if (filters.cidade && matches) }
+
+const [currentPage, setCurrentPage] = useState(1)
+  const [showDetailedFilter, setShowDetailedFilter] = useState(false)
+    const [showUserDropdown, setShowUserDropdown] = useState(false)
+      const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null)
+    import React, { useSTATE, use emo} Use (effort_leve)
+  

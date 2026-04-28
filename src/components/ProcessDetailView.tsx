@@ -401,7 +401,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                         <ChevronLeft size={16} /> Voltar
                     </button>
                     <div>
-                        <span className={`text-xs font-semibold uppercase ${muted}`}>{type === 'estadual' ? 'Processo Estadual' : 'Processo Federal'}</span>
                         <h1 className={`text-lg font-bold ${text}`}>#{process.numero} — {process.cliente}</h1>
                     </div>
                 </div>
@@ -877,7 +876,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
 
             </div>
 
-{/* ===== MODAL HISTÓRICO ===== */}
+            {/* ===== MODAL HISTÓRICO ===== */}
             {showHistoryModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className={`${card} rounded-xl shadow-2xl border ${border} w-full max-w-md`}>
