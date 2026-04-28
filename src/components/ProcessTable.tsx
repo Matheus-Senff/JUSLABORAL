@@ -668,20 +668,20 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
           </button>
 
           <button
-            onClick={() => setShowNewProcessModal(true)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${darkMode ? 'bg-blue-600 hover:bg-blue-700 border-blue-500 text-white' : 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700'}`}
-          >
-            <Plus size={16} />
-            Novo Processo
-          </button>
-
-          <button
             onClick={handleClearFilters}
             className="flex items-center gap-2 px-3 py-2 text-sm font-semibold border rounded transition bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-600"
             title="Limpar todos os filtros"
           >
             <X size={16} />
             Limpar Filtro
+          </button>
+
+          <button
+            onClick={() => setShowNewProcessModal(true)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${darkMode ? 'bg-blue-600 hover:bg-blue-700 border-blue-500 text-white' : 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700'}`}
+          >
+            <Plus size={16} />
+            Novo Processo
           </button>
         </div>
 
