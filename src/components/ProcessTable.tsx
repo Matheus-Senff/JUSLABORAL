@@ -92,6 +92,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     cnpj: '',
     parceiro: '',
     natureza: '',
+    tipo: '',
     clienteId: '',
     searchResults: [] as any[]
   })
@@ -497,7 +498,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
 
     try {
       await addProcesso({
-        tipo: type,
+        tipo: newProcessData.tipo || '',
         cliente: newProcessData.cliente,
         cpf: newProcessData.cpf,
         parceiro: newProcessData.parceiro || '',
@@ -517,6 +518,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
         cnpj: '',
         parceiro: '',
         natureza: '',
+        tipo: '',
         clienteId: '',
         searchResults: []
       })
@@ -1824,7 +1826,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                   <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Natureza</label>
                   <select
                     value={newProcessData.natureza}
-                    onChange={(e) => setNewProcessData({ ...newProcessData, natureza: e.target.value })}
+                    onChange={(e) => setNewProcessData({ ...newProcessData, natureza: e.target.value, tipo: '' })}
                     className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
                   >
                     <option value="">Selecione uma natureza</option>
@@ -1833,6 +1835,36 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
                     <option value="PREVIDENCIÁRIA">Previdenciária</option>
                   </select>
                 </div>
+
+                {/* Tipo - só aparece quando Natureza está selecionada */}
+                {newProcessData.natureza && (
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Tipo</label>
+                    <select
+                      value={newProcessData.tipo}
+                      onChange={(e) => setNewProcessData({ ...newProcessData, tipo: e.target.value })}
+                      className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                    >
+                      <option value="">Selecione um tipo</option>
+                      {newProcessData.natureza === 'CIVIL' && <option value="AÇÕES CIVIS">Ações Civis</option>}
+                      {newProcessData.natureza === 'TRABALHISTA' && (
+                        <>
+                          <option value="TRABALHISTA">Trabalhista</option>
+                          <option value="AÇÃO DE SEGURO DE VIDA">Ação de Seguro de Vida</option>
+                          <option value="TRABALHISTA EXECUÇÃO">Trabalhista Execução</option>
+                          <option value="TRABALHISTA ACIDENTE">Trabalhista Acidente</option>
+                        </>
+                      )}
+                      {newProcessData.natureza === 'PREVIDENCIÁRIA' && (
+                        <>
+                          <option value="AUXÍLIO-ACIDENTE">Auxílio-Acidente</option>
+                          <option value="AUXÍLIO-DOEÇA">Auxílio-Doença</option>
+                          <option value="AUXÍLIO-REC-PROFISSIONAL">Auxílio-Rec-Profissional</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">
