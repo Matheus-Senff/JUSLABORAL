@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Download, FileText, PencilIcon, Paperclip, ExternalLink, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sliders, X } from 'lucide-react'
+import { Download, FileText, PencilIcon, Paperclip, ExternalLink, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sliders, X, Plus } from 'lucide-react'
 import { ProcessDetailView } from './ProcessDetailView'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -25,10 +25,10 @@ interface ProcessTableProps {
 // TODO: fazer virtualization pra melhorar performance com muitos registros
 export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, statusFilter, onAddEvent, initialProcessId }) => {
   const board = usePastaStore((s) => s.board)
-  const { processos: mockProcesses, loading: loadingProcessos } = useSupabaseProcessos(type)
+  const { processos: mockProcesses, loading: loadingProcessos, addProcesso } = useSupabaseProcessos(type)
   const { nomes: usuariosNomes } = useSupabaseUsuarios()
-  const { nomes: parceirosNomes } = useSupabaseParceiros()
-  const { nomes: clientesNomes } = useSupabaseClientes()
+  const { nomes: parceirosNomes, parceiros } = useSupabaseParceiros()
+  const { nomes: clientesNomes, clientes: todosClientes } = useSupabaseClientes()
   const { nomes: setoresNomes } = useSupabaseSetores()
 
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -83,6 +83,17 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const [showEmailDropdown, setShowEmailDropdown] = useState(false)
   const [showParceirosTableDropdown, setShowParceirosTableDropdown] = useState(false)
   const [showClientesTableDropdown, setShowClientesTableDropdown] = useState(false)
+  const [showNewProcessModal, setShowNewProcessModal] = useState(false)
+  const [newProcessData, setNewProcessData] = useState({
+    cliente: '',
+    cpf: '',
+    cnpj: '',
+    parceiro: '',
+    natureza: '',
+    clienteId: '',
+    searchResults: [] as any[]
+  })
+  const [showClienteSearch, setShowClienteSearch] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({
     numero: [],
     parceiro: [],
@@ -431,6 +442,74 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     setShowDetailView(true)
   }
 
+  const handleClienteSearch = (valor: string) => {
+    setNewProcessData({ ...newProcessData, cliente: valor })
+    if (valor.trim().length === 0) {
+      setNewProcessData(prev => ({ ...prev, searchResults: [] }))
+      return
+    }
+
+    const results = todosClientes.filter(c =>
+      c.nome.toLowerCase().includes(valor.toLowerCase()) ||
+      (c.cpf_cnpj && c.cpf_cnpj.includes(valor))
+    ).slice(0, 5)
+
+    setNewProcessData(prev => ({ ...prev, searchResults: results }))
+  }
+
+  const handleSelectCliente = (cliente: any) => {
+    setNewProcessData({
+      ...newProcessData,
+      cliente: cliente.nome,
+      cpf: cliente.cpf_cnpj || '',
+      clienteId: cliente.id,
+      searchResults: []
+    })
+  }
+
+  const handleSaveNewProcess = async () => {
+    if (!newProcessData.cliente.trim()) {
+      alert('Selecione um cliente')
+      return
+    }
+    if (!newProcessData.natureza) {
+      alert('Selecione uma natureza')
+      return
+    }
+
+    try {
+      await addProcesso({
+        tipo: type,
+        cliente: newProcessData.cliente,
+        cpf: newProcessData.cpf,
+        parceiro: newProcessData.parceiro || '',
+        natureza: newProcessData.natureza,
+        status: 'Não Ajuizado',
+        dataInicio: new Date().toISOString().split('T')[0],
+        responsavel: '',
+        processo: '',
+        cidade: '',
+        uf: ''
+      })
+
+      // Limpar formulário
+      setNewProcessData({
+        cliente: '',
+        cpf: '',
+        cnpj: '',
+        parceiro: '',
+        natureza: '',
+        clienteId: '',
+        searchResults: []
+      })
+      setShowNewProcessModal(false)
+      alert('Processo criado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao criar processo:', error)
+      alert('Erro ao criar processo')
+    }
+  }
+
   const handleEditClick = (process: Process) => {
     setEditingProcess(process)
     setEditFormData({ ...process })
@@ -586,6 +665,14 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
           >
             <Sliders size={16} />
             Filtro Detalhado
+          </button>
+
+          <button
+            onClick={() => setShowNewProcessModal(true)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm border rounded transition ${darkMode ? 'bg-blue-600 hover:bg-blue-700 border-blue-500 text-white' : 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700'}`}
+          >
+            <Plus size={16} />
+            Novo Processo
           </button>
 
           <button
@@ -1311,380 +1398,489 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       </div>
 
       {/* Edit Modal */}
-      {showEditModal && editFormData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl max-w-md w-full space-y-4 p-6`}>
-            <div className="flex items-center justify-between">
-              <h3 className={`text-lg font-bold ${textColor}`}>Editar Processo</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Parceiro</label>
-                <input
-                  type="text"
-                  value={editFormData.parceiro}
-                  onChange={(e) => setEditFormData({ ...editFormData, parceiro: e.target.value })}
-                  className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
-                />
+      {
+        showEditModal && editFormData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl max-w-md w-full space-y-4 p-6`}>
+              <div className="flex items-center justify-between">
+                <h3 className={`text-lg font-bold ${textColor}`}>Editar Processo</h3>
+                <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
               </div>
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Cliente</label>
-                <input
-                  type="text"
-                  value={editFormData.cliente}
-                  onChange={(e) => setEditFormData({ ...editFormData, cliente: e.target.value })}
-                  className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
-                />
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Parceiro</label>
+                  <input
+                    type="text"
+                    value={editFormData.parceiro}
+                    onChange={(e) => setEditFormData({ ...editFormData, parceiro: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Cliente</label>
+                  <input
+                    type="text"
+                    value={editFormData.cliente}
+                    onChange={(e) => setEditFormData({ ...editFormData, cliente: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF</label>
+                  <input
+                    type="text"
+                    value={editFormData.cpf}
+                    onChange={(e) => setEditFormData({ ...editFormData, cpf: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Processo</label>
+                  <input
+                    type="text"
+                    value={editFormData.processo}
+                    onChange={(e) => setEditFormData({ ...editFormData, processo: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Responsável</label>
+                  <input
+                    type="text"
+                    value={editFormData.responsavel}
+                    onChange={(e) => setEditFormData({ ...editFormData, responsavel: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Status</label>
+                  <input
+                    type="text"
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF</label>
-                <input
-                  type="text"
-                  value={editFormData.cpf}
-                  onChange={(e) => setEditFormData({ ...editFormData, cpf: e.target.value })}
-                  className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
-                />
+              <div className="flex gap-2 pt-4">
+                <button onClick={handleSaveEdit} className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded font-semibold transition">
+                  Salvar
+                </button>
+                <button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded font-semibold transition">
+                  Cancelar
+                </button>
               </div>
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Processo</label>
-                <input
-                  type="text"
-                  value={editFormData.processo}
-                  onChange={(e) => setEditFormData({ ...editFormData, processo: e.target.value })}
-                  className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Responsável</label>
-                <input
-                  type="text"
-                  value={editFormData.responsavel}
-                  onChange={(e) => setEditFormData({ ...editFormData, responsavel: e.target.value })}
-                  className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
-                />
-              </div>
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${textColor}`}>Status</label>
-                <input
-                  type="text"
-                  value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                  className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 pt-4">
-              <button onClick={handleSaveEdit} className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded font-semibold transition">
-                Salvar
-              </button>
-              <button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded font-semibold transition">
-                Cancelar
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Process Detail Modal - replaced by full-page ProcessDetailView above */}
-      {false && selectedProcess && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
-            {/* Modal Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Detalhes do Processo #{selectedProcess.numero}
-              </h2>
-              <button
-                onClick={() => setShowProcessDetailModal(false)}
-                className={`p-1 rounded hover:bg-gray-200 ${darkMode ? 'text-gray-300 hover:bg-dark-700' : ''}`}
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Número</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.numero}</p>
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Parceiro</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.parceiro}</p>
-                </div>
+      {
+        false && selectedProcess && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+              {/* Modal Header */}
+              <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Detalhes do Processo #{selectedProcess.numero}
+                </h2>
+                <button
+                  onClick={() => setShowProcessDetailModal(false)}
+                  className={`p-1 rounded hover:bg-gray-200 ${darkMode ? 'text-gray-300 hover:bg-dark-700' : ''}`}
+                >
+                  <X size={24} />
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Cliente</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.cliente}</p>
+              {/* Modal Body */}
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Número</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.numero}</p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Parceiro</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.parceiro}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>CPF</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.cpf}</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Processo/CAT</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.processo}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Cliente</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.cliente}</p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>CPF</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.cpf}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Responsável</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.responsavel}</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Cidade/Comarca</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.cidade}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Processo/CAT</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.processo}</p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Responsável</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.responsavel}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>UF</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.uf}</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Data Início</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.dataInicio}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Cidade/Comarca</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.cidade}</p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>UF</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.uf}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
-                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.status}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Data Início</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.dataInicio}</p>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
+                    <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.status}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Última Alteração</label>
-                <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.ultimaAlteracao}</p>
-              </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Última Alteração</label>
+                  <p className={`px-3 py-2 rounded ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'}`}>{selectedProcess.ultimaAlteracao}</p>
+                </div>
 
-              {/* Linked Documents Section */}
-              <div className="mt-6 pt-6 border-t border-gray-300">
-                <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>📄 Documentos Vinculados</label>
-                {getLinkedDocuments().length > 0 ? (
-                  <div className="space-y-2">
-                    {getLinkedDocuments().map((doc) => (
-                      <div
-                        key={doc.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition hover:shadow-md ${darkMode
-                          ? 'bg-dark-700 border-dark-600 hover:border-blue-500'
-                          : 'bg-gray-50 border-gray-300 hover:border-blue-500'
-                          }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <FileText size={18} className={darkMode ? 'text-gray-400 mt-0.5' : 'text-gray-500 mt-0.5'} />
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-medium text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {doc.title}
-                            </h4>
-                            {doc.description && (
-                              <p className={`text-xs mt-1 line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                {doc.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-2">
-                              {doc.attachments.length > 0 && (
-                                <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-dark-600' : 'bg-gray-200'}`}>
-                                  <Paperclip size={12} className="inline mr-1" /> {doc.attachments.length}
-                                </span>
+                {/* Linked Documents Section */}
+                <div className="mt-6 pt-6 border-t border-gray-300">
+                  <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>📄 Documentos Vinculados</label>
+                  {getLinkedDocuments().length > 0 ? (
+                    <div className="space-y-2">
+                      {getLinkedDocuments().map((doc) => (
+                        <div
+                          key={doc.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition hover:shadow-md ${darkMode
+                            ? 'bg-dark-700 border-dark-600 hover:border-blue-500'
+                            : 'bg-gray-50 border-gray-300 hover:border-blue-500'
+                            }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <FileText size={18} className={darkMode ? 'text-gray-400 mt-0.5' : 'text-gray-500 mt-0.5'} />
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`font-medium text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                {doc.title}
+                              </h4>
+                              {doc.description && (
+                                <p className={`text-xs mt-1 line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  {doc.description}
+                                </p>
                               )}
-                              {doc.checklists.length > 0 && (
-                                <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-dark-600' : 'bg-gray-200'}`}>
-                                  ✓ {doc.checklists.length} checklist
-                                </span>
-                              )}
+                              <div className="flex items-center gap-2 mt-2">
+                                {doc.attachments.length > 0 && (
+                                  <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-dark-600' : 'bg-gray-200'}`}>
+                                    <Paperclip size={12} className="inline mr-1" /> {doc.attachments.length}
+                                  </span>
+                                )}
+                                {doc.checklists.length > 0 && (
+                                  <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-dark-600' : 'bg-gray-200'}`}>
+                                    ✓ {doc.checklists.length} checklist
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className={`text-sm px-3 py-2 rounded text-center ${darkMode ? 'bg-dark-700 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
-                    Nenhum documento vinculado a este processo
-                  </p>
-                )}
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={`text-sm px-3 py-2 rounded text-center ${darkMode ? 'bg-dark-700 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+                      Nenhum documento vinculado a este processo
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className={`flex justify-end gap-3 p-6 border-t ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
-              <button
-                onClick={() => setShowProcessDetailModal(false)}
-                className={`px-4 py-2 rounded-lg transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
-              >
-                Fechar
-              </button>
-              <button
-                onClick={handleSchedulingClick}
-                className={`px-4 py-2 rounded-lg transition font-medium ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
-              >
-                Agendar
-              </button>
+              {/* Modal Footer */}
+              <div className={`flex justify-end gap-3 p-6 border-t ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
+                <button
+                  onClick={() => setShowProcessDetailModal(false)}
+                  className={`px-4 py-2 rounded-lg transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={handleSchedulingClick}
+                  className={`px-4 py-2 rounded-lg transition font-medium ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                >
+                  Agendar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Scheduling Modal */}
-      {showSchedulingModal && showProcessDetailModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
-            {/* Modal Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Novo Agendamento
-              </h2>
-              <button
-                onClick={() => setShowSchedulingModal(false)}
-                className={`p-1 rounded hover:bg-gray-200 ${darkMode ? 'text-gray-300 hover:bg-dark-700' : ''}`}
-              >
-                <X size={24} />
-              </button>
+      {
+        showSchedulingModal && showProcessDetailModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+              {/* Modal Header */}
+              <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Novo Agendamento
+                </h2>
+                <button
+                  onClick={() => setShowSchedulingModal(false)}
+                  className={`p-1 rounded hover:bg-gray-200 ${darkMode ? 'text-gray-300 hover:bg-dark-700' : ''}`}
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4">
+                {/* Row 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>O que será feito?</label>
+                    <input
+                      type="text"
+                      value={formData.atividade}
+                      onChange={(e) => handleInputChange('atividade', e.target.value)}
+                      placeholder="Ex: Audiência, Reunião, Pericia"
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Hora</label>
+                    <input
+                      type="time"
+                      value={formData.hora}
+                      onChange={(e) => handleInputChange('hora', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Row 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Local</label>
+                    <input
+                      type="text"
+                      value={formData.local}
+                      onChange={(e) => handleInputChange('local', e.target.value)}
+                      placeholder="Local onde o cliente deverá ir"
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Solicitante</label>
+                    <input
+                      type="text"
+                      value={formData.solicitante}
+                      onChange={(e) => handleInputChange('solicitante', e.target.value)}
+                      placeholder="Quem solicitou"
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Parceiro</label>
+                    <input
+                      type="text"
+                      value={formData.parceiro}
+                      readOnly
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white opacity-60' : 'bg-gray-100 border-gray-300 text-gray-900 opacity-60'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Nome do Cliente</label>
+                    <input
+                      type="text"
+                      value={formData.cliente}
+                      readOnly
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white opacity-60' : 'bg-gray-100 border-gray-300 text-gray-900 opacity-60'}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Row 4 */}
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Observação</label>
+                  <textarea
+                    value={formData.observacao}
+                    onChange={(e) => handleInputChange('observacao', e.target.value)}
+                    placeholder="Observações adicionais"
+                    rows={3}
+                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </div>
+
+                {/* Row 5 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Responsável</label>
+                    <input
+                      type="text"
+                      value={formData.responsavel}
+                      readOnly
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white opacity-60' : 'bg-gray-100 border-gray-300 text-gray-900 opacity-60'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => handleInputChange('status', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    >
+                      <option value="pendente">Pendente</option>
+                      <option value="confirmado">Confirmado</option>
+                      <option value="cancelado">Cancelado</option>
+                      <option value="realizado">Realizado</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className={`flex justify-end gap-3 p-6 border-t ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
+                <button
+                  onClick={() => setShowSchedulingModal(false)}
+                  className={`px-4 py-2 rounded-lg transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveScheduling}
+                  disabled={!formData.atividade || !formData.hora}
+                  className={`px-4 py-2 rounded-lg transition font-medium ${!formData.atividade || !formData.hora
+                    ? darkMode ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    }`}
+                >
+                  Salvar Agendamento
+                </button>
+              </div>
             </div>
+          </div>
+        )
+      }
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              {/* Row 1 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>O que será feito?</label>
-                  <input
-                    type="text"
-                    value={formData.atividade}
-                    onChange={(e) => handleInputChange('atividade', e.target.value)}
-                    placeholder="Ex: Audiência, Reunião, Pericia"
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Hora</label>
-                  <input
-                    type="time"
-                    value={formData.hora}
-                    onChange={(e) => handleInputChange('hora', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  />
-                </div>
+      {/* Novo Processo Modal */}
+      {
+        showNewProcessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className={`${darkMode ? 'bg-dark-800' : 'bg-white'} rounded-lg shadow-2xl w-full max-w-2xl space-y-6 p-8`}>
+              <div className="flex items-center justify-between">
+                <h2 className={`text-2xl font-bold ${textColor}`}>Novo Processo {type === 'estadual' ? 'Estadual' : 'Federal'}</h2>
+                <button onClick={() => setShowNewProcessModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={24} />
+                </button>
               </div>
 
-              {/* Row 2 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-6 max-h-[60vh] overflow-y-auto">
+                {/* Dados do Cliente */}
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Local</label>
-                  <input
-                    type="text"
-                    value={formData.local}
-                    onChange={(e) => handleInputChange('local', e.target.value)}
-                    placeholder="Local onde o cliente deverá ir"
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  />
+                  <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Dados do Cliente</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar por nome, CPF ou CNPJ"
+                      value={newProcessData.cliente}
+                      onChange={(e) => handleClienteSearch(e.target.value)}
+                      onFocus={() => setShowClienteSearch(true)}
+                      className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                    />
+                    {showClienteSearch && newProcessData.searchResults.length > 0 && (
+                      <div className={`absolute top-full left-0 mt-2 w-full rounded-lg shadow-xl z-30 border ${borderColor} ${tableBg} max-h-48 overflow-y-auto`}>
+                        {newProcessData.searchResults.map(cliente => (
+                          <button
+                            key={cliente.id}
+                            onClick={() => handleSelectCliente(cliente)}
+                            className={`w-full text-left px-3 py-2 text-sm border-b ${borderColor} transition ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'} ${textColor}`}
+                          >
+                            <div className="font-medium">{cliente.nome}</div>
+                            <div className="text-xs opacity-75">{cliente.cpf_cnpj || 'Sem CPF/CNPJ'}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1 ${textColor}`}>CPF/CNPJ</label>
+                      <input
+                        type="text"
+                        value={newProcessData.cpf}
+                        readOnly
+                        className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder} opacity-75`}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Solicitante</label>
-                  <input
-                    type="text"
-                    value={formData.solicitante}
-                    onChange={(e) => handleInputChange('solicitante', e.target.value)}
-                    placeholder="Quem solicitou"
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                  />
-                </div>
-              </div>
 
-              {/* Row 3 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Parceiro */}
                 <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Parceiro</label>
-                  <input
-                    type="text"
-                    value={formData.parceiro}
-                    readOnly
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white opacity-60' : 'bg-gray-100 border-gray-300 text-gray-900 opacity-60'}`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Nome do Cliente</label>
-                  <input
-                    type="text"
-                    value={formData.cliente}
-                    readOnly
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white opacity-60' : 'bg-gray-100 border-gray-300 text-gray-900 opacity-60'}`}
-                  />
-                </div>
-              </div>
-
-              {/* Row 4 */}
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Observação</label>
-                <textarea
-                  value={formData.observacao}
-                  onChange={(e) => handleInputChange('observacao', e.target.value)}
-                  placeholder="Observações adicionais"
-                  rows={3}
-                  className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                />
-              </div>
-
-              {/* Row 5 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Responsável</label>
-                  <input
-                    type="text"
-                    value={formData.responsavel}
-                    readOnly
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white opacity-60' : 'bg-gray-100 border-gray-300 text-gray-900 opacity-60'}`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
+                  <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Parceiro</label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => handleInputChange('status', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-dark-700 border-dark-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    value={newProcessData.parceiro}
+                    onChange={(e) => setNewProcessData({ ...newProcessData, parceiro: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
                   >
-                    <option value="pendente">Pendente</option>
-                    <option value="confirmado">Confirmado</option>
-                    <option value="cancelado">Cancelado</option>
-                    <option value="realizado">Realizado</option>
+                    <option value="">Selecione um parceiro</option>
+                    {parceirosNomes.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Natureza */}
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${textColor}`}>Natureza</label>
+                  <select
+                    value={newProcessData.natureza}
+                    onChange={(e) => setNewProcessData({ ...newProcessData, natureza: e.target.value })}
+                    className={`w-full px-3 py-2 text-sm rounded border ${inputBg} ${inputBorder}`}
+                  >
+                    <option value="">Selecione uma natureza</option>
+                    <option value="CIVIL">Civil</option>
+                    <option value="TRABALHISTA">Trabalhista</option>
+                    <option value="PREVIDENCIÁRIA">Previdenciária</option>
                   </select>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className={`flex justify-end gap-3 p-6 border-t ${darkMode ? 'border-dark-700' : 'border-gray-200'}`}>
-              <button
-                onClick={() => setShowSchedulingModal(false)}
-                className={`px-4 py-2 rounded-lg transition ${darkMode ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSaveScheduling}
-                disabled={!formData.atividade || !formData.hora}
-                className={`px-4 py-2 rounded-lg transition font-medium ${!formData.atividade || !formData.hora
-                  ? darkMode ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-              >
-                Salvar Agendamento
-              </button>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleSaveNewProcess}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded font-semibold transition"
+                >
+                  Criar Processo
+                </button>
+                <button
+                  onClick={() => setShowNewProcessModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded font-semibold transition"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   )
 }
 
