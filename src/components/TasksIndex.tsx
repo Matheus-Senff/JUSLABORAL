@@ -9,7 +9,7 @@ interface TasksIndexProps {
   darkMode: boolean
 }
 
-const STATUS_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado']
+const STATUS_OPTIONS = ['Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado']
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro']
 
 export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
@@ -62,14 +62,19 @@ export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
 
   const getStatusColor = (status: ProcessTask['status']) => {
     switch (status) {
-      case 'Concluído':
-        return 'bg-green-600'
-      case 'Em Andamento':
+      case 'Ajuizado':
         return 'bg-blue-600'
-      case 'Cancelado':
-        return 'bg-gray-500'
-      default:
+      case 'Pendência':
         return 'bg-orange-500'
+      case 'Pendência Cumprida':
+        return 'bg-green-600'
+      case 'Aguardando Ajuizamento':
+        return 'bg-yellow-600'
+      case 'Arquivado':
+        return 'bg-gray-500'
+      case 'Não Ajuizado':
+      default:
+        return 'bg-red-600'
     }
   }
 
@@ -330,7 +335,7 @@ export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
                   <p className={`text-xs ${muted} line-clamp-2`}>{task.descricao || '—'}</p>
                 </div>
                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-white text-xs font-semibold shrink-0 ml-2 ${getStatusColor(task.status)}`}>
-                  {task.status === 'Concluído' && <CheckCircle2 size={12} />}
+                  {task.status === 'Pendência Cumprida' && <CheckCircle2 size={12} />}
                   {task.status.length > 12 ? task.status.substring(0, 10) + '...' : task.status}
                 </span>
               </div>
@@ -367,11 +372,11 @@ export const TasksIndex: React.FC<TasksIndexProps> = ({ darkMode }) => {
               <div className="flex items-center gap-2 mt-auto pt-3 border-t border-opacity-20">
                 <button
                   onClick={() => completeTask(task.id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded text-xs font-bold transition ${task.status === 'Concluído'
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : darkMode
-                        ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded text-xs font-bold transition ${task.status === 'Pendência Cumprida'
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : darkMode
+                      ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                     }`}
                 >
                   <CheckCircle2 size={12} /> Concluir

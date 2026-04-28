@@ -96,10 +96,10 @@ export function useSupabaseTarefas() {
   async function completeTarefa(id: string) {
     const tarefa = tarefas.find(t => t.id === id)
     if (!tarefa) return
-    const isConcluida = tarefa.status === 'Concluído'
+    const isPendenciaCumprida = tarefa.status === 'Pendência Cumprida'
     const row = {
-      status: isConcluida ? 'Aberto' : 'Concluído',
-      data_conclusao: isConcluida ? null : new Date().toISOString(),
+      status: isPendenciaCumprida ? 'Pendência' : 'Pendência Cumprida',
+      data_conclusao: isPendenciaCumprida ? null : new Date().toISOString(),
     }
     const { data, error } = await supabase.from('tarefas').update(row).eq('id', id).select().single()
     if (error) throw error

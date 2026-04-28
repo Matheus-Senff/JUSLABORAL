@@ -247,7 +247,7 @@ create table if not exists tarefas (
   setor text,
   tipo_responsavel text check (tipo_responsavel in ('Setor', 'Usuário', 'Equipe')),
   tipo_acao text check (tipo_acao in ('Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro')),
-  status text default 'Aberto' check (status in ('Aberto', 'Em Andamento', 'Concluído', 'Cancelado')),
+  status text default 'Não Ajuizado' check (status in ('Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado', 'Aberto', 'Em Andamento', 'Concluído', 'Cancelado')),
   data_criacao timestamp with time zone default now(),
   data_conclusao timestamp with time zone,
   autor text,
@@ -298,6 +298,6 @@ create policy "equipes_all" on equipes for all using (true) with check (true);
 
 -- Incluir usuário Vizualizador, Editor, Admin --
 
-"Setores" adicionados não estão ficando ao recarregar a página
+--"Setores" adicionados não estão ficando ao recarregar a página
   verificar se está acontecendo com "Clientes" "Usuários" "Equipes" "Setores" "Parceiros"
     incluindo tarefa adicionada, anotação, histórico, que use o banco de dados e que o usuário pode mexer incluir ou excluir --

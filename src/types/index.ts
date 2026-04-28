@@ -101,7 +101,7 @@ export interface ProcessTask {
   setor: string
   observacao: string
   tipoAcao: 'Pedir Documentação' | 'Anotação' | 'Evento' | 'Reunião' | 'Análise' | 'Outro'
-  status: 'Aberto' | 'Em Andamento' | 'Concluído' | 'Cancelado'
+  status: 'Não Ajuizado' | 'Ajuizado' | 'Pendência' | 'Pendência Cumprida' | 'Aguardando Ajuizamento' | 'Arquivado'
   dataCriacao: string
   dataConclusao?: string
   autor: string

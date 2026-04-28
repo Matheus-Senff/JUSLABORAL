@@ -36,7 +36,7 @@ const TIPO_OPTIONS: Record<string, string[]> = {
 
 const TIPO_EVENTO_OPTIONS = ['Perícia Adm.', 'Perícia Jur.', 'Audiência', 'Reunião Cliente'] as const
 const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro'] as const
-const STATUS_TAREFA_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado'] as const
+const STATUS_TAREFA_OPTIONS = ['Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado'] as const
 const ANDAMENTO_OPTIONS = ['Parado', 'Em Análise', 'Pendência', 'Aguardando', 'Resolvido']
 
 const TAREFA_TIPOS_OPTIONS = ['Documento', 'Evento', 'Anotação'] as const
@@ -271,7 +271,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             tarefa: taskForm.tarefa || undefined,
             prazo: taskForm.prazo || undefined,
             tipoResponsavel: taskForm.tipoResponsavel as 'Setor' | 'Usuário' | 'Equipe',
-            status: 'Aberto',
+            status: 'Não Ajuizado',
             dataCriacao: new Date().toLocaleString('pt-BR'),
             autor: process.responsavel,
         }
@@ -289,7 +289,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     const handleCompleteTask = (id: string) => {
         setTasks(prev => prev.map(t =>
             t.id === id
-                ? { ...t, status: t.status === 'Concluído' ? 'Aberto' : 'Concluído', dataConclusao: t.status === 'Concluído' ? undefined : new Date().toLocaleString('pt-BR') }
+                ? { ...t, status: t.status === 'Pendência' ? 'Pendência Cumprida' : 'Pendência', dataConclusao: t.status === 'Pendência' ? new Date().toLocaleString('pt-BR') : undefined }
                 : t
         ))
     }
@@ -439,11 +439,13 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                         <h3 className={`font-semibold text-xs ${text}`}>{task.titulo}</h3>
                                         <p className={`text-xs ${muted} line-clamp-1`}>{task.descricao || '—'}</p>
                                     </div>
-                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white text-xs font-semibold shrink-0 ${task.status === 'Concluído' ? 'bg-green-600' :
-                                            task.status === 'Em Andamento' ? 'bg-blue-600' :
-                                                task.status === 'Cancelado' ? 'bg-gray-500' : 'bg-orange-500'
+                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-white text-xs font-semibold shrink-0 ${task.status === 'Ajuizado' ? 'bg-blue-600' :
+                                        task.status === 'Pendência' ? 'bg-orange-500' :
+                                            task.status === 'Pendência Cumprida' ? 'bg-green-600' :
+                                                task.status === 'Aguardando Ajuizamento' ? 'bg-yellow-600' :
+                                                    task.status === 'Arquivado' ? 'bg-gray-500' : 'bg-red-600'
                                         }`}>
-                                        {task.status === 'Concluído' && <CheckCircle2 size={11} />}
+                                        {task.status === 'Pendência Cumprida' && <CheckCircle2 size={11} />}
                                         {task.status.length > 12 ? task.status.substring(0, 10) + '...' : task.status}
                                     </span>
                                 </div>
@@ -457,9 +459,9 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-opacity-20">
                                     <button
                                         onClick={() => handleCompleteTask(task.id)}
-                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Concluído'
-                                                ? 'bg-green-600 hover:bg-green-700 text-white'
-                                                : 'bg-green-100 hover:bg-green-200 text-green-700'
+                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Pendência Cumprida'
+                                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                                            : 'bg-green-100 hover:bg-green-200 text-green-700'
                                             }`}
                                     >
                                         <CheckCircle2 size={12} /> Concluir

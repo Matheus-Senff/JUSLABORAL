@@ -46,7 +46,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
   const { nomes: SETORES_OPTIONS } = useSupabaseSetores()
 
   const RESPONSAVEIS_OPTIONS = usuariosNomes
-  const STATUS_OPTIONS = ['Aberto', 'Em Andamento', 'Concluído', 'Cancelado']
+  const STATUS_OPTIONS = ['Não Ajuizado', 'Ajuizado', 'Pendência', 'Pendência Cumprida', 'Aguardando Ajuizamento', 'Arquivado']
   const TIPO_ACAO_OPTIONS = ['Pedir Documentação', 'Anotação', 'Evento', 'Reunião', 'Análise', 'Outro']
 
   // CALCULATE ACTIVE FILTERS
@@ -116,14 +116,19 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
 
   const getStatusColor = (status: ProcessTask['status']) => {
     switch (status) {
-      case 'Concluído':
-        return 'bg-green-600'
-      case 'Em Andamento':
+      case 'Ajuizado':
         return 'bg-blue-600'
-      case 'Cancelado':
-        return 'bg-gray-500'
-      default:
+      case 'Pendência':
         return 'bg-orange-500'
+      case 'Pendência Cumprida':
+        return 'bg-green-600'
+      case 'Aguardando Ajuizamento':
+        return 'bg-yellow-600'
+      case 'Arquivado':
+        return 'bg-gray-500'
+      case 'Não Ajuizado':
+      default:
+        return 'bg-red-600'
     }
   }
 
@@ -362,7 +367,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                       <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-2`}>{task.descricao || '—'}</p>
                     </div>
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-white text-xs font-semibold shrink-0 ml-2 ${getStatusColor(task.status)}`}>
-                      {task.status === 'Concluído' && <CheckCircle2 size={11} />}
+                      {task.status === 'Pendência Cumprida' && <CheckCircle2 size={11} />}
                       {task.status}
                     </span>
                   </div>
@@ -413,7 +418,7 @@ export const PastaApp: React.FC<{ darkMode?: boolean }> = ({ darkMode }) => {
                   <div className="flex gap-2 mt-auto pt-3 border-t border-opacity-20">
                     <button
                       onClick={() => completeTask(task.id)}
-                      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Concluído'
+                      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-bold transition ${task.status === 'Pendência Cumprida'
                         ? 'bg-green-600 hover:bg-green-700 text-white'
                         : darkMode
                           ? 'bg-dark-700 hover:bg-dark-600 text-gray-300'
