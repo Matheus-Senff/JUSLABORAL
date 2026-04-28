@@ -31,7 +31,10 @@ export function useSupabaseUsuarios() {
   }
 
   async function addUsuario(u: Omit<UsuarioSistema, 'id' | 'created_at'>) {
-    const { data, error } = await supabase.from('usuarios_sistema').insert(u).select().single()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) throw new Error('Usuário não autenticado')
+
+    const { data, error } = await supabase.from('usuarios_sistema').insert({ ...u, org_id: userData.user.id }).select().single()
     if (error) throw error
     setUsuarios(prev => [...prev, data])
     return data

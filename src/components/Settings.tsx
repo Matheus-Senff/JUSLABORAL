@@ -3,6 +3,8 @@ import { Users, Users2, Building2, Briefcase, ChevronLeft, ChevronRight, Chevron
 import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
 import { useSupabaseUsuarios } from '../hooks/useSupabaseUsuarios'
 import { useSupabaseParceiros } from '../hooks/useSupabaseParceiros'
+import { useSupabaseSetores } from '../hooks/useSupabaseSetores'
+import { useSupabaseClientes } from '../hooks/useSupabaseClientes'
 
 interface SettingsProps {
     darkMode: boolean
@@ -49,8 +51,9 @@ interface Parceiro {
 export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
     const { usuarios, addUsuario, updateUsuario, deleteUsuario } = useSupabaseUsuarios()
     const { parceiros, addParceiro, updateParceiro, deleteParceiro } = useSupabaseParceiros()
+    const { setores, addSetor, updateSetor, deleteSetor } = useSupabaseSetores()
+    const { clientes, addCliente, updateCliente, deleteCliente } = useSupabaseClientes()
     const [equipes, setEquipes] = useState<Equipe[]>([])
-    const [setores, setSetores] = useState<Setor[]>([])
 
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('usuarios')
     const [currentPage, setCurrentPage] = useState(1)
@@ -112,7 +115,14 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
 
     // Filtro de setores
     const filteredSetores = useMemo(() => {
-        return setores.filter(s => {
+        return (setores as any[]).map(s => ({
+            id: s.id,
+            numero: 0,
+            nome: s.nome,
+            gestores: '',
+            parceiro: '',
+            qtdProcessos: 0
+        })).filter(s => {
             return (
                 (setoresFilters.numero ? s.numero.toString().includes(setoresFilters.numero) : true) &&
                 (setoresFilters.nome ? s.nome.toLowerCase().includes(setoresFilters.nome.toLowerCase()) : true) &&
@@ -174,13 +184,13 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
             if (value.trim()) {
                 let suggestions: string[] = []
                 if (key === 'numero') {
-                    suggestions = autocompleteSearch(value, setores.map(s => s.numero.toString()), x => x, 5)
+                    suggestions = []
                 } else if (key === 'nome') {
-                    suggestions = autocompleteSearch(value, setores.map(s => s.nome), x => x, 5)
+                    suggestions = autocompleteSearch(value, (setores as any).map(s => s.nome), x => x, 5)
                 } else if (key === 'gestores') {
-                    suggestions = autocompleteSearch(value, [...new Set(setores.map(s => s.gestores))], x => x, 5)
+                    suggestions = []
                 } else if (key === 'parceiro') {
-                    suggestions = autocompleteSearch(value, [...new Set(setores.map(s => s.parceiro))], x => x, 5)
+                    suggestions = []
                 }
                 setSetoresSuggestions({ ...setoresSuggestions, [key]: suggestions })
             }
@@ -215,7 +225,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
         } else if (activeSubTab === 'equipes') {
             setEquipes(equipes.map(e => e.id === editingItem.id ? editFormData : e))
         } else if (activeSubTab === 'setores') {
-            setSetores(setores.map(s => s.id === editingItem.id ? editFormData : s))
+            await updateSetor(editingItem.id, editFormData)
         } else if (activeSubTab === 'parceiros') {
             await updateParceiro(editingItem.id, editFormData)
         }
@@ -231,7 +241,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
         } else if (activeSubTab === 'equipes') {
             setEquipes(equipes.filter(e => e.id !== id))
         } else if (activeSubTab === 'setores') {
-            setSetores(setores.filter(s => s.id !== id))
+            await deleteSetor(id)
         } else if (activeSubTab === 'parceiros') {
             await deleteParceiro(id)
         }
@@ -285,7 +295,7 @@ export const Settings: React.FC<SettingsProps> = ({ darkMode }) => {
                     setModalError('Nome é obrigatório')
                     return
                 }
-                setSetores([...setores, { ...addFormData, id: `set-${Date.now()}`, numero: setores.length + 1 }])
+                await addSetor(addFormData.nome.trim())
             } else if (activeSubTab === 'parceiros') {
                 if (!addFormData.nome?.trim()) {
                     setModalError('Nome é obrigatório')

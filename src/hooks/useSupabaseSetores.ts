@@ -45,9 +45,12 @@ export const useSupabaseSetores = () => {
 
     const addSetor = async (nome: string) => {
         try {
+            const { data: userData, error: userError } = await supabase.auth.getUser()
+            if (userError || !userData.user) throw new Error('Usuário não autenticado')
+
             const { data, error } = await supabase
                 .from('setores')
-                .insert([{ nome }])
+                .insert([{ nome, org_id: userData.user.id }])
                 .select()
 
             if (error) throw error

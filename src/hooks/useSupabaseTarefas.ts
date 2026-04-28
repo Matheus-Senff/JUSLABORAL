@@ -43,7 +43,11 @@ export function useSupabaseTarefas() {
   }
 
   async function addTarefa(t: ProcessTask) {
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) throw new Error('Usuário não autenticado')
+
     const row = {
+      org_id: userData.user.id,
       process_id_texto: t.processId,
       titulo: t.titulo,
       descricao: t.descricao,

@@ -35,7 +35,10 @@ export function useSupabaseClientes() {
   }
 
   async function addCliente(c: Omit<Cliente, 'id' | 'created_at' | 'numero'>) {
-    const { data, error } = await supabase.from('clientes').insert(c).select().single()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) throw new Error('Usuário não autenticado')
+
+    const { data, error } = await supabase.from('clientes').insert({ ...c, org_id: userData.user.id }).select().single()
     if (error) throw error
     setClientes(prev => [...prev, data])
     return data

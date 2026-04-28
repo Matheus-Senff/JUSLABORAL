@@ -49,7 +49,11 @@ export function useSupabaseProcessos(tipo: 'estadual' | 'federal') {
   }
 
   async function addProcesso(p: Omit<Process, 'id' | 'numero' | 'ultimaAlteracao'> & { tipo?: string }) {
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) throw new Error('Usuário não autenticado')
+
     const row = {
+      org_id: userData.user.id,
       tipo: p.tipo || tipo,
       parceiro: p.parceiro,
       cliente: p.cliente,

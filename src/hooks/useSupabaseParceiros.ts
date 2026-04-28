@@ -31,7 +31,10 @@ export function useSupabaseParceiros() {
   }
 
   async function addParceiro(p: Omit<Parceiro, 'id' | 'created_at'>) {
-    const { data, error } = await supabase.from('parceiros').insert(p).select().single()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) throw new Error('Usuário não autenticado')
+
+    const { data, error } = await supabase.from('parceiros').insert({ ...p, org_id: userData.user.id }).select().single()
     if (error) throw error
     setParceiros(prev => [...prev, data])
     return data
