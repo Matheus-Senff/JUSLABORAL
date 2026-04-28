@@ -54,5 +54,7 @@ export function useSupabaseClientes() {
     setClientes(prev => prev.filter(c => c.id !== id))
   }
 
-  return { clientes, loading, error, addCliente, updateCliente, deleteCliente, reload: load }
+  const nomes = clientes.map(c => c.nome)
+
+  return { clientes, nomes, loading, error, addCliente, updateCliente, deleteCliente, reload: load }
 }
