@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import { Process, ProcessEvent } from '../types'
 import { usePastaStore } from './pasta/pastaStore'
+import { useFilters } from '../contexts/FiltersContext'
 import { autocompleteSearch, fuzzySearch } from '../utils/fuzzySearch'
 import { mockUFs, mockCidades } from '../data/mockData'
 import { useSupabaseProcessos } from '../hooks/useSupabaseProcessos'
@@ -30,6 +31,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const { nomes: parceirosNomes, parceiros } = useSupabaseParceiros()
   const { nomes: clientesNomes, clientes: todosClientes } = useSupabaseClientes()
   const { nomes: setoresNomes } = useSupabaseSetores()
+  const { filters: globalFilters, updateFilter: updateGlobalFilter, clearCommonFilters } = useFilters()
 
   const [filters, setFilters] = useState<Record<string, string>>({
     dataInicio: '',
@@ -43,9 +45,9 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
     processo: '',
     cidade: '',
     uf: '',
-    responsavel: '',
-    status: statusFilter || '',
-    setor: '',
+    responsavel: globalFilters.responsavel,
+    status: statusFilter || globalFilters.status,
+    setor: globalFilters.setor,
     nProcesso: '',
     dataAlteracaoSetor: '',
     dataAlteracaoResponsavel: '',
@@ -184,6 +186,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       natureza: '',
       tipo: '',
     })
+    clearCommonFilters()
     setSelectedUser('geral')
     setCurrentPage(1)
     setShowDetailedFilter(false)
@@ -198,6 +201,16 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
       setShowDetailView(true)
     }
   }, [initialProcessId])
+
+  // Sincronizar filtros comuns com contexto global
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      responsavel: globalFilters.responsavel,
+      setor: globalFilters.setor,
+      status: globalFilters.status || (statusFilter || ''),
+    }))
+  }, [globalFilters.responsavel, globalFilters.setor, globalFilters.status])
 
   // Filter data
   const filteredProcesses = useMemo(() => {
@@ -337,6 +350,11 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({ darkMode, type, stat
   const handleFilterChange = (key: string, value: string) => {
     setFilters({ ...filters, [key]: value })
     setCurrentPage(1)
+
+    // Update global context for common filters
+    if (key === 'responsavel' || key === 'setor' || key === 'status') {
+      updateGlobalFilter(key as any, value)
+    }
 
     // Generate autocomplete suggestions
     if (value.trim()) {
