@@ -155,12 +155,10 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
         endereco: process.endereco || '',
         setor: process.setor || '',
         responsavel: process.responsavel || '',
-        andamento: process.andamento || '',
     })
     const [showSetorDropdown, setShowSetorDropdown] = useState(false)
     const [showResponsavelDropdown, setShowResponsavelDropdown] = useState(false)
     const [showParceiroDropdown, setShowParceiroDropdown] = useState(false)
-    const [showAndamentoDropdown, setShowAndamentoDropdown] = useState(false)
     const [saveConfirmed, setSaveConfirmed] = useState(false)
 
     const getLinkedDocuments = () =>
@@ -172,26 +170,8 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             )
 
     const handleStatusChange = (newStatus: string) => {
-        const entry: ProcessHistoryEntry = {
-            id: Date.now().toString(),
-            processId: process.id,
-            tipo: 'status',
-            campo: 'Status',
-            valorAnterior: currentStatus,
-            valorNovo: newStatus,
-            autor: process.responsavel,
-            data: new Date().toLocaleString('pt-BR'),
-        }
-        setHistory(prev => [entry, ...prev])
         setCurrentStatus(newStatus)
         setShowStatusDropdown(false)
-
-        // Salvar no Supabase
-        try {
-            addHistoryEntry(entry, process.id.toString())
-        } catch (err) {
-            console.error('Erro ao salvar histórico no Supabase:', err)
-        }
     }
 
     const handleAddHistoryEntry = async () => {
@@ -351,16 +331,31 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
             endereco: process.endereco || '',
             setor: process.setor || '',
             responsavel: process.responsavel || '',
-            andamento: process.andamento || '',
         }
         const fieldLabels: Record<string, string> = {
             telefone: 'Telefone', email: 'E-mail', parceiro: 'Parceiro',
             natureza: 'Natureza', tipo: 'Tipo', nProcesso: 'N° Processo',
             dataInicio: 'Data Início', orgao: 'Órgão', endereco: 'Endereço',
-            setor: 'Setor', responsavel: 'Responsável', andamento: 'Andamento',
+            setor: 'Setor', responsavel: 'Responsável',
         }
         const current = editForm as Record<string, string>
         const newEntries: ProcessHistoryEntry[] = []
+
+        // Adiciona mudança de status ao histórico se mudou
+        if (currentStatus !== process.status) {
+            newEntries.push({
+                id: `${Date.now()}-status`,
+                processId: process.id,
+                tipo: 'status',
+                campo: 'Status',
+                valorAnterior: process.status || '—',
+                valorNovo: currentStatus || '—',
+                autor: process.responsavel,
+                data: new Date().toLocaleString('pt-BR'),
+            })
+        }
+
+        // Adiciona mudanças de outros campos
         Object.keys(current).forEach(key => {
             if (current[key] !== initial[key]) {
                 newEntries.push({
@@ -390,7 +385,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
     }
 
     return (
-        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowAndamentoDropdown(false) }}>
+        <div className={`${bg} min-h-screen`} onClick={() => { setShowStatusDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false) }}>
             {/* Header - FIXED at top (does NOT follow scroll) */}
             <div className={`${card} border-b ${border} px-6 py-4 flex items-center justify-between fixed top-0 left-0 right-0 z-20 h-20`} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
@@ -421,14 +416,14 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                 <div className="space-y-4 overflow-y-auto" onClick={e => e.stopPropagation()}>
 
                     {/* 1. Identificação */}
-                    <div className={`${card} rounded-xl border ${border} p-3`}>
-                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Identificação</h2>
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className={`${card} rounded-xl border ${border} p-4`}>
+                        <h2 className={`text-sm font-bold uppercase tracking-wider mb-4 ${muted}`}>Identificação</h2>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label className={labelCls}>Nome</label><p className={valueCls}>{process.cliente}</p></div>
                                 <div><label className={labelCls}>CPF</label><p className={valueCls}>{process.cpf}</p></div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className={labelCls}>Telefone</label>
                                     <input type="text" value={editForm.telefone} onChange={e => setEditForm(f => ({ ...f, telefone: e.target.value }))} className={inputCls} placeholder="—" />
@@ -438,7 +433,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     <input type="text" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="—" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className={labelCls}>Cidade</label>
                                     <p className={`px-3 py-2 rounded-lg text-sm font-medium ${darkMode ? 'bg-dark-700 text-white' : 'bg-gray-100 text-gray-900'} break-words`}>{process.cidade}</p>
@@ -607,7 +602,7 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                     )}
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
                                 {/* Status dropdown */}
                                 <div className="relative">
                                     <label className={labelCls}>Status</label>
@@ -631,31 +626,6 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                                             ))}
                                         </div>
                                     )}
-                                </div>
-                                <div>
-                                    <label className={labelCls}>Andamento</label>
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => { setShowAndamentoDropdown(!showAndamentoDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                        >
-                                            <span className="truncate">{editForm.andamento || '— Selecionar —'}</span>
-                                            <span className="text-xs opacity-50 ml-2">▼</span>
-                                        </button>
-                                        {showAndamentoDropdown && (
-                                            <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                                {ANDAMENTO_OPTIONS.map(opt => (
-                                                    <button
-                                                        key={opt}
-                                                        onClick={() => { setEditForm(f => ({ ...f, andamento: opt })); setShowAndamentoDropdown(false) }}
-                                                        className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.andamento === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                                    >
-                                                        {opt}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
                             <div><label className={labelCls}>Última Alteração</label><p className={valueCls}>{process.ultimaAlteracao}</p></div>
