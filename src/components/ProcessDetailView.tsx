@@ -483,112 +483,124 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     {/* Identificação */}
                     <div className={`${card} rounded-xl border ${border} p-3`}>
                         <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Identificação</h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div><label className={labelCls}>Nome</label><p className={valueCls}>{process.cliente}</p></div>
-                            <div><label className={labelCls}>CPF</label><p className={valueCls}>{process.cpf}</p></div>
-                            <div>
-                                <label className={labelCls}>Telefone</label>
-                                <input type="text" value={editForm.telefone} onChange={e => setEditForm(f => ({ ...f, telefone: e.target.value }))} className={inputCls} placeholder="—" />
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div><label className={labelCls}>Nome</label><p className={valueCls}>{process.cliente}</p></div>
+                                <div><label className={labelCls}>CPF</label><p className={valueCls}>{process.cpf}</p></div>
                             </div>
-                            <div>
-                                <label className={labelCls}>E-mail</label>
-                                <input type="text" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="—" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label className={labelCls}>Telefone</label>
+                                    <input type="text" value={editForm.telefone} onChange={e => setEditForm(f => ({ ...f, telefone: e.target.value }))} className={inputCls} placeholder="—" />
+                                </div>
+                                <div>
+                                    <label className={labelCls}>E-mail</label>
+                                    <input type="text" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className={inputCls} placeholder="—" />
+                                </div>
                             </div>
-                            <div><label className={labelCls}>Cidade</label><p className={valueCls}>{process.cidade}</p></div>
-                            <div><label className={labelCls}>UF</label><p className={valueCls}>{process.uf}</p></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div><label className={labelCls}>Cidade</label><p className={valueCls}>{process.cidade}</p></div>
+                                <div><label className={labelCls}>UF</label><p className={valueCls}>{process.uf}</p></div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Dados do Processo */}
                     <div className={`${card} rounded-xl border ${border} p-3`}>
                         <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Dados do Processo</h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="relative">
-                                <label className={labelCls}>Parceiro</label>
-                                <button
-                                    onClick={() => { setShowParceiroDropdown(!showParceiroDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                >
-                                    <span className="truncate">{editForm.parceiro || '— Selecionar —'}</span>
-                                    <span className="text-xs opacity-50 ml-2">▼</span>
-                                </button>
-                                {showParceiroDropdown && (
-                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
-                                        {parceiroNomes.map(opt => (
-                                            <button
-                                                key={opt}
-                                                onClick={() => { setEditForm(f => ({ ...f, parceiro: opt })); setShowParceiroDropdown(false) }}
-                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.parceiro === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            {/* Natureza dropdown */}
-                            <div className="relative">
-                                <label className={labelCls}>Natureza</label>
-                                <button
-                                    onClick={() => { setShowNaturezaDropdown(!showNaturezaDropdown); setShowTipoDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowStatusDropdown(false) }}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                >
-                                    <span className="truncate">{editForm.natureza || '— Selecionar —'}</span>
-                                    <span className="text-xs opacity-50 ml-2">▼</span>
-                                </button>
-                                {showNaturezaDropdown && (
-                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                        {NATUREZA_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt}
-                                                onClick={() => { setEditForm(f => ({ ...f, natureza: opt, tipo: '' })); setShowNaturezaDropdown(false); setShowTipoDropdown(false) }}
-                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.natureza === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            {/* Tipo dropdown - só aparece quando Natureza está selecionada */}
-                            {editForm.natureza && (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
-                                    <label className={labelCls}>Tipo</label>
+                                    <label className={labelCls}>Parceiro</label>
                                     <button
-                                        onClick={() => { setShowTipoDropdown(!showTipoDropdown); setShowNaturezaDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowStatusDropdown(false) }}
+                                        onClick={() => { setShowParceiroDropdown(!showParceiroDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
                                     >
-                                        <span className="truncate">{editForm.tipo || '— Selecionar —'}</span>
+                                        <span className="truncate">{editForm.parceiro || '— Selecionar —'}</span>
                                         <span className="text-xs opacity-50 ml-2">▼</span>
                                     </button>
-                                    {showTipoDropdown && (
+                                    {showParceiroDropdown && (
                                         <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
-                                            {TIPO_OPTIONS[editForm.natureza]?.map(opt => (
+                                            {parceiroNomes.map(opt => (
                                                 <button
                                                     key={opt}
-                                                    onClick={() => { setEditForm(f => ({ ...f, tipo: opt })); setShowTipoDropdown(false) }}
-                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.tipo === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                    onClick={() => { setEditForm(f => ({ ...f, parceiro: opt })); setShowParceiroDropdown(false) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.parceiro === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
                                                 >
                                                     {opt}
                                                 </button>
-                                            )) || null}
+                                            ))}
                                         </div>
                                     )}
                                 </div>
+                                {/* Natureza dropdown */}
+                                <div className="relative">
+                                    <label className={labelCls}>Natureza</label>
+                                    <button
+                                        onClick={() => { setShowNaturezaDropdown(!showNaturezaDropdown); setShowTipoDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowStatusDropdown(false) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{editForm.natureza || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {showNaturezaDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                            {NATUREZA_OPTIONS.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setEditForm(f => ({ ...f, natureza: opt, tipo: '' })); setShowNaturezaDropdown(false); setShowTipoDropdown(false) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.natureza === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            {/* Tipo dropdown - só aparece quando Natureza está selecionada */}
+                            {editForm.natureza && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="relative">
+                                        <label className={labelCls}>Tipo</label>
+                                        <button
+                                            onClick={() => { setShowTipoDropdown(!showTipoDropdown); setShowNaturezaDropdown(false); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowParceiroDropdown(false); setShowStatusDropdown(false) }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                        >
+                                            <span className="truncate">{editForm.tipo || '— Selecionar —'}</span>
+                                            <span className="text-xs opacity-50 ml-2">▼</span>
+                                        </button>
+                                        {showTipoDropdown && (
+                                            <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden max-h-48 overflow-y-auto`}>
+                                                {TIPO_OPTIONS[editForm.natureza]?.map(opt => (
+                                                    <button
+                                                        key={opt}
+                                                        onClick={() => { setEditForm(f => ({ ...f, tipo: opt })); setShowTipoDropdown(false) }}
+                                                        className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.tipo === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                    >
+                                                        {opt}
+                                                    </button>
+                                                )) || null}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>N° Processo</label>
+                                        <input type="text" value={editForm.nProcesso} onChange={e => setEditForm(f => ({ ...f, nProcesso: e.target.value }))} className={inputCls} />
+                                    </div>
+                                </div>
                             )}
-                            <div>
-                                <label className={labelCls}>N° Processo</label>
-                                <input type="text" value={editForm.nProcesso} onChange={e => setEditForm(f => ({ ...f, nProcesso: e.target.value }))} className={inputCls} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label className={labelCls}>Data Início</label>
+                                    <input type="text" value={editForm.dataInicio} onChange={e => setEditForm(f => ({ ...f, dataInicio: e.target.value }))} className={inputCls} />
+                                </div>
+                                <div>
+                                    <label className={labelCls}>Órgão</label>
+                                    <input type="text" value={editForm.orgao} onChange={e => setEditForm(f => ({ ...f, orgao: e.target.value }))} className={inputCls} />
+                                </div>
                             </div>
                             <div>
-                                <label className={labelCls}>Data Início</label>
-                                <input type="text" value={editForm.dataInicio} onChange={e => setEditForm(f => ({ ...f, dataInicio: e.target.value }))} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Órgão</label>
-                                <input type="text" value={editForm.orgao} onChange={e => setEditForm(f => ({ ...f, orgao: e.target.value }))} className={inputCls} />
-                            </div>
-                            <div className="col-span-2">
                                 <label className={labelCls}>Endereço</label>
                                 <input type="text" value={editForm.endereco} onChange={e => setEditForm(f => ({ ...f, endereco: e.target.value }))} className={inputCls} />
                             </div>
@@ -598,102 +610,106 @@ export const ProcessDetailView: React.FC<ProcessDetailViewProps> = ({
                     {/* Andamento */}
                     <div className={`${card} rounded-xl border ${border} p-3`}>
                         <h2 className={`text-sm font-bold uppercase tracking-wider mb-3 ${muted}`}>Andamento</h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Setor dropdown */}
-                            <div className="relative">
-                                <label className={labelCls}>Setor</label>
-                                <button
-                                    onClick={() => { setShowSetorDropdown(!showSetorDropdown); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                >
-                                    <span className="truncate">{editForm.setor || '— Selecionar —'}</span>
-                                    <span className="text-xs opacity-50 ml-2">▼</span>
-                                </button>
-                                {showSetorDropdown && (
-                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                        {SETORES_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt}
-                                                onClick={() => { setEditForm(f => ({ ...f, setor: opt })); setShowSetorDropdown(false) }}
-                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            {/* Responsável dropdown */}
-                            <div className="relative">
-                                <label className={labelCls}>Responsável</label>
-                                <button
-                                    onClick={() => { setShowResponsavelDropdown(!showResponsavelDropdown); setShowSetorDropdown(false); setShowStatusDropdown(false) }}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
-                                >
-                                    <span className="truncate">{editForm.responsavel || '— Selecionar —'}</span>
-                                    <span className="text-xs opacity-50 ml-2">▼</span>
-                                </button>
-                                {showResponsavelDropdown && (
-                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                        {RESPONSAVEIS_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt}
-                                                onClick={() => { setEditForm(f => ({ ...f, responsavel: opt })); setShowResponsavelDropdown(false) }}
-                                                className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.responsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            {/* Status dropdown */}
-                            <div className="relative">
-                                <label className={labelCls}>Status</label>
-                                <button
-                                    onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false) }}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-500 text-white hover:border-blue-500' : 'bg-blue-50 border-blue-200 text-blue-800 hover:border-blue-400'}`}
-                                >
-                                    {currentStatus}
-                                    <span className="text-xs opacity-60">▼</span>
-                                </button>
-                                {showStatusDropdown && (
-                                    <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                        {STATUS_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt}
-                                                onClick={() => handleStatusChange(opt)}
-                                                className={`w-full text-left px-3 py-2 text-sm transition border-b ${border} ${opt === currentStatus ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <label className={labelCls}>Andamento</label>
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {/* Setor dropdown */}
                                 <div className="relative">
+                                    <label className={labelCls}>Setor</label>
                                     <button
-                                        onClick={() => { setShowAndamentoDropdown(!showAndamentoDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
+                                        onClick={() => { setShowSetorDropdown(!showSetorDropdown); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
                                     >
-                                        <span className="truncate">{editForm.andamento || '— Selecionar —'}</span>
+                                        <span className="truncate">{editForm.setor || '— Selecionar —'}</span>
                                         <span className="text-xs opacity-50 ml-2">▼</span>
                                     </button>
-                                    {showAndamentoDropdown && (
+                                    {showSetorDropdown && (
                                         <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
-                                            {ANDAMENTO_OPTIONS.map(opt => (
+                                            {SETORES_OPTIONS.map(opt => (
                                                 <button
                                                     key={opt}
-                                                    onClick={() => { setEditForm(f => ({ ...f, andamento: opt })); setShowAndamentoDropdown(false) }}
-                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.andamento === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                    onClick={() => { setEditForm(f => ({ ...f, setor: opt })); setShowSetorDropdown(false) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.setor === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
                                                 >
                                                     {opt}
                                                 </button>
                                             ))}
                                         </div>
                                     )}
+                                </div>
+                                {/* Responsável dropdown */}
+                                <div className="relative">
+                                    <label className={labelCls}>Responsável</label>
+                                    <button
+                                        onClick={() => { setShowResponsavelDropdown(!showResponsavelDropdown); setShowSetorDropdown(false); setShowStatusDropdown(false) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                    >
+                                        <span className="truncate">{editForm.responsavel || '— Selecionar —'}</span>
+                                        <span className="text-xs opacity-50 ml-2">▼</span>
+                                    </button>
+                                    {showResponsavelDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                            {RESPONSAVEIS_OPTIONS.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setEditForm(f => ({ ...f, responsavel: opt })); setShowResponsavelDropdown(false) }}
+                                                    className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.responsavel === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {/* Status dropdown */}
+                                <div className="relative">
+                                    <label className={labelCls}>Status</label>
+                                    <button
+                                        onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false) }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-500 text-white hover:border-blue-500' : 'bg-blue-50 border-blue-200 text-blue-800 hover:border-blue-400'}`}
+                                    >
+                                        {currentStatus}
+                                        <span className="text-xs opacity-60">▼</span>
+                                    </button>
+                                    {showStatusDropdown && (
+                                        <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                            {STATUS_OPTIONS.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => handleStatusChange(opt)}
+                                                    className={`w-full text-left px-3 py-2 text-sm transition border-b ${border} ${opt === currentStatus ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className={labelCls}>Andamento</label>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => { setShowAndamentoDropdown(!showAndamentoDropdown); setShowSetorDropdown(false); setShowResponsavelDropdown(false); setShowStatusDropdown(false) }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition flex items-center justify-between ${darkMode ? 'bg-dark-700 border-dark-600 text-white hover:border-blue-500' : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400'}`}
+                                        >
+                                            <span className="truncate">{editForm.andamento || '— Selecionar —'}</span>
+                                            <span className="text-xs opacity-50 ml-2">▼</span>
+                                        </button>
+                                        {showAndamentoDropdown && (
+                                            <div className={`absolute top-full left-0 mt-1 w-full rounded-lg shadow-xl z-30 border ${border} ${card} overflow-hidden`}>
+                                                {ANDAMENTO_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt}
+                                                        onClick={() => { setEditForm(f => ({ ...f, andamento: opt })); setShowAndamentoDropdown(false) }}
+                                                        className={`w-full text-left px-3 py-2 text-sm border-b ${border} transition ${editForm.andamento === opt ? (darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-50 text-blue-700') : (darkMode ? 'hover:bg-dark-700' : 'hover:bg-gray-50')} ${text}`}
+                                                    >
+                                                        {opt}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div><label className={labelCls}>Última Alteração</label><p className={valueCls}>{process.ultimaAlteracao}</p></div>
